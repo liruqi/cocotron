@@ -14,7 +14,7 @@ freeWhenDone:(BOOL)freeWhenDone;
 
 -initWithBytes:(const void *)bytes length:(NSUInteger)length encoding:(NSStringEncoding)encoding;
 
--initWithFormat:(NSString *)format locale:(NSDictionary *)locale arguments:(va_list)arguments;
+-initWithFormat:(NSString *)format locale:(id)locale arguments:(va_list)arguments;
 
 -(unichar)characterAtIndex:(NSUInteger)location;
 
@@ -53,6 +53,7 @@ freeWhenDone:(BOOL)freeWhenDone;
 #import <Foundation/NSScanner.h>
 #import <Foundation/NSAutoreleasePool.h>
 #import <Foundation/NSRaiseException.h>
+#import <Foundation/NSCFTypeID.h>
 #import <limits.h>
 #import <string.h>
 
@@ -120,13 +121,13 @@ int __CFConstantStringClassReference[1];
    return [self initWithCharactersNoCopy:unicode length:length freeWhenDone:YES];
 }
 
--initWithFormat:(NSString *)format locale:(NSDictionary *)locale
+-initWithFormat:(NSString *)format locale:(id)locale
       arguments:(va_list)arguments {
    NSInvalidAbstractInvocation();
    return nil;
 }
 
--initWithFormat:(NSString *)format locale:(NSDictionary *)locale,... {
+-initWithFormat:(NSString *)format locale:(id)locale,... {
    va_list arguments;
 
    va_start(arguments,locale);
@@ -266,27 +267,27 @@ int __CFConstantStringClassReference[1];
 }
 
 +stringWithCharacters:(const unichar *)unicode length:(NSUInteger)length {
-   return [[[self alloc] initWithCharacters:unicode length:length] autorelease];
+   return [[[self allocWithZone:NULL] initWithCharacters:unicode length:length] autorelease];
 }
 
 +string {
-   return [[[self alloc] init] autorelease];
+   return [[[self allocWithZone:NULL] init] autorelease];
 }
 
 +stringWithCString:(const char *)cString length:(NSUInteger)length {
-   return [[[self alloc] initWithCString:cString length:length] autorelease];
+   return [[[self allocWithZone:NULL] initWithCString:cString length:length] autorelease];
 }
 
 +stringWithCString:(const char *)cString encoding:(NSStringEncoding)encoding {
-   return [[[self alloc] initWithCString:cString encoding:encoding] autorelease];
+   return [[[self allocWithZone:NULL] initWithCString:cString encoding:encoding] autorelease];
 }
 
 +stringWithCString:(const char *)cString {
-   return [[[self alloc] initWithCString:cString] autorelease];
+   return [[[self allocWithZone:NULL] initWithCString:cString] autorelease];
 }
 
 +stringWithString:(NSString *)string {
-   return [[[self alloc] initWithString:string] autorelease];
+   return [[[self allocWithZone:NULL] initWithString:string] autorelease];
 }
 
 +stringWithFormat:(NSString *)format,... {
@@ -295,7 +296,7 @@ int __CFConstantStringClassReference[1];
    va_start(arguments,format);
    id result;
    
-   result=[[[self alloc] initWithFormat:format arguments:arguments] autorelease];
+   result=[[[self allocWithZone:NULL] initWithFormat:format arguments:arguments] autorelease];
     
    va_end(arguments);
    
@@ -303,27 +304,27 @@ int __CFConstantStringClassReference[1];
 }
 
 +stringWithContentsOfFile:(NSString *)path {
-   return [[[self alloc] initWithContentsOfFile:path] autorelease];
+   return [[[self allocWithZone:NULL] initWithContentsOfFile:path] autorelease];
 }
 
 +stringWithContentsOfFile:(NSString *)path encoding:(NSStringEncoding)encoding error:(NSError **)error {
-   return [[[self alloc] initWithContentsOfFile:path encoding:encoding error:error] autorelease];
+   return [[[self allocWithZone:NULL] initWithContentsOfFile:path encoding:encoding error:error] autorelease];
 }
 
 +stringWithContentsOfFile:(NSString *)path usedEncoding:(NSStringEncoding *)encoding error:(NSError **)error {
-   return [[[self alloc] initWithContentsOfFile:path usedEncoding:encoding error:error] autorelease];
+   return [[[self allocWithZone:NULL] initWithContentsOfFile:path usedEncoding:encoding error:error] autorelease];
 }
 
 +stringWithContentsOfURL:(NSURL *)url encoding:(NSStringEncoding)encoding error:(NSError **)error {
-   return [[[self alloc] initWithContentsOfURL:url encoding:encoding error:error] autorelease];
+   return [[[self allocWithZone:NULL] initWithContentsOfURL:url encoding:encoding error:error] autorelease];
 }
 
 +stringWithContentsOfURL:(NSURL *)url usedEncoding:(NSStringEncoding *)encoding error:(NSError **)error {
-   return [[[self alloc] initWithContentsOfURL:url usedEncoding:encoding error:error] autorelease];
+   return [[[self allocWithZone:NULL] initWithContentsOfURL:url usedEncoding:encoding error:error] autorelease];
 }
 
 +stringWithUTF8String:(const char *)utf8 {
-   return [[[NSString alloc] initWithUTF8String:utf8] autorelease];
+   return [[[NSString allocWithZone:NULL] initWithUTF8String:utf8] autorelease];
 }
 
 +localizedStringWithFormat:(NSString *)format,... {
@@ -347,7 +348,7 @@ int __CFConstantStringClassReference[1];
 }
 
 -mutableCopy {
-   return [[NSMutableString alloc] initWithString:self];
+   return [[NSMutableString allocWithZone:NULL] initWithString:self];
 }
 
 -mutableCopyWithZone:(NSZone *)zone {
@@ -568,8 +569,13 @@ static inline BOOL isEqualString(NSString *str1,NSString *str2){
    if(other==nil)
     return NO;
 
+#if 1
+   if([other _cfTypeID]!=kNSCFTypeString)
+    return NO;
+#else
    if(!NSObjectIsKindOfClass(other,objc_lookUpClass("NSString")))
     return NO;
+#endif
 
    return isEqualString(self,other);
 }
@@ -956,14 +962,61 @@ U+2029 (Unicode paragraph separator), \r\n, in that order (also known as CRLF)
 }
 
 -(BOOL)boolValue {
-   NSUnimplementedMethod();
-   return 0;
+   NSUInteger i,length=[self length];
+   unichar buffer[length];
+   
+   if(length==0)
+    return NO;
+
+   [self getCharacters:buffer];
+   NSCharacterSet *set=[NSCharacterSet whitespaceCharacterSet];
+   
+   for(i=0;i<length;i++)
+    if(![set characterIsMember:buffer[i]])
+     break;
+   
+   if(i==length)
+    return NO;
+   
+   if(buffer[i]=='Y' || buffer[i]=='y' || buffer[i]=='T' || buffer[i]=='t')
+    return YES;
+   
+   if(buffer[i]=='-' || buffer[i]=='+')
+    i++;
+
+   for(;i<length;i++)
+    if(buffer[i]!='0')
+     break;
+   
+   if(i==length)
+    return NO;
+   
+   if(buffer[i]>='1' && buffer[i]<='9')
+    return YES;
+   
+   return NO;
 }
 
 -(int)intValue {
+   long long llvalue=[self longLongValue];
+   
+   if(llvalue>INT_MAX)
+    llvalue=INT_MAX;
+   if(llvalue<INT_MIN)
+    llvalue=INT_MIN;
+   
+   return llvalue;
+}
+
+-(NSInteger)integerValue {
+   return [self intValue];
+}
+
+-(long long)longLongValue {
    NSUInteger pos,length=[self length];
-   unichar  unicode[length];
-   int      sign=1,value=0;
+   unichar    unicode[length];
+   int        sign=1;
+   long long  value=0;
 
    [self getCharacters:unicode];
 
@@ -992,16 +1045,6 @@ U+2029 (Unicode paragraph separator), \r\n, in that order (also known as CRLF)
    }
 
    return sign*value;
-}
-
--(NSInteger)integerValue {
-   NSUnimplementedMethod();
-   return 0;
-}
-
--(long long)longLongValue {
-   NSUnimplementedMethod();
-   return 0;
 }
 
 -(float)floatValue {
@@ -1407,7 +1450,7 @@ U+2029 (Unicode paragraph separator), \r\n, in that order (also known as CRLF)
     unichar  unicode[maxLength];
     NSUInteger location;
     [self getCharacters:unicode range:range];
-    if(NSGetAnyCStringWithMaxLength(encoding, unicode,range.length,&range.location,cString,maxLength,YES) <= 0) {
+    if(NSGetAnyCStringWithMaxLength(encoding, unicode,range.length,&range.location,cString,maxLength,YES) ==NSNotFound) {
         return NO;
     }
 
@@ -1418,9 +1461,8 @@ U+2029 (Unicode paragraph separator), \r\n, in that order (also known as CRLF)
    return defaultEncoding();
 }
 
--(void)getCString:(char *)cString maxLength:(NSUInteger)maxLength
-            range:(NSRange)range remainingRange:(NSRange *)leftoverRange {
-   unichar  unicode[range.length];
+-(void)getCString:(char *)cString maxLength:(NSUInteger)maxLength range:(NSRange)range remainingRange:(NSRange *)leftoverRange {
+   unichar    unicode[range.length];
    NSUInteger location;
 
    [self getCharacters:unicode range:range];
@@ -1439,8 +1481,13 @@ U+2029 (Unicode paragraph separator), \r\n, in that order (also known as CRLF)
 }
 
 -(void)getCString:(char *)cString {
-   NSRange range={0,[self length]};
-   [self getCString:cString maxLength:NSMaximumStringLength+1 range:range remainingRange:NULL];
+   NSInteger  length=[self length];
+   NSUInteger location;
+   unichar    unicode[length];
+   
+   [self getCharacters:unicode];
+   
+   NSGetCStringWithMaxLength(unicode,length,&location,cString,NSMaximumStringLength+1,YES);
 }
 
 -(NSUInteger)cStringLength {

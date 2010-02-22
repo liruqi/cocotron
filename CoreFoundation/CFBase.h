@@ -53,8 +53,12 @@ THE SOFTWARE IS PROVIDED "AS IS",WITHOUT WARRANTY OF ANY KIND,EXPRESS OR IMPLIED
  
 #ifdef __LP64__
 typedef double CGFloat;
+#define CGFLOAT_MIN DBL_MIN
+#define CGFLOAT_MAX DBL_MAX
 #else
 typedef float CGFloat;
+#define CGFLOAT_MIN FLT_MIN
+#define CGFLOAT_MAX FLT_MAX
 #endif
 
 typedef struct CGPoint {
@@ -79,6 +83,10 @@ typedef struct CGRect {
 typedef int mach_port_t;
 #endif
 
+// FIXME:
+typedef int OSStatus;
+typedef uint32_t OSType;
+
 typedef unsigned short UniChar;
 typedef unsigned long UTF32Char;
 typedef float Float32;
@@ -87,10 +95,11 @@ typedef double Float64;
 
 typedef unsigned CFUInteger;
 typedef int CFInteger;
-typedef int SInt32;
+typedef int32_t SInt32;
+typedef uint32_t UInt32;
 typedef signed char SInt8;
 
-typedef void *CFTypeRef;
+typedef const void *CFTypeRef;
 typedef CFUInteger CFTypeID;
 typedef CFUInteger CFHashCode;
 typedef char       Boolean;
@@ -183,5 +192,13 @@ COREFOUNDATION_EXPORT Boolean        CFEqual(CFTypeRef self,CFTypeRef other);
 COREFOUNDATION_EXPORT CFStringRef    CFCopyTypeIDDescription(CFTypeID typeID);
 COREFOUNDATION_EXPORT CFStringRef    CFCopyDescription(CFTypeRef self);
 COREFOUNDATION_EXPORT CFTypeRef      CFMakeCollectable(CFTypeRef self);
+
+#ifdef WINDOWS
+COREFOUNDATION_EXPORT unsigned int sleep(unsigned int seconds);
+COREFOUNDATION_EXPORT size_t strlcpy(char *dst, const char *src, size_t size);
+COREFOUNDATION_EXPORT void bzero(void *ptr,size_t size);
+COREFOUNDATION_EXPORT void bcopy(const void *s1, void *s2, size_t n);
+COREFOUNDATION_EXPORT int bcmp(const void *s1, void *s2, size_t n);
+#endif
 
 

@@ -30,7 +30,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <AppKit/NSTextView.h>
 #import <AppKit/NSTrackingArea.h>
 #import <AppKit/NSToolbar.h>
-#import <AppKit/NSWindowAnimationContext.h>
 #import <AppKit/NSToolTipWindow.h>
 #import <AppKit/NSDisplay.h>
 #import <AppKit/NSRaise.h>
@@ -49,11 +48,6 @@ NSString *NSWindowWillCloseNotification=@"NSWindowWillCloseNotification";
 NSString *NSWindowWillMoveNotification=@"NSWindowWillMoveNotification";
 NSString *NSWindowWillStartLiveResizeNotification=@"NSWindowWillStartLiveResizeNotification";
 NSString *NSWindowDidEndLiveResizeNotification=@"NSWindowDidEndLiveResizeNotification";
-
-NSString *NSWindowWillAnimateNotification=@"NSWindowWillAnimateNotification";
-NSString *NSWindowAnimatingNotification=@"NSWindowAnimatingNotification";
-NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
-
 
 @interface NSToolbar (NSToolbar_privateForWindow)
 - (void)_setWindow:(NSWindow *)window;
@@ -121,8 +115,9 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
    NSRect backgroundFrame={{0,0},contentRect.size};
    NSRect contentViewFrame={{0,0},contentRect.size};
 
-   _frame=[[self class] frameRectForContentRect:contentRect styleMask:styleMask];
-
+   _frame=[isa frameRectForContentRect:contentRect styleMask:styleMask];
+   backgroundFrame.size=_frame.size;
+   
    _styleMask=styleMask;
    _backingType=backing;
 
@@ -133,15 +128,13 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
    _miniwindowTitle=@"";
 
    _menu=nil;
-   if(![self isKindOfClass:[NSPanel class]] && styleMask>0){
+   if(![self isKindOfClass:[NSPanel class]] && styleMask!=0){
     NSRect frame=NSMakeRect(0,contentRect.size.height,contentRect.size.width,[NSMainMenuView menuHeight]);
 
     _menu=[[NSApp mainMenu] copy];
 
     _menuView=[[NSMainMenuView alloc] initWithFrame:frame menu:_menu];
     [_menuView setAutoresizingMask:NSViewWidthSizable|NSViewMinYMargin];
-
-    backgroundFrame.size.height+=[_menuView frame].size.height;
    }
 
    _backgroundView=[[NSWindowBackgroundView alloc] initWithFrame:backgroundFrame];
@@ -190,7 +183,7 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
     [_backgroundView addSubview:_menuView];
 
    [_backgroundView addSubview:_contentView];
-
+   [_backgroundView setNeedsDisplay:YES];
    [[NSApplication sharedApplication] _addWindow:self];
 
    return self;
@@ -208,7 +201,7 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
 
 -(void)dealloc {
    [[NSNotificationCenter defaultCenter] removeObserver:self];
-   
+   [_childWindows release];
    [_title release];
    [_miniwindowTitle release];
    [_miniwindowImage release];
@@ -225,6 +218,8 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
    [_platformWindow invalidate];
    [_platformWindow release];
    _platformWindow=nil;
+   [_graphicsContext release];
+   _graphicsContext=nil;
    [_undoManager release];
    [super dealloc];
 }
@@ -264,12 +259,11 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
    return [[self platformWindow] cgContext];
 }
 
--(void)setStyleMask:(unsigned)mask
-{
-    if (_platformWindow == nil)
-        _styleMask = mask;
-    else
-        [NSException raise:NSInternalInconsistencyException format:@"-[NSWindow setStyleMask:] platformWindow already created, cannot change style mask"];
+-(void)setStyleMask:(unsigned)mask {
+   _styleMask=mask;
+   [_platformWindow setStyleMask:_styleMask];
+   if(_styleMask&NSDocModalWindowMask)
+    [self _hideMenuViewIfNeeded];
 }
 
 -(void)postNotificationName:(NSString *)name {
@@ -277,9 +271,17 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
      object:self];
 }
 
--(NSGraphicsContext *)graphicsContext { 
-   return [NSGraphicsContext graphicsContextWithWindow:self]; 
+-(NSGraphicsContext *)graphicsContext {
+   if(_graphicsContext==nil)
+    _graphicsContext=[[NSGraphicsContext graphicsContextWithWindow:self] retain];
+   
+   return _graphicsContext;
 } 
+
+-(void)platformWindowDidInvalidateCGContext:(CGWindow *)window {
+   [_graphicsContext release];
+   _graphicsContext=nil;
+}
 
 -(NSDictionary *)deviceDescription {
    NSValue *resolution=[NSValue valueWithSize:NSMakeSize(72.0,72.0)];
@@ -668,88 +670,20 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
 }
 
 -(void)setFrame:(NSRect)frame display:(BOOL)display {
-   _frame=frame;
+   [self setFrame:frame display:display animate:NO];
+}
+
+-(void)setFrame:(NSRect)newFrame display:(BOOL)display animate:(BOOL)animate  {
+   _frame=newFrame;
    _makeSureIsOnAScreen=YES;
 
    [_backgroundView setFrameSize:_frame.size];
    [[self platformWindow] setFrame:_frame];
 
-   [self _updateTrackingAreas];
+   [self _invalidateTrackingAreas];
 
    if(display)
     [self display];
-}
-
-- (void)_animateWithContext:(NSWindowAnimationContext *)context
-{
-    NSRect frame = [self frame];
-    NSDictionary *userInfo = [NSDictionary dictionaryWithObjectsAndKeys:context, @"NSWindowAnimationContext", nil];
-    
-    if (_animationContext == nil)
-        _animationContext = [context retain];
-    
-    if (_animationContext != context) 
-        [NSException raise:NSInvalidArgumentException
-                    format:@"-[%@ %@]: attempt to animate frame while animation still in progress",
-            [self class], NSStringFromSelector(_cmd)];
-    
-    [[NSNotificationCenter defaultCenter] postNotificationName:NSWindowWillAnimateNotification object:self userInfo:userInfo];
-    
-    [context decrement];
-    
-    if ([context stepCount] > 0) {
-        frame.origin.x += [context stepRect].origin.x;
-        frame.origin.y += [context stepRect].origin.y;
-        frame.size.width += [context stepRect].size.width;
-        frame.size.height += [context stepRect].size.height;
-    }
-    else
-        frame = [context targetRect];
-    
-    [self setFrame:frame display:[context display]];
-    
-    [[NSNotificationCenter defaultCenter] postNotificationName:NSWindowAnimatingNotification object:self userInfo:userInfo];
-    
-    if ([context stepCount] > 0) {
-        [self performSelector:_cmd withObject:context afterDelay:[context stepInterval]];
-    }
-    else {
-        [[NSNotificationCenter defaultCenter] postNotificationName:NSWindowDidAnimateNotification object:self userInfo:userInfo];
-        
-        [_animationContext release];
-        _animationContext = nil;
-#if 0
-        if ([_backgroundView cachesImageForAnimation])
-            [_backgroundView invalidateCachedImage];
-#endif
-    }
-}
-
-- (NSWindowAnimationContext *)_animationContext
-{
-    return _animationContext;
-}
-
--(void)setFrame:(NSRect)newFrame display:(BOOL)display animate:(BOOL)animate 
-{
-    NSWindowAnimationContext *context;
-    
-    // no fun at all!
-    if (animate == NO) {
-        [self setFrame:newFrame display:display];
-        return;
-    }
-
-    context = [NSWindowAnimationContext contextToTransformWindow:self startRect:[self frame] targetRect:newFrame resizeTime:[self animationResizeTime:newFrame] display:display];
-
-// FIX
-#if 0
-    [_backgroundView setCachesImageForAnimation:NO];    // re-enable
-    if ([_backgroundView cachedImageIsValid] == NO)
-        [_backgroundView cacheImageForAnimation];
-#endif
-
-    [self _animateWithContext:context];
 }
 
 -(void)setContentSize:(NSSize)size {
@@ -792,7 +726,6 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
 
 -(void)setContentMaxSize:(NSSize)value {
    _contentMaxSize=value;
-   NSUnimplementedMethod();
 }
 
 -(void)setContentBorderThickness:(CGFloat)thickness forEdge:(NSRectEdge)edge {
@@ -932,7 +865,7 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
 -(void)setToolbar:(NSToolbar *)toolbar {
    if(toolbar!=_toolbar){
     CGFloat oldHeight=0;
-   
+
     toolbar=[toolbar retain];
    
     if(_toolbar!=nil){
@@ -940,6 +873,7 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
      [_toolbar _setWindow:nil];
      [[_toolbar _view] removeFromSuperview];
      [_toolbar release];
+     [[self _backgroundView] setNeedsDisplay:YES];
     }
    
     _toolbar = toolbar;
@@ -947,8 +881,8 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
     if(_toolbar!=nil){
      [_toolbar _setWindow:self];
      [[self _backgroundView] addSubview:[_toolbar _view]];
+     [[self _backgroundView] setNeedsDisplay:YES];
     }
-   
     [self _toolbarSizeDidChangeFromOldHeight:oldHeight];
    }
 }
@@ -1099,13 +1033,29 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
    return YES;
 }
 
--(BOOL)setFrameAutosaveName:(NSString *)name {
+-(void)_setFrameAutosaveNameNoIO:(NSString *)name {
    name=[name copy];
    [_autosaveFrameName release];
    _autosaveFrameName=name;
-   // check if this name is in use by any other windows
+}
+
+-(BOOL)setFrameAutosaveName:(NSString *)name {
+   [self _setFrameAutosaveNameNoIO:name];
+
+   [self setFrameUsingName:_autosaveFrameName];
    [self saveFrameUsingName:_autosaveFrameName];
    return YES;
+}
+
+-(void)postAwakeFromNib {
+/*
+  We  do this after awakeFromNib because a saved frame is also post awakeFromNib. If awakeFromNib modifies
+  the windows adornments we need to wait until here to actually set it.
+ */
+   if([_autosaveFrameName length]>0){
+    [self setFrameUsingName:_autosaveFrameName];
+    [self saveFrameUsingName:_autosaveFrameName];
+   }
 }
 
 -(void)saveFrameUsingName:(NSString *)name {
@@ -1312,11 +1262,41 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
 }
 
 -(void)addChildWindow:(NSWindow *)child ordered:(NSWindowOrderingMode)ordered {
-   NSUnimplementedMethod();
+   if(_childWindows==nil)
+    _childWindows=[NSMutableArray new];
+    
+   [_childWindows addObject:child];
+   [child setParentWindow:self];
+   [child makeKeyAndOrderFront:nil];
 }
 
 -(void)removeChildWindow:(NSWindow *)child {
-   NSUnimplementedMethod();
+   [child orderOut:nil];
+   [child setParentWindow:nil];
+   [_childWindows removeObjectIdenticalTo:child];
+}
+
+-(void)_parentWindowDidClose:(NSWindow *)parent {
+   [self orderOut:nil];
+}
+
+-(void)_parentWindowDidActivate:(NSWindow *)parent {
+   [self orderWindow:NSWindowAbove relativeTo:[_parentWindow windowNumber]];
+}
+
+-(void)_parentWindowDidDeactivate:(NSWindow *)parent {
+   [self orderWindow:NSWindowAbove relativeTo:[_parentWindow windowNumber]];
+}
+
+-(void)_parentWindowDidMiniaturize:(NSWindow *)parent {
+   [self orderOut:nil];
+}
+
+-(void)_parentWindowDidChangeFrame:(NSWindow *)parent {
+}
+
+-(void)_parentWindowDidExitMove:(NSWindow *)parent {
+   [self orderWindow:NSWindowAbove relativeTo:[_parentWindow windowNumber]];
 }
 
 -(BOOL)acceptsFirstResponder {
@@ -1399,7 +1379,7 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
 }
 
 - (NSTimeInterval)animationResizeTime:(NSRect)frame {
-    return 0.20;
+    return 0.000001;
 }
 
 -(void)selectNextKeyView:sender {
@@ -1510,6 +1490,7 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
 -(void)displayIfNeeded {
    if([self isVisible] && ![self isMiniaturized] && [self viewsNeedDisplay]){
     NSAutoreleasePool *pool=[NSAutoreleasePool new];
+
     [self disableFlushWindow];
     [_backgroundView displayIfNeeded];
     [self enableFlushWindow];
@@ -1529,6 +1510,10 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
     [self enableFlushWindow];
     [self flushWindowIfNeeded];
     [pool release];
+   }
+   else {
+    // If we were asked to display and weren't visible, mark it for display
+    [_backgroundView setNeedsDisplay:YES];
    }
 }
 
@@ -1555,18 +1540,18 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
 -(void)disableCursorRects {
    _cursorRectsDisabled++;
    if(_cursorRectsDisabled==1)
-    [self _updateTrackingAreas];
+    [self _invalidateTrackingAreas];
 }
 
 -(void)enableCursorRects {
    _cursorRectsDisabled--;
    if(_cursorRectsDisabled==0)
-    [self _updateTrackingAreas];
+    [self _invalidateTrackingAreas];
 }
 
 -(void)discardCursorRects {
    [[self _backgroundView] discardCursorRects];
-   [self _updateTrackingAreas];
+   [self _invalidateTrackingAreas];
 }
 
 // Apple docs say: "sends -resetCursorRects to every NSView object in the [...] hierarchy",
@@ -1585,13 +1570,13 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
 -(void)resetCursorRects {
    [self discardCursorRects];
    [self _resetCursorRectsInView:_backgroundView];
-   [self _updateTrackingAreas];
+   [self _invalidateTrackingAreas];
 }
 
 -(void)invalidateCursorRectsForView:(NSView *)view {
    [view discardCursorRects];
    [view resetCursorRects];
-   [self _updateTrackingAreas];
+   [self _invalidateTrackingAreas];
 }
 
 // This shall be received in case of
@@ -1600,7 +1585,7 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
 // - the number or TrackingAreas has changed
 // - a property of one of the TrackingAreas has changed
 // - a frame of this window or one the relevant views has changed.
--(void)_updateTrackingAreas {
+-(void)_invalidateTrackingAreas {
    // Rebuild it on demand.
    [_trackingAreas release];
    _trackingAreas=nil;
@@ -1613,8 +1598,9 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
     BOOL toolTipsAllowed=[[NSApplication sharedApplication] isActive] ||
                          [self allowsToolTipsWhenApplicationIsInactive];
 
-    _trackingAreas=[[NSMutableArray alloc] init];
-    [[self _backgroundView] _collectTrackingAreasForWindowInto:_trackingAreas];
+    NSMutableArray *collectedAreas=[[NSMutableArray alloc] init];
+    [[self _backgroundView] _collectTrackingAreasForWindowInto:collectedAreas];
+    _trackingAreas=collectedAreas;
     
     count=[_trackingAreas count];
     while(--count>=0){
@@ -1647,8 +1633,8 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
  */
    [self orderOut:nil];
 
-   if ([_drawers count] > 0)
-       [_drawers makeObjectsPerformSelector:@selector(parentWindowDidClose:) withObject:self];
+   [_childWindows makeObjectsPerformSelector:@selector(_parentWindowDidClose:) withObject:self];
+   [_drawers makeObjectsPerformSelector:@selector(parentWindowDidClose:) withObject:self];
 
    [self postNotificationName:NSWindowWillCloseNotification];
 
@@ -1675,7 +1661,6 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
 -(void)orderWindow:(NSWindowOrderingMode)place relativeTo:(int)relativeTo {
 // The move notifications are sent under unknown conditions around orderFront: in the Apple AppKit, we do them all the time here until it's figured out. I suspect it is a side effect of off-screen windows being at off-screen coordinates (as opposed to just being hidden)
 
-
    [self postNotificationName:NSWindowWillMoveNotification];
 
    switch(place){
@@ -1695,6 +1680,7 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
          [NSApp changeWindowsItem:self title:_title filename:NO];
          [NSApp _windowOrderingChange: NSWindowAbove forWindow: self relativeTo: (NSWindow *)relativeTo];
      }
+
      break;
 
     case NSWindowBelow:
@@ -1715,7 +1701,7 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
      }
      break;
 
-    case NSWindowOut:   
+    case NSWindowOut:
      _isVisible=NO;
      [[self platformWindow] hideWindow];
      if (![self isKindOfClass:[NSPanel class]]) {
@@ -2240,60 +2226,46 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
 
 -(void)_attachSheetContextOrderFrontAndAnimate:(NSSheetContext *)sheetContext {
    NSWindow *sheet = [sheetContext sheet];
-   NSRect sheetFrame;
+   NSRect    sheetFrame;
+
+   if ([sheet styleMask] != NSDocModalWindowMask)
+    [sheet setStyleMask:NSDocModalWindowMask];
 
    [_sheetContext autorelease];
    _sheetContext=[sheetContext retain];
 
-   [self _setSheetOrigin];
-   sheetFrame = [sheet frame];
-   
    [(NSWindowBackgroundView *)[sheet _backgroundView] setBorderType:NSButtonBorder];
-   [[sheet contentView] setAutoresizesSubviews:NO];
-   [[sheet contentView] setAutoresizingMask:NSViewNotSizable];
    
-//   [(NSWindowBackgroundView *)[sheet _backgroundView] cacheImageForAnimation];
+   [self _setSheetOrigin];
+   sheetFrame = [sheet frame];   
    
-   [sheet setFrame:NSMakeRect(sheetFrame.origin.x, NSMaxY([self frame]), sheetFrame.size.width, 0) display:YES];
-   [self _setSheetOriginAndFront];
-   
-   [sheet setFrame:sheetFrame display:YES animate:YES];
+   sheet->_isVisible=YES;
+   [sheet display];
+   [[sheet platformWindow] sheetOrderFrontFromFrame:NSMakeRect(sheetFrame.origin.x,NSMaxY(sheetFrame),sheetFrame.size.width,0) aboveWindow:[self platformWindow]];
+   [[sheet platformWindow] makeKey];
 }
 
 -(NSSheetContext *)_sheetContext {
    return _sheetContext;
 }
 
--(void)_sheetDidFinishAnimating:(NSNotification *)note {
+-(void)_detachSheetContextAnimateAndOrderOut {
     NSWindow *sheet = [_sheetContext sheet];
+    NSRect sheetFrame = [sheet frame];
 
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:NSWindowDidAnimateNotification object:sheet];
-    
-    [sheet orderOut:nil];
-    [sheet setFrame:[_sheetContext frame] display:NO animate:NO];
+    sheet->_isVisible=NO;
+    [[sheet platformWindow] sheetOrderOutToFrame:NSMakeRect(sheetFrame.origin.x,NSMaxY(sheetFrame),sheetFrame.size.width,0)];
     
     [_sheetContext release];
     _sheetContext=nil;
 }
 
--(void)_detachSheetContextAnimateAndOrderOut {
-    NSWindow *sheet = [_sheetContext sheet];
-    NSRect frame = [sheet frame];
-    
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_sheetDidFinishAnimating:) name:NSWindowDidAnimateNotification object:sheet];
-
-    frame.origin.y = NSMaxY(frame) - 2;
-    frame.size.height = 2;
- 
-    [sheet setFrame:frame display:YES animate:YES];
-}
-
--(void)platformWindowActivated:(CGWindow *)window {
+-(void)platformWindowActivated:(CGWindow *)window displayIfNeeded:(BOOL)displayIfNeeded {
    [NSApp _windowWillBecomeActive:self];
    
    [self _setSheetOriginAndFront];
-   if ([_drawers count] > 0)
-       [_drawers makeObjectsPerformSelector:@selector(parentWindowDidActivate:) withObject:self];
+   [_childWindows makeObjectsPerformSelector:@selector(_parentWindowDidActivate:) withObject:self];
+   [_drawers makeObjectsPerformSelector:@selector(parentWindowDidActivate:) withObject:self];
 
    _isActive=YES;
    if([self canBecomeKeyWindow] && ![self isKeyWindow])
@@ -2302,7 +2274,8 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
     [self becomeMainWindow];
 
    [_menuView setNeedsDisplay:YES];
-   [self displayIfNeeded];
+   if(displayIfNeeded)
+    [self displayIfNeeded];
 
    [NSApp _windowDidBecomeActive:self];
    
@@ -2312,9 +2285,9 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
 -(void)platformWindowDeactivated:(CGWindow *)window checkForAppDeactivation:(BOOL)checkForAppDeactivation {
    [NSApp _windowWillBecomeDeactive:self];
    
-   if ([_drawers count] > 0)
-       [_drawers makeObjectsPerformSelector:@selector(parentWindowDidDeactivate:) withObject:self];
-
+   [_childWindows makeObjectsPerformSelector:@selector(_parentWindowDidDeactivate:) withObject:self];
+   [_drawers makeObjectsPerformSelector:@selector(parentWindowDidDeactivate:) withObject:self];
+       
    _isActive=NO;
    if([self isMainWindow])
     [self resignMainWindow];
@@ -2334,6 +2307,9 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
 
 -(void)platformWindowDeminiaturized:(CGWindow *)window {
    [self _updatePlatformWindowTitle];
+   if(_sheetContext!=nil){
+    [[_sheetContext sheet] orderWindow:NSWindowAbove relativeTo:self];
+   }
    [self postNotificationName:NSWindowDidDeminiaturizeNotification];
    [NSApp updateWindows];
 }
@@ -2342,6 +2318,10 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
    _isActive=NO;
 
    [self _updatePlatformWindowTitle];
+   if(_sheetContext!=nil){
+    [[_sheetContext sheet] orderWindow:NSWindowOut relativeTo:0];
+   }
+   
    [self postNotificationName:NSWindowDidMiniaturizeNotification];
 
    if([self isKeyWindow])
@@ -2350,19 +2330,20 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
    if([self isMainWindow])
     [self resignMainWindow];
 
-   if ([_drawers count] > 0)
-       [_drawers makeObjectsPerformSelector:@selector(parentWindowDidMiniaturize:) withObject:self];
+   [_childWindows makeObjectsPerformSelector:@selector(_parentWindowDidMiniaturize:) withObject:self];
+   [_drawers makeObjectsPerformSelector:@selector(parentWindowDidMiniaturize:) withObject:self];
 
    [NSApp updateWindows];
 }
 
 -(void)platformWindow:(CGWindow *)window frameChanged:(NSRect)frame didSize:(BOOL)didSize {
    _frame=frame;
+   
    _makeSureIsOnAScreen=YES;
 
    [self _setSheetOriginAndFront];
-   if ([_drawers count] > 0)
-       [_drawers makeObjectsPerformSelector:@selector(parentWindowDidChangeFrame:) withObject:self];
+   [_childWindows makeObjectsPerformSelector:@selector(_parentWindowDidChangeFrame:) withObject:self];
+   [_drawers makeObjectsPerformSelector:@selector(parentWindowDidChangeFrame:) withObject:self];
 
    [_backgroundView setFrameSize:_frame.size];
    [_backgroundView setNeedsDisplay:YES];
@@ -2378,8 +2359,8 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
 
 -(void)platformWindowExitMove:(CGWindow *)window {
    [self _setSheetOriginAndFront];
-    if ([_drawers count] > 0)
-        [_drawers makeObjectsPerformSelector:@selector(parentWindowDidExitMove:) withObject:self];
+   [_childWindows makeObjectsPerformSelector:@selector(_parentWindowDidExitMove:) withObject:self];
+   [_drawers makeObjectsPerformSelector:@selector(parentWindowDidExitMove:) withObject:self];
 }
 
 -(NSSize)platformWindow:(CGWindow *)window frameSizeWillChange:(NSSize)size {
@@ -2485,8 +2466,7 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
      else if(options&NSTrackingActiveInActiveApp && [NSApp isActive]==NO){
       mouseIsInside=NO;
      }
-     else if(options&NSTrackingActiveInKeyWindow &&
-             ([self isKeyWindow]==NO || [self _sheetContext]!=nil)){
+     else if(options&NSTrackingActiveInKeyWindow && ([self isKeyWindow]==NO || [self _sheetContext]!=nil)){
       mouseIsInside=NO;
      }
      else if(options&NSTrackingActiveWhenFirstResponder && [area _view]!=[self firstResponder]){
@@ -2498,8 +2478,10 @@ NSString *NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
       if(mouseView!=[area _view])
        mouseIsInside=NO;
      }
+     
+//FIXME:
      if(options&NSTrackingEnabledDuringMouseDrag){
-      NSLog(@"NSTrackingEnabledDuringMouseDrag handling unimplemented.");
+      // NSLog(@"NSTrackingEnabledDuringMouseDrag handling unimplemented.");
      }
 
      // Send appropriate events.

@@ -30,7 +30,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     _rect=rect;
     _options=options;
     _owner=[owner retain];
-    _userInfo=userInfo;
+    _userInfo=[userInfo retain];
     if(_options&NSTrackingAssumeInside)
      _mouseInside=YES;
     else
@@ -45,6 +45,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -(void)dealloc {
    [_owner release];
+   [_userInfo release];
    [_view release];
    [super dealloc];
 }
@@ -83,7 +84,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -(void)_setView:(NSView *)newView {
    if(_view!=newView){
-    [newView retain];
+    newView=[newView retain];
     [_view release];
     _view=newView;
    }

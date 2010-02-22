@@ -90,6 +90,48 @@ static DWORD WINAPI runWaitCursor(LPVOID arg){
    return (Win32Display *)[super currentDisplay];
 }
 
+-(void)loadPrivateFontPaths:(NSArray *)paths {
+   for(NSString *path in paths){
+    const uint16_t *rep=[path fileSystemRepresentationW];
+#if 0
+    typedef WINGDIAPI int WINAPI (*ftype)(LPCWSTR);
+
+    HANDLE library=LoadLibrary("GDI32");
+    
+    ftype  function=(ftype)GetProcAddress(library,"AddFontResourceW");
+    if(function==NULL)
+     NSLog(@"GetProcAddress(\"GDI32\",\"AddFontResourceW\") failed");
+    else {
+     if(function(rep)==0){
+      NSLog(@"AddFontResourceW failed for %@",path);
+     }
+    }
+#else
+#ifndef FR_PRIVATE
+#define FR_PRIVATE 0x10
+#endif
+    typedef WINGDIAPI int WINAPI (*ftype)(LPCWSTR,DWORD,PVOID);
+
+    HANDLE library=LoadLibrary("GDI32");
+    
+    ftype  function=(ftype)GetProcAddress(library,"AddFontResourceExW");
+    if(function==NULL)
+     NSLog(@"GetProcAddress(\"GDI32\",\"AddFontResourceExW\") failed");
+    else {
+     if(function(rep,FR_PRIVATE,0)==0){
+      NSLog(@"AddFontResourceExW failed for %@",path);
+     }
+    }
+#endif
+   }
+}
+
+-(void)loadPrivateFonts {
+  NSArray *ttf=[[NSBundle mainBundle] pathsForResourcesOfType:@"ttf" inDirectory:nil];
+
+  [self loadPrivateFontPaths:ttf];
+}
+
 -(id)init {
    self=[super init];
    if (self!=nil){
@@ -103,6 +145,8 @@ static DWORD WINAPI runWaitCursor(LPVOID arg){
     _cursorDisplayCount=1;
     _cursorCache=[NSMutableDictionary new];
 	_pastLocation = NSMakePoint(FLT_MAX, FLT_MAX);
+    
+    [self loadPrivateFonts];
    }
    return self;
 }
@@ -121,12 +165,6 @@ static BOOL CALLBACK monitorEnumerator(HMONITOR hMonitor,HDC hdcMonitor,LPRECT r
    frame.origin.y=GetSystemMetrics(SM_CYSCREEN)-(frame.origin.y+frame.size.height);
 
    screen=[[[NSScreen alloc] initWithFrame:frame visibleFrame:frame] autorelease];
-
-#ifdef MONITORINFOF_PRIMARY
-#warning MONITORINFOF_PRIMARY now defined
-#else
-#define MONITORINFOF_PRIMARY 0x01
-#endif
 
    if(info.dwFlags&MONITORINFOF_PRIMARY)
     [array insertObject:screen atIndex:0];
@@ -253,6 +291,7 @@ static BOOL CALLBACK monitorEnumerator(HMONITOR hMonitor,HDC hdcMonitor,LPRECT r
 
     color=[NSColor_CGColor colorWithColorRef:colorRef];
     CGColorRelease(colorRef);
+
     [_nameToColor setObject:color forKey:table[i].name];
    }
    

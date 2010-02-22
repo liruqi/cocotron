@@ -8,6 +8,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 #import <Foundation/Foundation.h>
 
+#import <AppKit/NSAccessibility.h>
 #import <AppKit/NSActionCell.h>
 #import <AppKit/NSAffineTransform.h>
 #import <AppKit/NSAlert.h>
@@ -24,6 +25,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <AppKit/NSBrowserCell.h>
 #import <AppKit/NSCachedImageRep.h>
 #import <AppKit/NSCell.h>
+#import <AppKit/NSCIImageRep.h>
 #import <AppKit/NSClipView.h>
 #import <AppKit/NSCollectionView.h>
 #import <AppKit/NSColor.h>
@@ -40,6 +42,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <AppKit/NSCustomImageRep.h>
 #import <AppKit/NSDatePicker.h>
 #import <AppKit/NSDatePickerCell.h>
+#import <AppKit/NSDockTile.h>
 #import <AppKit/NSDocument.h>
 #import <AppKit/NSDocumentController.h>
 #import <AppKit/NSDragging.h>
@@ -141,9 +144,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <AppKit/NSToolbar.h>
 #import <AppKit/NSToolbarItem.h>
 #import <AppKit/NSToolbarItemGroup.h>
+#import <AppKit/NSTrackingArea.h>
 #import <AppKit/NSTreeController.h>
 #import <AppKit/NSUserDefaultsController.h>
 #import <AppKit/NSView.h>
+#import <AppKit/NSViewController.h>
 #import <AppKit/NSWindow.h>
 #import <AppKit/NSWindowController.h>
 #import <AppKit/NSWorkspace.h>

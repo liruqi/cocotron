@@ -463,7 +463,6 @@ extern NSSize _NSToolbarIconSizeSmall;
    CGFloat labelHeight=0;
    CGFloat padding=4;
    
-
    if([_toolbar displayMode]!=NSToolbarDisplayModeIconOnly){  
     NSMutableDictionary *attributes=[NSMutableDictionary dictionaryWithDictionary:[_toolbar _labelAttributes]];
     NSColor             *color=[self isEnabled]?[NSColor controlTextColor]:[NSColor disabledControlTextColor];
@@ -506,7 +505,6 @@ extern NSSize _NSToolbarIconSizeSmall;
      [image drawInRect:imageRect fromRect:NSZeroRect operation:NSCompositeSourceOver fraction:highlighted?0.5:1.0];
     }        
    }
-    
 }
 
 -(NSString *)description {

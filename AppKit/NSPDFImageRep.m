@@ -34,9 +34,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 -initWithData:(NSData *)data {
    _pdf=[data retain];
    _currentPage=1;
+#if 0
+#warning fix
    CGDataProviderRef provider=CGDataProviderCreateWithCFData((CFDataRef)_pdf);
    _document=CGPDFDocumentCreateWithProvider(provider);
    CGDataProviderRelease(provider);
+#endif
    return self;
 }
 

@@ -44,10 +44,6 @@ void O2MutablePathEllipseToBezier(O2Point *cp,float x,float y,float xrad,float y
 
 @implementation O2MutablePath
 
-O2MutablePathRef O2PathCreateMutable(void) {
-   return [[O2MutablePath alloc] init];
-}
-
 // Bezier and arc to bezier algorithms from: Windows Graphics Programming by Feng Yuan
 #if 0
 static void bezier(O2GState *self,double x1,double y1,double x2, double y2,double x3,double y3,double x4,double y4){
@@ -84,15 +80,19 @@ static void bezier(O2GState *self,double x1,double y1,double x2, double y2,doubl
 
 #endif
 
+O2MutablePathRef O2PathCreateMutable(void) {
+   return [[O2MutablePath allocWithZone:NULL] initWithOperators:NULL numberOfElements:0 points:NULL numberOfPoints:0];
+}
+
 -initWithOperators:(unsigned char *)elements numberOfElements:(unsigned)numberOfElements points:(O2Point *)points numberOfPoints:(unsigned)numberOfPoints {
-   [super initWithOperators:elements numberOfElements:numberOfElements points:points numberOfPoints:numberOfPoints];
+   O2PathInitWithOperators(self,elements,numberOfElements,points,numberOfPoints);
    _capacityOfElements=numberOfElements;
    _capacityOfPoints=numberOfPoints;
    return self;
 }
 
 -copyWithZone:(NSZone *)zone {
-   return [[O2Path allocWithZone:zone] initWithOperators:_elements numberOfElements:_numberOfElements points:_points numberOfPoints:_numberOfPoints];
+   return O2PathInitWithOperators([O2Path allocWithZone:zone],_elements,_numberOfElements,_points,_numberOfPoints);
 }
 
 void O2PathReset(O2MutablePathRef self) {
@@ -281,7 +281,9 @@ void O2PathAddArc(O2MutablePathRef self,const O2AffineTransform *matrix,O2Float 
 }
 
 void O2PathAddArcToPoint(O2MutablePathRef self,const O2AffineTransform *matrix,O2Float tx1,O2Float ty1,O2Float tx2,O2Float ty2,O2Float radius) {
-	O2UnimplementedFunction();
+#warning fix
+// ignores arc and draws a sharp corner
+   O2PathAddLineToPoint(self,matrix,tx1,ty1);
 }
 
 void O2PathAddEllipseInRect(O2MutablePathRef self,const O2AffineTransform *matrix,O2Rect rect) {

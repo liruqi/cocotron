@@ -36,6 +36,7 @@ NSString *NSViewFocusDidChangeNotification=@"NSViewFocusDidChangeNotification";
 @interface NSView(NSView_forward)
 -(CGAffineTransform)transformFromWindow;
 -(CGAffineTransform)transformToWindow;
+-(void)_trackingAreasChanged;
 @end
 
 @implementation NSView
@@ -82,7 +83,6 @@ NSString *NSViewFocusDidChangeNotification=@"NSViewFocusDidChangeNotification";
      _autoresizesSubviews=(vFlags&0x100)?YES:NO;
     else
      _autoresizesSubviews=YES;
-
     _isHidden=(vFlags&0x80000000)?YES:NO;
     _tag=-1;
     if([keyed containsValueForKey:@"NSTag"])
@@ -141,10 +141,12 @@ NSString *NSViewFocusDidChangeNotification=@"NSViewFocusDidChangeNotification";
    [super dealloc];
 }
 
--(void)invalidateTransform {
-   _validTransforms=NO;
-   [_subviews makeObjectsPerformSelector:_cmd];
-   [self updateTrackingAreas];
+static void invalidateTransform(NSView *self){
+   self->_validTransforms=NO;
+   self->_validTrackingAreas=NO;
+   
+   for(NSView *check in self->_subviews)
+    invalidateTransform(check);
 }
 
 -(CGAffineTransform)createTransformToWindow {
@@ -170,6 +172,9 @@ NSString *NSViewFocusDidChangeNotification=@"NSViewFocusDidChangeNotification";
 }
 
 -(NSRect)calculateVisibleRect {
+   if([self isHiddenOrHasHiddenAncestor])
+    return NSZeroRect;
+    
    if([self superview]==nil)
     return [self bounds];
    else {
@@ -300,7 +305,7 @@ static inline void buildTransformsIfNeeded(NSView *self) {
 }
 
 -(NSArray *)subviews {
-   return [[_subviews copy] autorelease];
+   return _subviews;
 }
 
 -(BOOL)autoresizesSubviews {
@@ -341,9 +346,6 @@ static inline void buildTransformsIfNeeded(NSView *self) {
 }
 
 -(NSRect)visibleRect {
-   if ([self isHiddenOrHasHiddenAncestor])
-    return NSZeroRect;
-   
    buildTransformsIfNeeded(self);
 
    return _visibleRect;
@@ -371,10 +373,12 @@ static inline void buildTransformsIfNeeded(NSView *self) {
    return _isHidden || [_superview isHiddenOrHasHiddenAncestor];
 }
 
--(void)setHidden:(BOOL)flag
-{
+-(void)setHidden:(BOOL)flag {
+   flag=flag?YES:NO;
+
    if (_isHidden != flag)
    {
+    invalidateTransform(self);
       if ((_isHidden = flag))
       {
          id view=[_window firstResponder];
@@ -389,7 +393,7 @@ static inline void buildTransformsIfNeeded(NSView *self) {
             }
       }
 
-      [self setNeedsDisplay:YES];
+      [[self superview] setNeedsDisplay:YES];
    }
 }
 
@@ -624,15 +628,21 @@ static inline void buildTransformsIfNeeded(NSView *self) {
 
 
 -(void)setFrame:(NSRect)frame {
-   NSSize oldSize=_bounds.size;
+   // Cocoa does not post the notification if the frames are equal
+   // Possible that resizeSubviewsWithOldSize is not called if the sizes are equal
+   if(NSEqualRects(_frame,frame))
+    return;
 
-   // includes [window _updateTrackingRects]
-   [self invalidateTransform];
+   NSSize oldSize=_bounds.size;
 
    _frame=frame;
    _bounds.size=frame.size;
-   if(_autoresizesSubviews)
+   if(_autoresizesSubviews){
     [self resizeSubviewsWithOldSize:oldSize];
+   }
+   
+   
+   invalidateTransform(self);
 
    if(_postsNotificationOnFrameChange)
     [[NSNotificationCenter defaultCenter] postNotificationName:NSViewFrameDidChangeNotification object:self];
@@ -662,7 +672,7 @@ static inline void buildTransformsIfNeeded(NSView *self) {
 
 -(void)setBounds:(NSRect)bounds {
     _bounds=bounds;
-    [self invalidateTransform];
+   invalidateTransform(self);
 
    if(_postsNotificationOnBoundsChange)
     [[NSNotificationCenter defaultCenter] postNotificationName:NSViewBoundsDidChangeNotification object:self];
@@ -701,7 +711,7 @@ static inline void buildTransformsIfNeeded(NSView *self) {
 
    _window=window;
    [_subviews makeObjectsPerformSelector:_cmd withObject:window];
-   [self updateTrackingAreas];
+   _validTrackingAreas=NO;
 }
 
 -(void)_setSuperview:superview {
@@ -729,10 +739,9 @@ static inline void buildTransformsIfNeeded(NSView *self) {
     [_subviews insertObject:view atIndex:index];
    [view release];
 
-   [self invalidateTransform]; // subview may affect transform (e.g. clipview)
+   invalidateTransform(view);
 
    [self setNeedsDisplayInRect:[view frame]];
-   [self updateTrackingAreas]; // Cocoa obviously omits this for CursorRects and TrackingRects.
 }
 
 -(void)addSubview:(NSView *)view {
@@ -839,7 +848,7 @@ static inline void buildTransformsIfNeeded(NSView *self) {
    [_trackingAreas addObject:area];
    [area release];
 
-   [self updateTrackingAreas];
+   [self _trackingAreasChanged];
 
    return area;
 }
@@ -856,7 +865,7 @@ static inline void buildTransformsIfNeeded(NSView *self) {
      [_trackingAreas removeObjectAtIndex:count];
    }
 
-   [self updateTrackingAreas];
+   [self _trackingAreasChanged];
 }
 
 -(void)addCursorRect:(NSRect)rect cursor:(NSCursor *)cursor {
@@ -868,7 +877,7 @@ static inline void buildTransformsIfNeeded(NSView *self) {
    [area release];
    [cursorRect release];
 
-   [self updateTrackingAreas];
+   [self _trackingAreasChanged];
 }
 
 -(void)removeCursorRect:(NSRect)rect cursor:(NSCursor *)cursor {
@@ -886,7 +895,7 @@ static inline void buildTransformsIfNeeded(NSView *self) {
     }
    }
 
-   [self updateTrackingAreas];
+   [self _trackingAreasChanged];
 }
 
 -(void)discardCursorRects {
@@ -903,7 +912,7 @@ static inline void buildTransformsIfNeeded(NSView *self) {
 
    [[self subviews] makeObjectsPerformSelector:_cmd];
 
-   [self updateTrackingAreas];
+   [self _trackingAreasChanged];
 }
 
 -(void)resetCursorRects {
@@ -912,22 +921,32 @@ static inline void buildTransformsIfNeeded(NSView *self) {
 
 -(void)_collectTrackingAreasForWindowInto:(NSMutableArray *)collector {
    if(_isHidden==NO){
-    NSArray    *subviews=[self subviews];
     NSUInteger  i,count;
 
+    if(!_validTrackingAreas){
+     [_trackingAreas removeAllObjects];
+     [self updateTrackingAreas];
+     _validTrackingAreas=NO;
+    }
+    
     count=[_trackingAreas count];
     for(i=0;i<count;i++){
      NSTrackingArea *area=[_trackingAreas objectAtIndex:i];
      NSRect          rectOfInterest;
 
+NSLog(@"area=%@ bounds=%@",NSStringFromRect([area rect]),NSStringFromRect([self bounds]));
+
      rectOfInterest=NSIntersectionRect([area rect], [self bounds]);
+NSLog(@"rectOfInterest=%@",NSStringFromRect(rectOfInterest));
      if(rectOfInterest.size.width>0. && rectOfInterest.size.height>0.){
       [area _setView:self];
+NSLog(@"rectInWindow=%@",NSStringFromRect([self convertRect:rectOfInterest toView:nil]));
       [area _setRectInWindow:[self convertRect:rectOfInterest toView:nil]];
       [collector addObject:[_trackingAreas objectAtIndex:i]];
      }
     }
 
+    NSArray *subviews=[self subviews];
     // Collect subviews' areas _after_ collecting our own.
     count=[subviews count];
     for(i=0;i<count;i++)
@@ -939,18 +958,22 @@ static inline void buildTransformsIfNeeded(NSView *self) {
    return _trackingAreas;
 }
 
+-(void)_trackingAreasChanged {
+   [[self window] _invalidateTrackingAreas];
+}
+
 -(void)addTrackingArea:(NSTrackingArea *)trackingArea {
    [_trackingAreas addObject:trackingArea];
-   [self updateTrackingAreas];
+   [self _trackingAreasChanged];
 }
 
 -(void)removeTrackingArea:(NSTrackingArea *)trackingArea {
    [_trackingAreas removeObjectIdenticalTo:trackingArea];
-   [self updateTrackingAreas];
+   [self _trackingAreasChanged];
 }
 
 -(void)updateTrackingAreas {
-   [[self window] _updateTrackingAreas];
+   [self _trackingAreasChanged];
 }
 
 -(NSTrackingRectTag)addTrackingRect:(NSRect)rect owner:owner userData:(void *)userData assumeInside:(BOOL)assumeInside {
@@ -966,7 +989,7 @@ static inline void buildTransformsIfNeeded(NSView *self) {
    [_trackingAreas addObject:area];
    [area release];
 
-   [self updateTrackingAreas];
+   [self _trackingAreasChanged];
 
    return area;
 }
@@ -1020,7 +1043,7 @@ static inline void buildTransformsIfNeeded(NSView *self) {
    [self _setWindow:nil];
 
    [removeFrom _removeViewWithoutDisplay:self];
-   [window _updateTrackingAreas];
+   [window _invalidateTrackingAreas];
 }
 
 -(void)viewWillMoveToSuperview:(NSView *)view {
@@ -1394,21 +1417,7 @@ static inline void buildTransformsIfNeeded(NSView *self) {
 -(void)lockFocus {
    NSGraphicsContext *context=[[self window] graphicsContext];
 
-   if(context!=nil){
-    CGContextRef graphicsPort=[context graphicsPort];
-
-    [NSGraphicsContext saveGraphicsState];
-    [NSGraphicsContext setCurrentContext:context];
-   
-    [NSCurrentFocusStack() addObject:self];
-
-    CGContextSaveGState(graphicsPort);
-    CGContextResetClip(graphicsPort);
-    CGContextSetCTM(graphicsPort,[self transformToWindow]);
-    CGContextClipToRect(graphicsPort,[self visibleRect]);
-
-    [self setUpGState];
-   }
+   [self lockFocusIfCanDrawInContext:context];
 }
 
 -(BOOL)lockFocusIfCanDraw {
@@ -1420,20 +1429,27 @@ static inline void buildTransformsIfNeeded(NSView *self) {
 }
 
 -(BOOL)lockFocusIfCanDrawInContext:(NSGraphicsContext *)context {
-   NSUnimplementedMethod();
+   if(context!=nil){
+    CGContextRef graphicsPort=[context graphicsPort];
+
+    [NSGraphicsContext saveGraphicsState];
+    [NSGraphicsContext setCurrentContext:context];
+   
+    [[context focusStack] addObject:self];
+
+    CGContextResetClip(graphicsPort);
+    CGContextSetCTM(graphicsPort,[self transformToWindow]);
+    CGContextClipToRect(graphicsPort,[self visibleRect]);
+
+    [self setUpGState];
+    return YES;
+   }
    return NO;
 }
 
 -(void)unlockFocus {
-   NSGraphicsContext *context=[[self window] graphicsContext];
-
-   if(context!=nil){
-    CGContextRef graphicsPort=[context graphicsPort];
-
-    CGContextRestoreGState(graphicsPort);
-    [NSCurrentFocusStack() removeLastObject];
-    [NSGraphicsContext restoreGraphicsState];
-   }
+   [[[NSGraphicsContext currentContext] focusStack] removeLastObject];
+   [NSGraphicsContext restoreGraphicsState];
 }
 
 -(BOOL)needsToDrawRect:(NSRect)rect {
@@ -1465,18 +1481,21 @@ static inline void buildTransformsIfNeeded(NSView *self) {
    [self displayRect:[self visibleRect]];
 }
 
--(void)displayIfNeeded {
+-(void)displayIfNeeded {    
    int i,count=[_subviews count];
   
-   if([self needsDisplay])
-     [self displayRect:_invalidRect];
-
+   if([self needsDisplay]){
+    [self displayRect:_invalidRect];
+    _invalidRect=NSZeroRect;
+   }
+   
    for(i=0;i<count;i++) // back to front
     [[_subviews objectAtIndex:i] displayIfNeeded];
 }
 
 -(void)displayIfNeededInRect:(NSRect)rect {
    int i,count=[_subviews count];
+   
    rect=NSIntersectionRect(_invalidRect, rect);
 
    if([self needsDisplay])
@@ -1493,6 +1512,7 @@ static inline void buildTransformsIfNeeded(NSView *self) {
 
 -(void)displayIfNeededInRectIgnoringOpacity:(NSRect)rect {
    int i,count=[_subviews count];
+   
    rect=NSIntersectionRect(_invalidRect, rect);
 
    if([self needsDisplay])
@@ -1527,33 +1547,41 @@ static inline void buildTransformsIfNeeded(NSView *self) {
 }
 
 -(void)displayRectIgnoringOpacity:(NSRect)rect {
-   int i,count=[_subviews count];
+   [self displayRectIgnoringOpacity:rect inContext:[[self window] graphicsContext]];
+}
 
-   if(!NSIsEmptyRect(_invalidRect)){
-    rect=NSUnionRect(rect,_invalidRect);
+-(void)displayRectIgnoringOpacity:(NSRect)rect inContext:(NSGraphicsContext *)context {   
+   if(NSContainsRect(rect,_invalidRect)){
     _invalidRect=NSZeroRect;
    }
 
    rect=NSIntersectionRect(rect,[self visibleRect]);
 
-   if([self canDraw]){
-    [self lockFocus];
-// rect should be expanded to completely cover all the non-opaque subviews invalid rects
-// We may not completely erase the background of a non-opaque view
-
-    NSGraphicsContext *context=[[self window] graphicsContext];
+   if(NSIsEmptyRect(rect))
+    return;
+    
+   if([self canDraw]){    
+    [self lockFocusIfCanDrawInContext:context];
     CGContextRef       graphicsPort=[context graphicsPort];
 
     CGContextClipToRect(graphicsPort,rect);
-    [self drawRect:rect];
 
+    NSTimeInterval interval=[NSDate timeIntervalSinceReferenceDate];
+    [self drawRect:rect];
+    NSTimeInterval nextInterval=[NSDate timeIntervalSinceReferenceDate];
+    if(nextInterval-interval>0.100)
+     NSCLog("EXPENSIVE -[%s %s] cost=%f",class_getName(isa),_cmd,nextInterval-interval);
+
+    int i,count=[_subviews count];
+    
     for(i=0;i<count;i++){
      NSView *view=[_subviews objectAtIndex:i];
      NSRect  check=[self convertRect:rect toView:view];
-
-     if(NSIntersectsRect(check,[view bounds])){
-      check=NSIntersectionRect(check,[view visibleRect]);
-      [view displayRectIgnoringOpacity:check];
+     
+     check=NSIntersectionRect(check,[view bounds]);
+     
+     if(!NSIsEmptyRect(check)){
+      [view displayRectIgnoringOpacity:check inContext:context];
      }
     }
     [self unlockFocus];
@@ -1562,10 +1590,6 @@ static inline void buildTransformsIfNeeded(NSView *self) {
 /*  We do the flushWindow here. If any of the display* methods are being used, you want it to update on screen immediately. If the view hierarchy is being displayed as needed at the end of an event, flushing will be disabled and this will just mark the window as needing flushing which will happen when all the views have finished being displayed */
  
    [[self window] flushWindow];
-}
-
--(void)displayRectIgnoringOpacity:(NSRect)rect inContext:(NSGraphicsContext *)context {
-   NSUnimplementedMethod();
 }
 
 -(void)drawRect:(NSRect)rect {

@@ -21,6 +21,20 @@ void objc_noAutoreleasePool(id object) {
    NSCLog("autorelease pool is nil, leaking %x %s",object,object_getClassName(object));
 }
 
+static inline NSUInteger objectCountInPool(NSAutoreleasePool *self,id object){
+   NSUInteger result=0;
+   NSUInteger slotIndex=0;
+   
+   for(slotIndex=0;slotIndex<self->_nextSlot;slotIndex++){
+    id check=self->_pages[slotIndex/PAGESIZE][slotIndex%PAGESIZE];
+    
+    if(check==object)
+     result++;
+   }
+   
+   return result;
+}
+
 static inline void addObject(NSAutoreleasePool *self,id object){
    if(self==nil){
     objc_noAutoreleasePool(object);
@@ -35,12 +49,25 @@ static inline void addObject(NSAutoreleasePool *self,id object){
 
    self->_pages[self->_nextSlot/PAGESIZE][self->_nextSlot%PAGESIZE]=object;
    self->_nextSlot++;
+   
+   if(NSAutoreleaseFreedObjectCheckEnabled){
+    NSUInteger retainCount=[object retainCount];
+    NSUInteger poolCount=0;
+    NSAutoreleasePool *check=self;
+    
+    for(;check!=nil;check=check->_parent)
+     poolCount+=objectCountInPool(check,object);
+    
+    if(poolCount>retainCount){
+     NSLog(@"NSAutoreleaseFreedObjectCheckEnabled over release of object (poolCount=%d, retainCount=%d) %@",poolCount,retainCount,object);
+    }
+    
+   }
 }
 
 +(void)addObject:object {
    if(NSThreadCurrentPool()==nil)
-    [NSException raise:@"NSAutoreleasePoolException"
-                format:@"NSAutoreleasePool no current pool"];
+    [NSException raise:@"NSAutoreleasePoolException" format:@"NSAutoreleasePool no current pool"];
 
    addObject(NSThreadCurrentPool(),object);
 }
@@ -69,10 +96,29 @@ static inline void addObject(NSAutoreleasePool *self,id object){
 
    [_childPool release];
 
+   BOOL report=(_nextSlot>100000);
+   if(report)
+    NSCLog("slotCount=%d",_nextSlot);
+   
    for(i=0;i<_nextSlot;i++){
     NS_DURING
      id object=_pages[i/PAGESIZE][i%PAGESIZE];
 
+     if(NO && report){
+     int size=0;
+
+     if([object isKindOfClass:[NSData class]])
+      size=[object length];
+     if([object isKindOfClass:[NSString class]])
+      size=[object length];
+     if([object isKindOfClass:[NSArray class]])
+      size=[object count];
+     if([object isKindOfClass:[NSDictionary class]])
+      size=[object count];
+      
+     NSCLog("class=%s size=%d",class_getName([object class]),size);
+     }
+     
      [object release];
     NS_HANDLER
      NSLog(@"Exception while autoreleasing %@",localException);

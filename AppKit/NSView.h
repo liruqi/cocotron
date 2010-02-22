@@ -85,6 +85,7 @@ APPKIT_EXPORT NSString *NSViewFocusDidChangeNotification;
    NSMutableArray *_trackingAreas;
    NSRect          _invalidRect;
 
+   BOOL              _validTrackingAreas;
    BOOL              _validTransforms;
    CGAffineTransform _transformFromWindow;
    CGAffineTransform _transformToWindow;
@@ -179,6 +180,13 @@ APPKIT_EXPORT NSString *NSViewFocusDidChangeNotification;
 -(void)setBoundsSize:(NSSize)size;
 -(void)setBoundsOrigin:(NSPoint)origin;
 -(void)setBoundsRotation:(CGFloat)angle;
+
+-(CGFloat)frameRotation;
+-(CGFloat)boundsRotation;
+
+-(void)setFrameRotation:(CGFloat)degrees;
+-(void)setBoundsRotation:(CGFloat)degrees;
+-(void)rotateByAngle:(CGFloat)degrees;
 
 -(void)setPostsFrameChangedNotifications:(BOOL)flag;
 -(void)setPostsBoundsChangedNotifications:(BOOL)flag;

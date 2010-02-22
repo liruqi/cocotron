@@ -173,6 +173,8 @@ APPKIT_EXPORT NSString *NSWindowDidEndLiveResizeNotification;
    NSString *_autosaveFrameName;
 
    CGWindow *_platformWindow;
+   NSGraphicsContext *_graphicsContext;
+   
    NSUndoManager *_undoManager;
    NSView *_initialFirstResponder;
    NSButtonCell *_defaultButtonCell;
@@ -180,7 +182,6 @@ APPKIT_EXPORT NSString *NSWindowDidEndLiveResizeNotification;
    NSWindowController *_windowController;
    NSMutableArray *_drawers;
    NSToolbar *_toolbar;
-   NSWindowAnimationContext *_animationContext;
 }
 
 +(NSWindowDepth)defaultDepthLimit;
@@ -510,8 +511,3 @@ APPKIT_EXPORT NSString *NSWindowDidEndLiveResizeNotification;
 -(BOOL)windowShouldClose:sender;
 -(void)windowWillClose:(NSNotification *)note;
 @end
-
-//private
-APPKIT_EXPORT NSString *NSWindowWillAnimateNotification;
-APPKIT_EXPORT NSString *NSWindowAnimatingNotification;
-APPKIT_EXPORT NSString *NSWindowDidAnimateNotification;

@@ -126,7 +126,9 @@ void NSSetUncaughtExceptionHandler(NSUncaughtExceptionHandler *proc) {
 }
 
 -(void)raise {
-   //NSLog(@"RAISE %@",self);
+   NSCLog("RAISE %s",[[self description] cString]);
+ //  OBJCEnableMsgTracing();
+   return;
    [_callStack release];
    _callStack=[[NSThread callStackReturnAddresses] retain];
    _NSRaiseException(self);

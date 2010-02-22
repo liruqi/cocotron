@@ -10,6 +10,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 NSString *NSWorkspaceWillPowerOffNotification=@"NSWorkspaceWillPowerOffNotification";
 
+NSString *NSWorkspaceRecycleOperation=@"NSWorkspaceRecycleOperation";
+
 @implementation NSWorkspace
 
 +(NSWorkspace *)sharedWorkspace {

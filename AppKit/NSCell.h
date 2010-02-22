@@ -122,6 +122,7 @@ typedef NSUInteger NSControlTint;
 -(NSControlSize)controlSize;
 -(NSFocusRingType)focusRingType;
 
+-(void)setControlView:(NSView *)view;
 -(void)setType:(NSCellType)type;
 
 -(void)setState:(int)value;

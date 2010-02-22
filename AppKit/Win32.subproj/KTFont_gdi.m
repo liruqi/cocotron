@@ -26,7 +26,7 @@ static inline CGGlyph glyphForCharacter(KTFont_gdi *self,unichar character){
    CGGlyphRangeTable *table=self->_glyphRangeTable;
    unsigned           range=character>>8;
    unsigned           index=character&0xFF;
-
+   
    if(table->ranges[range]!=NULL)
     return table->ranges[range]->glyphs[index];
 

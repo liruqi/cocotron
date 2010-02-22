@@ -10,7 +10,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <Foundation/NSKeyedArchiver.h>
 #import <AppKit/NSScreen.h>
 #import <AppKit/NSMainMenuView.h>
-#import <AppKit/NSWindow.h>
+#import <AppKit/NSWindow-Private.h>
 
 @implementation NSWindowTemplate
 
@@ -73,14 +73,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    [_windowView setAutoresizingMask:NSViewWidthSizable|NSViewHeightSizable];
    
    if([_viewClass isKindOfClass:[NSToolbar class]]) {
+    NSLog(@"%s %d",__FILE__,__LINE__);
       [result setToolbar:_viewClass];
    }
 
-       if (_windowAutosave)
-       {
-	[result setFrameUsingName:_windowAutosave];
-	[result setFrameAutosaveName:_windowAutosave];
-      }
+   if([_windowAutosave length]>0)
+    [result _setFrameAutosaveNameNoIO:_windowAutosave];
 
    [self release];
    return result;

@@ -285,6 +285,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 @end
 
+NSArray *NSSearchPathForDirectoriesInDomains(NSSearchPathDirectory d,NSSearchPathDomainMask mask,BOOL expand) {
+#warning implement
+    NSUnimplementedFunction();
+    return nil;
+}
+
 NSString *NSHomeDirectory(void) {
    return [[NSPlatform currentPlatform] homeDirectory];
 }
