@@ -472,6 +472,12 @@ static BOOL scanURL(urlScanner *scanner,NSURL *url){
 }
 
 -initFileURLWithPath:(NSString *)path {
+   if(path==nil){
+    [self dealloc];
+    [NSException raise:NSInvalidArgumentException format:@"-[%@ %s] path is nil",isa,_cmd];
+    return nil;
+   }
+   
    _scheme=NSURLFileScheme;
    _path=[path copy];
    return self;

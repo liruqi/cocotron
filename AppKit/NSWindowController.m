@@ -1,12 +1,10 @@
-/* Copyright (c) 2006-2007 Christopher J. W. Lloyd
+/* Copyright (c) 2006-2007 Christopher J. W. Lloyd <cjwl@objc.net>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. */
-
-// Original - Christopher Lloyd <cjwl@objc.net>
 #import <AppKit/NSWindowController.h>
 #import <AppKit/NSWindow.h>
 #import <AppKit/NSNibLoading.h>
@@ -19,10 +17,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 -initWithWindow:(NSWindow *)window {
    _window=[window retain];
    [_window setWindowController:self];
+   _nibName=nil;
    _nibPath=nil;
-   _owner=nil;
+   _owner=self;
    _document=nil;
-   _nibPathIsName=NO;
    _shouldCloseDocument=NO;
    _shouldCascadeWindows=YES;
    _windowFrameAutosaveName=nil;
@@ -35,24 +33,29 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -initWithWindowNibName:(NSString *)nibName owner:owner {
    [self initWithWindow:nil];
-   _nibPath=[nibName copy];
-   _nibPathIsName=YES;
+   _nibName=[nibName copy];
+   _nibPath=nil;
    _owner=owner;
    return self;
 }
 
 -initWithWindowNibPath:(NSString *)nibPath owner:owner {
    [self initWithWindow:nil];
+   _nibName=[[[nibPath lastPathComponent] stringByDeletingPathExtension] copy];
    _nibPath=[nibPath copy];
-   _nibPathIsName=NO;
    _owner=owner;
    return self;
+}
+
+-init {
+   return [self initWithWindow:nil];
 }
 
 -(void)dealloc {
    [[NSNotificationCenter defaultCenter] removeObserver:self];
    [_window setWindowController:nil];
    [_window release];
+   [_nibName release];
    [_nibPath release];
    [_windowFrameAutosaveName release];
    [_topLevelObjects release];
@@ -60,7 +63,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(NSWindow *)window {
-   if(_window==nil && _nibPath!=nil){
+   if(_window==nil && [self windowNibPath]!=nil){
     [self windowWillLoad];
     [_document windowControllerWillLoadNib:self];
 
@@ -98,18 +101,23 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(void)loadWindow {
-   static       NSPoint cascadeTopLeftSavedPoint={0.0, 0.0};
-   NSString     *path=[self windowNibPath];
-   NSDictionary *nameTable;
+   if(![self isWindowLoaded]){
+    static       NSPoint cascadeTopLeftSavedPoint={0.0, 0.0};
+    NSString     *path=[self windowNibPath];
+    NSDictionary *nameTable;
    
-   _topLevelObjects = [[NSMutableArray alloc] init];
-   nameTable=[NSDictionary dictionaryWithObjectsAndKeys:_owner, NSNibOwner, _topLevelObjects, NSNibTopLevelObjects, nil];
+    _topLevelObjects = [[NSMutableArray alloc] init];
+    nameTable=[NSDictionary dictionaryWithObjectsAndKeys:_owner, NSNibOwner, _topLevelObjects, NSNibTopLevelObjects, nil];
 
-   NSAssert2([NSBundle loadNibFile:path externalNameTable:nameTable withZone:NULL], @"%s: unable to load nib from file '%@'", __PRETTY_FUNCTION__, path);
-   [self synchronizeWindowTitleWithDocumentName];
+    if(![NSBundle loadNibFile:path externalNameTable:nameTable withZone:NULL]){
+     NSLog(@"%s: unable to load nib from file '%@'", __PRETTY_FUNCTION__, path);
+    }
+
+    [self synchronizeWindowTitleWithDocumentName];
    
-   if (_shouldCascadeWindows)
-      cascadeTopLeftSavedPoint=[_window cascadeTopLeftFromPoint:cascadeTopLeftSavedPoint];   
+    if (_shouldCascadeWindows)
+       cascadeTopLeftSavedPoint=[_window cascadeTopLeftFromPoint:cascadeTopLeftSavedPoint];
+   }
 }
 
 -(void)windowWillLoad {
@@ -154,18 +162,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(NSString *)windowNibName {
-   if(_nibPathIsName)
-    return _nibPath;
-   else {
-    return [[_nibPath lastPathComponent] stringByDeletingPathExtension];
-   }
+   return _nibName;
 }
 
 -(NSString *)windowNibPath {
-   if(!_nibPathIsName)
+   if(_nibPath!=nil)
     return _nibPath;
    else {
-    NSString *name=_nibPath;
+    NSString *name=[self windowNibName];
     NSBundle *bundle=[NSBundle bundleForClass:[_owner class]];
     NSString *path=[bundle pathForResource:name ofType:@"nib"];
 

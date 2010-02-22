@@ -10,7 +10,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <winsock2.h>
 
 @interface NSSocket_windows : NSSocket {
-   SOCKET _handle;
+   SOCKET        _handle;
+   CFSSLHandler *_sslHandler;
+   
 }
 
 -initWithSocketHandle:(SOCKET)handle;

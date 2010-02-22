@@ -19,6 +19,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <float.h>
 #import <limits.h>
 #import <math.h>
+
 #import <stdarg.h>
 #import <stddef.h>
 #import <stdio.h>
@@ -35,6 +36,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #endif
 
 #import <CoreFoundation/CoreFoundation.h>
+#import <CoreServices/CoreServices.h> // This is actually imported by NSURLError.h
 
 #import <Foundation/FoundationErrors.h>
 #import <Foundation/NSAffineTransform.h>
@@ -124,6 +126,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <Foundation/NSURL.h>
 #import <Foundation/NSMutableURLRequest.h>
 #import <Foundation/NSURLConnection.h>
+#import <Foundation/NSURLDownload.h>
+#import <Foundation/NSURLResponse.h>
 #import <Foundation/NSUserDefaults.h>
 #import <Foundation/NSValue.h>
 #import <Foundation/NSValueTransformer.h>

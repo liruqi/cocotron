@@ -15,54 +15,64 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <Foundation/NSEnumerator.h>
 
 static NSMutableDictionary *bindersForObjects=nil;
-static NSDictionary *defaultBindingOptions;
-
-#pragma mark -
-#pragma mark Binding Option Keys
+static NSDictionary *defaultBindingOptions=nil;
+static NSMutableDictionary *defaultBindingOptionsCache=nil;
 
 NSString* NSObservedObjectKey=@"NSObservedObject";
 NSString* NSObservedKeyPathKey=@"NSObservedKeyPath";
 NSString* NSOptionsKey=@"NSOptions";
 
-NSString *NSNullPlaceholderBindingOption=@"NSNullPlaceholder";
+NSString *NSNullPlaceholderBindingOption=@"NSNullPlaceholder"; // Do not change.
 NSString *NSNoSelectionPlaceholderBindingOption=@"NSNoSelectionPlaceholder";
 NSString *NSMultipleValuesPlaceholderBindingOption=@"NSMultipleValuesPlaceholder";
 NSString *NSCreatesSortDescriptorBindingOption=@"NSCreatesSortDescriptors";
 NSString *NSRaisesForNotApplicableKeysBindingOption=@"NSRaisesForNotApplicableKeys";
 NSString *NSAllowsEditingMultipleValuesSelectionBindingOption=@"NSAllowsEditingMultipleValuesSelection";
-NSString *NSValueTransformerNameBindingOption=@"NSValueTransformerName";
+NSString *NSValueTransformerNameBindingOption=@"NSValueTransformerName"; // Do not change.
 NSString *NSValueTransformerBindingOption=@"NSValueTransformerBinding";
-NSString *NSConditionallySetsEnabledBindingOption=@"NSConditionallySetsEnabled";
-NSString *NSConditionallySetsEditableBindingOption=@"NSConditionallySetsEditable";
-NSString *NSContinuouslyUpdatesValueBindingOption=@"NSContinuouslyUpdatesValue";
+NSString *NSConditionallySetsEnabledBindingOption=@"NSConditionallySetsEnabled"; // Do not change.
+NSString *NSConditionallySetsEditableBindingOption=@"NSConditionallySetsEditable"; // Do not change.
+NSString *NSContinuouslyUpdatesValueBindingOption=@"NSContinuouslyUpdatesValue"; // Do not change.
+NSString *NSDisplayPatternBindingOption=@"NSDisplayPattern"; // Do not change.
+
 
 @implementation NSObject (BindingSupport)
 
-+(id)_defaultBindingOptionsForBinding:(id)binding
-{
-	if(!defaultBindingOptions)
-	{
-		defaultBindingOptions=[NSDictionary dictionaryWithContentsOfFile:
-			[[NSBundle bundleForClass:[_NSKVOBinder class]] pathForResource:@"defaultBindingOptions" 
-																	 ofType:@"plist"]];
-		[defaultBindingOptions retain];
-	}
-	id defaults=[defaultBindingOptions objectForKey:NSStringFromClass(self)];
-	if(self==[NSObject class])
-	{
-		if(defaults)
-			return defaults;
-		return [NSDictionary dictionary];
-	}
-	
-	id ret=[[[self superclass] _defaultBindingOptionsForBinding:binding] mutableCopy];
-	if(defaults)
-		[ret setValuesForKeysWithDictionary:defaults];
-	return [ret autorelease];
++(NSDictionary *)_defaultBindingOptionsForBinding:(NSString *)binding {
+
+   if(defaultBindingOptions==nil) {
+    NSBundle *bundle=[NSBundle bundleForClass:[_NSKVOBinder class]];
+    NSString *path=[bundle pathForResource:@"defaultBindingOptions" ofType:@"plist"];
+    
+    if((defaultBindingOptions=[[NSDictionary alloc] initWithContentsOfFile:path])==nil)
+     defaultBindingOptions=[NSDictionary new];
+   }
+   
+   NSString     *className=NSStringFromClass(self);
+   NSString     *bindingKey=[[className stringByAppendingString:@"."] stringByAppendingString:binding];
+   NSDictionary *defaults=[defaultBindingOptionsCache objectForKey:bindingKey];
+   
+   if(defaults==nil){
+    NSMutableDictionary *values;
+
+   	if(self==[NSObject class])
+     values=[NSMutableDictionary dictionary];
+    else
+     values=[[[[self superclass] _defaultBindingOptionsForBinding:binding] mutableCopy] autorelease];
+
+    [values addEntriesFromDictionary:[defaultBindingOptions objectForKey:bindingKey]];
+    
+    if(defaultBindingOptionsCache==nil)
+     defaultBindingOptionsCache=[NSMutableDictionary new];
+     
+    [defaultBindingOptionsCache setObject:values forKey:bindingKey];
+    defaults=values;
+   }
+
+   return defaults;
 }
 
--(id)_defaultBindingOptionsForBinding:(id)binding
-{
+-(NSDictionary *)_defaultBindingOptionsForBinding:(NSString *)binding {
 	return [isa _defaultBindingOptionsForBinding:binding];
 }
 
@@ -99,7 +109,7 @@ NSString *NSContinuouslyUpdatesValueBindingOption=@"NSContinuouslyUpdatesValue";
 		binder = [[[isa _binderClassForBinding:binding] new] autorelease];
 		[ownBinders setObject:binder forKey:binding];
 	}
-	
+
 	return binder;
 }
 
@@ -108,20 +118,20 @@ NSString *NSContinuouslyUpdatesValueBindingOption=@"NSContinuouslyUpdatesValue";
 	if([binding isEqual:@"value"])
 		return @"objectValue";
    // FIX: actually try and detect these
-	if([binding isEqual:@"displayPatternValue1"])
+	if([binding hasPrefix:@"displayPatternValue"])
 		return @"objectValue";
-	if([binding isEqual:@"displayPatternValue2"])
-		return @"objectValue";
+
 	return binding;
 }
 
 -(void)bind:(id)binding toObject:(id)destination withKeyPath:(NSString*)keyPath options:(NSDictionary*)options
 {
-	if(![isa _binderClassForBinding:binding])
+	if(![isa _binderClassForBinding:binding]){
 		return;
+    }
 
 	id binder=[self _binderForBinding:binding create:NO];
-	
+
 	if(binder)
 		[binder unbind];
 	else
@@ -163,9 +173,15 @@ NSString *NSContinuouslyUpdatesValueBindingOption=@"NSContinuouslyUpdatesValue";
 	[bindersForObjects removeObjectForKey:key];
 }
 
--(NSDictionary *)infoForBinding:(id)binding
-{
-	return [[self _binderForBinding:binding create:NO] options];	
+-(NSDictionary *)infoForBinding:(id)binding {
+   _NSBinder    *binder=[self _binderForBinding:binding create:NO];
+   NSDictionary *result=[NSDictionary dictionaryWithObjectsAndKeys:
+      [binder destination],NSObservedObjectKey,
+      [binder keyPath],NSObservedKeyPathKey,
+      [binder options],NSOptionsKey,
+      nil];
+      
+	return result;	
 }
 
 +(void)exposeBinding:(id)binding
@@ -173,10 +189,11 @@ NSString *NSContinuouslyUpdatesValueBindingOption=@"NSContinuouslyUpdatesValue";
 	
 }
 
--(NSArray*)_allUsedBinders
-{
-	id key = [NSValue valueWithNonretainedObject:self];
-	id ownBinders = [bindersForObjects objectForKey:key];
-	return [ownBinders allValues];
+-(NSArray *)_allUsedBinders {
+   NSValue      *key=[NSValue valueWithNonretainedObject:self];
+   NSDictionary *ownBinders=[bindersForObjects objectForKey:key];
+   
+   return [ownBinders allValues];
 }
+
 @end

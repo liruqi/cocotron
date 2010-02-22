@@ -439,7 +439,7 @@ static int errorHandler(Display *display,XErrorEvent *errorEvent) {
       [lastFocusedWindow platformWindowDeactivated:window checkForAppDeactivation:NO];
       lastFocusedWindow=nil;  
      }
-     [delegate platformWindowActivated:window];
+     [delegate platformWindowActivated:window displayIfNeeded:YES];
      lastFocusedWindow=delegate;
      break;
      

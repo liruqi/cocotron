@@ -155,12 +155,20 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    return NSAutorelease(NSSet_concreteNew(NULL,objects,count));
 }
 
--(id)setByAddingObjectsFromSet:(NSSet*)other
-{
-	id ret=[self mutableCopy];
-	[ret unionSet:other];
-	[ret autorelease];
-	return [[ret copy] autorelease];
+-(NSSet *)setByAddingObject:object {
+   id result=[[self mutableCopy] autorelease];
+   
+   [result addObject:object];
+   
+   return result;
+}
+
+-(NSSet *)setByAddingObjectsFromSet:(NSSet*)other {
+	id result=[[self mutableCopy] autorelease];
+    
+	[result unionSet:other];
+
+	return result;
 }
 
 -(Class)classForCoder {
@@ -341,17 +349,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 	state->itemsPtr=stackbuf;
 	
 	state->mutationsPtr=(unsigned long*)self;
+
+    if([self count]==0)
+     return 0;
+     
 	if(!state->state)
 		state->state=(unsigned long)[self objectEnumerator];
 
 	id en=(id)state->state;
 	
-	for(i=0; i<length; i++)
-	{
-		state->itemsPtr[i]=[en nextObject];
-		if(!state->itemsPtr[i])
-			return i;
-	}
+    for(i=0; i<length; i++)
+     if((state->itemsPtr[i]=[en nextObject])==nil)
+      break;
 
 	return i;
 	

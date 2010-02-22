@@ -116,13 +116,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(void)setHeaderCell:(NSCell *)cell {
-    [_headerCell release];
-    _headerCell = [cell retain];
+   cell=[cell retain];
+   [_headerCell release];
+    _headerCell = cell;
 }
 
 -(void)setDataCell:(NSCell *)cell {
-    [_dataCell release];
-    _dataCell = [cell retain];
+   cell=[cell retain];
+   [_dataCell release];
+   _dataCell = cell;
 }
 
 -(void)setWidth:(float)width {

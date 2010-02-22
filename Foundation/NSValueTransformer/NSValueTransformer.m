@@ -14,10 +14,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import "NSValueTransformer_NegateBoolean.h"
 #import "NSValueTransformer_UnarchiveFromData.h"
 
-NSString *NSIsNilTransformerName=@"NSIsNilTransformerName";
-NSString *NSIsNotNilTransformerName=@"NSIsNotNilTransformerName";
-NSString *NSNegateBooleanTransformerName=@"NSNegateBooleanTransformerName";
-NSString *NSUnarchiveFromDataTransformerName=@"NSUnarchiveFromDataTransformerName";
+// Do not change these values
+NSString *NSIsNilTransformerName=@"NSIsNil";
+NSString *NSIsNotNilTransformerName=@"NSIsNotNil";
+NSString *NSNegateBooleanTransformerName=@"NSNegateBoolean";
+NSString *NSUnarchiveFromDataTransformerName=@"NSUnarchiveFromData";
+NSString *NSKeyedUnarchiveFromDataTransformerName=@"NSKeyedUnarchiveFromData";
 
 @implementation NSValueTransformer
 
@@ -26,10 +28,10 @@ static NSMapTable *_nameToTransformer=NULL;
 +(void)initialize {
    if(self==[NSValueTransformer class]){
     _nameToTransformer=NSCreateMapTable(NSObjectMapKeyCallBacks,NSObjectMapValueCallBacks,0);
-    NSMapInsert(_nameToTransformer,NSIsNilTransformerName,[NSValueTransformer_IsNil class]);
-    NSMapInsert(_nameToTransformer,NSIsNotNilTransformerName,[NSValueTransformer_IsNotNil class]);
-    NSMapInsert(_nameToTransformer,NSNegateBooleanTransformerName,[NSValueTransformer_NegateBoolean class]);
-    NSMapInsert(_nameToTransformer,NSUnarchiveFromDataTransformerName,[NSValueTransformer_UnarchiveFromData class]);
+    NSMapInsert(_nameToTransformer,NSIsNilTransformerName,[[[NSValueTransformer_IsNil alloc] init] autorelease]);
+    NSMapInsert(_nameToTransformer,NSIsNotNilTransformerName,[[[NSValueTransformer_IsNotNil alloc] init] autorelease]);
+    NSMapInsert(_nameToTransformer,NSNegateBooleanTransformerName,[[[NSValueTransformer_NegateBoolean alloc] init] autorelease]);
+    NSMapInsert(_nameToTransformer,NSUnarchiveFromDataTransformerName,[[[NSValueTransformer_UnarchiveFromData alloc] init] autorelease]);
    }
 }
 

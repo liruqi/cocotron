@@ -8,11 +8,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <Foundation/NSStream.h>
 #import <Foundation/NSRaise.h>
 #import <Foundation/NSSocket.h>
+#import <Foundation/NSHost.h>
 #import "NSInputStream_socket.h"
 #import "NSOutputStream_socket.h"
 
-NSString *NSStreamDataWrittenToMemoryStreamKey=@"NSStreamDataWrittenToMemoryStreamKey";
-NSString *NSStreamFileCurrentOffsetKey=@"NSStreamFileCurrentOffsetKey";
+NSString *NSStreamDataWrittenToMemoryStreamKey=@"kCFStreamPropertyDataWritten";
+NSString *NSStreamFileCurrentOffsetKey=@"kCFStreamPropertyFileCurrentOffset";
 
 @implementation NSStream
 
@@ -23,7 +24,7 @@ NSString *NSStreamFileCurrentOffsetKey=@"NSStreamFileCurrentOffsetKey";
    NSStreamStatus         status;
    NSInputStream_socket  *input;
    NSOutputStream_socket *output;
-   
+      
    if((error=[socket connectToHost:host port:port immediate:&immediate])!=nil){
     *inputStreamp=nil;
     *outputStreamp=nil;

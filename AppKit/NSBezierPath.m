@@ -182,7 +182,7 @@ static NSLineJoinStyle _defaultLineJoinStyle=NSMiterLineJoinStyle;
 
 +(void)strokeLineFromPoint:(NSPoint)point toPoint:(NSPoint)toPoint {
    CGContextRef context=[[NSGraphicsContext currentContext] graphicsPort];
-   
+
    CGContextBeginPath(context);
    CGContextMoveToPoint(context,point.x,point.y);
    CGContextAddLineToPoint(context,toPoint.x,toPoint.y);
@@ -360,7 +360,7 @@ static int numberOfPointsForOperator(int op){
 }
 
 -(NSRect)bounds {
-   NSUnimplementedMethod();
+#warning fix
    return [self controlPointBounds];
 }
 
@@ -667,12 +667,12 @@ static inline CGFloat degreesToRadians(CGFloat degrees){
    return nil;
 }
 
--(void)_addPathToContext:(CGContextRef)context {
+static void _addPathToContext(NSBezierPath *self,CGContextRef context) {
    int i;
-   CGPoint *points=_points;
+   CGPoint *points=self->_points;
    
-   for(i=0;i<_numberOfElements;i++){
-    switch(_elements[i]){
+   for(i=0;i<self->_numberOfElements;i++){
+    switch(self->_elements[i]){
     
      case NSMoveToBezierPathElement:{
        CGPoint p=*points++;
@@ -713,7 +713,7 @@ static inline CGFloat degreesToRadians(CGFloat degrees){
    CGContextSetLineJoin(context,[self lineJoinStyle]);
    CGContextSetLineDash(context,_dashPhase,_dashes,_dashCount);
    CGContextBeginPath(context);
-   [self _addPathToContext:context];
+   _addPathToContext(self,context);
    CGContextStrokePath(context);
    CGContextRestoreGState(context);
 }
@@ -722,7 +722,7 @@ static inline CGFloat degreesToRadians(CGFloat degrees){
    CGContextRef context=[[NSGraphicsContext currentContext] graphicsPort];
    
    CGContextBeginPath(context);
-   [self _addPathToContext:context];
+   _addPathToContext(self,context);
    if([self windingRule]==NSNonZeroWindingRule)
     CGContextFillPath(context);
    else
@@ -734,7 +734,7 @@ static inline CGFloat degreesToRadians(CGFloat degrees){
 
    if(CGContextIsPathEmpty(context))
     CGContextBeginPath(context);
-   [self _addPathToContext:context];
+   _addPathToContext(self,context);
    CGContextClip(context);
 }
 
@@ -742,7 +742,7 @@ static inline CGFloat degreesToRadians(CGFloat degrees){
    CGContextRef context=[[NSGraphicsContext currentContext] graphicsPort];
 
    CGContextBeginPath(context);
-   [self _addPathToContext:context];
+   _addPathToContext(self,context);
    CGContextClip(context);
 }
 

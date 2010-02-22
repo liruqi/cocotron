@@ -34,7 +34,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(NSUInteger)count {
-   return [_inputSources count];
+   return [[self validInputSources] count];
 }
 
 -(BOOL)recognizesInputSource:(NSInputSource *)source {
@@ -64,22 +64,42 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(NSHandleMonitor_win32 *)monitorWithHandle:(void *)handle {
-   NSEnumerator          *state=[_inputSources objectEnumerator];
+   NSEnumerator          *state=[[self validInputSources] objectEnumerator];
    NSHandleMonitor_win32 *monitor;
 
-   while((monitor=[state nextObject])!=nil)
+   while((monitor=[state nextObject])!=nil){
     if([monitor isKindOfClass:[NSHandleMonitor_win32 class]] && ([monitor handle]==handle))
      return monitor;
-
+   }
    return nil;
 }
 
+static HANDLE goEvent;
+
+#if 0
+#warning COOPERATIVE THREADING ON
+static BOOL cooperative=YES;
+#else
+static BOOL cooperative=NO;
++(void)goCooperative {
+  cooperative=YES;
+    goEvent=CreateEvent(NULL,FALSE,FALSE,NULL);
+}
+
+#endif
+
++(void)initialize {
+   if(cooperative)
+    goEvent=CreateEvent(NULL,FALSE,FALSE,NULL);
+}
+
 -(NSHandleMonitor_win32 *)waitForHandleActivityBeforeDate:(NSDate *)date mode:(NSString *)mode {
-   NSEnumerator          *state=[_inputSources objectEnumerator];
+   NSSet                 *validSources=[self validInputSources];
+   NSEnumerator          *state=[validSources objectEnumerator];
    NSHandleMonitor_win32    *monitor;
    NSTimeInterval         interval=[date timeIntervalSinceNow];
    DWORD                  msec;
-   HANDLE                 objectList[[_inputSources count]];
+   HANDLE                 objectList[[validSources count]];
    int                    objectCount=0;
    DWORD                  waitResult;
 
@@ -95,9 +115,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
    msec=interval*1000;
 
+   if(cooperative){
+    SetEvent(goEvent);
+    }
+
+   if(msec==0){
+    // If we're not waiting, yield
+    SwitchToThread();
+   }
+   
    if(_eventInputSource!=nil){
-    waitResult=[_eventInputSource waitForEventsAndMultipleObjects:objectList count:objectCount
-     milliseconds:msec];
+    waitResult=[_eventInputSource waitForEventsAndMultipleObjects:objectList count:objectCount milliseconds:msec];
    }
    else {
     if(objectCount==0){
@@ -107,6 +135,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     else {
      waitResult=WaitForMultipleObjects(objectCount,objectList,FALSE,msec);
     }
+   }
+   if(cooperative){
+    WaitForSingleObject(goEvent,INFINITE);
    }
 
    if(waitResult==WAIT_FAILED)
@@ -135,6 +166,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(BOOL)waitForInputInMode:(NSString *)mode beforeDate:(NSDate *)date {
+
    if([[self validInputSources] count]>0){
     NSHandleMonitor_win32 *monitor=[self waitForHandleActivityBeforeDate:date mode:mode];
 
