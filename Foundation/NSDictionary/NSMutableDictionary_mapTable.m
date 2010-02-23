@@ -310,7 +310,7 @@ static NSMutableDictionary_CF *mutableCopyWithZone(NSMutableDictionary_CF *self,
    for(i=0;i<self->_count;i++)
     NSNextDictionaryEnumeratorPair(&state,&(keys[i]),&(values[i]));
  
-   return [[self->isa alloc] initWithKeys:keys values:values count:self->_count keyCallBacks:&(self->_keyCallBacks) valueCallBacks:&(self->_valueCallBacks)];
+   return [[self->isa alloc] initWithKeys:(const void **)keys values:(const void **)values count:self->_count keyCallBacks:&(self->_keyCallBacks) valueCallBacks:&(self->_valueCallBacks)];
 
 }
 

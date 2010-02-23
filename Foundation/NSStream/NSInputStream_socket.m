@@ -13,6 +13,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <Foundation/NSRaise.h>
 #import <Foundation/NSRunLoop.h>
 #import <Foundation/CFSSLHandler.h>
+#import <Foundation/NSData.h>
 #import <CFNetwork/CFSocketStream.h>
 
 @implementation NSInputStream_socket
@@ -83,8 +84,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(BOOL)setProperty:property forKey:(NSString *)key {
-   if([key isEqualToString:kCFStreamPropertySSLSettings])
-    return [_socket setSSLProperties:property];
+   if([key isEqualToString:(NSString *)kCFStreamPropertySSLSettings])
+    return [_socket setSSLProperties:(CFDictionaryRef)property];
 
    NSUnimplementedMethod();
    return NO;
@@ -167,13 +168,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     [sslHandler runWithSocket:_socket];
 
     result=[sslHandler readPlaintext:buffer maxLength:maxLength];
-    NSCLog("readPlaintext:%d=%d",maxLength,result);
 
     [sslHandler runWithSocket:_socket];
    }
-   
-   NSCLog("%s %d result=%d",__FUNCTION__,__LINE__,result);
-   
+      
    if(result==0)
     _status=NSStreamStatusAtEnd;
    if(result==-1)
@@ -207,7 +205,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
      event=NSStreamEventNone;
      break;
    }
-   NSLog(@"event=%d",event);
    
    if(event!=NSStreamEventNone){
     if(_callBack!=NULL){

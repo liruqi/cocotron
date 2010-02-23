@@ -2308,7 +2308,7 @@ NSString *NSWindowDidEndLiveResizeNotification=@"NSWindowDidEndLiveResizeNotific
 -(void)platformWindowDeminiaturized:(CGWindow *)window {
    [self _updatePlatformWindowTitle];
    if(_sheetContext!=nil){
-    [[_sheetContext sheet] orderWindow:NSWindowAbove relativeTo:self];
+    [[_sheetContext sheet] orderWindow:NSWindowAbove relativeTo:[self windowNumber]];
    }
    [self postNotificationName:NSWindowDidDeminiaturizeNotification];
    [NSApp updateWindows];

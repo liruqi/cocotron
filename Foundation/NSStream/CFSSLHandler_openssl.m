@@ -40,7 +40,6 @@ static threadid_func(CRYPTO_THREADID *id){
 #endif
 
 +(void)initialize {
-NSCLog("%s %d",__FUNCTION__,__LINE__);
    pthread_mutex_lock(&initLock);
    SSL_library_init();
    SSL_load_error_strings();
@@ -55,7 +54,6 @@ NSCLog("%s %d",__FUNCTION__,__LINE__);
 }
 
 -initWithProperties:(CFDictionaryRef )properties {
-NSCLog("%s %d",__FUNCTION__,__LINE__);
    _properties=CFRetain(properties);
    
    CFStringRef level=CFDictionaryGetValue(_properties,kCFStreamSSLLevel);
@@ -75,7 +73,6 @@ NSCLog("%s %d",__FUNCTION__,__LINE__);
    
    if(validatesCertChain!=NULL){
    }
-NSCLog("%s %d",__FUNCTION__,__LINE__);
    
    _context=SSL_CTX_new(_method);
    _connection=SSL_new(_context);
@@ -99,12 +96,10 @@ NSCLog("%s %d",__FUNCTION__,__LINE__);
    _stableBuffer=NSZoneMalloc(NULL,_stableBufferCapacity);
    _readBuffer=[[NSMutableData alloc] init];
    
-NSCLog("%s %d",__FUNCTION__,__LINE__);
    return self;
 }
 
 -(void)dealloc {
-NSCLog("%s %d",__FUNCTION__,__LINE__);
    CFRelease(_properties);
    SSL_free(_connection);
    NSZoneFree(NULL,_stableBuffer);
@@ -112,34 +107,27 @@ NSCLog("%s %d",__FUNCTION__,__LINE__);
 }
 
 -(void)close {
-NSCLog("%s %d",__FUNCTION__,__LINE__);
    SSL_shutdown(_connection);
 }
 
 -(BOOL)isHandshaking {
-NSCLog("%s %d state=%s",__FUNCTION__,__LINE__,SSL_state_string_long(_connection));
    return SSL_in_init(_connection)?YES:NO;
 }
 
 -(NSInteger)writePlaintext:(const uint8_t *)buffer maxLength:(NSUInteger)length {
-NSCLog("%s %d",__FUNCTION__,__LINE__);
    int result=SSL_write(_connection,buffer,length);
    
    if(result<0){
-NSCLog("%s %d %d",__FUNCTION__,__LINE__,result);
     int error=SSL_get_error(_connection,result);
 
     switch(error) {
      case SSL_ERROR_ZERO_RETURN:
-      NSCLog("SSL_write(%d) returned SSL_ERROR_ZERO_RETURN",length);
       break;
       
      case SSL_ERROR_NONE: 
-      NSCLog("SSL_write(%d) returned SSL_ERROR_NONE",length);
       break;
       
      case SSL_ERROR_WANT_READ:
-      NSCLog("SSL_write(%d) returned SSL_ERROR_WANT_READ",length);
       break;
 
      default :;
@@ -160,17 +148,14 @@ NSCLog("%s %d %d",__FUNCTION__,__LINE__,result);
 }
 
 -(NSInteger)writeBytesAvailable {
-NSCLog("%s %d",__FUNCTION__,__LINE__);
    return BIO_ctrl_pending(_outgoing);
 }
 
 -(BOOL)wantsMoreIncoming {
-NSCLog("%s %d",__FUNCTION__,__LINE__);
    return SSL_want_read(_connection);
 }
 
 -(NSInteger)readEncrypted:(uint8_t *)buffer maxLength:(NSUInteger)length {
-NSCLog("%s %d",__FUNCTION__,__LINE__);
    int check=BIO_read(_outgoing,buffer,length);
 
    if(check<=0){
@@ -182,7 +167,6 @@ NSCLog("%s %d",__FUNCTION__,__LINE__);
 }
 
 -(NSInteger)writeEncrypted:(const uint8_t *)buffer maxLength:(NSUInteger)length {
-NSCLog("%s %d",__FUNCTION__,__LINE__);
    size_t check=BIO_write(_incoming,buffer,length);
    
    if(check<=0){
@@ -194,7 +178,6 @@ NSCLog("%s %d",__FUNCTION__,__LINE__);
 }
 
 -(NSInteger)_readPostSSL:(uint8_t *)buffer maxLength:(NSUInteger)length {
-NSCLog("%s %d",__FUNCTION__,__LINE__);
    int check=SSL_read(_connection,buffer,length);
    
    if(check<=0){
@@ -202,15 +185,12 @@ NSCLog("%s %d",__FUNCTION__,__LINE__);
 
     switch(error){
      case SSL_ERROR_ZERO_RETURN:
-      NSCLog("SSL_read(%d) returned SSL_ERROR_ZERO_RETURN",length);
       return 0;
       
      case SSL_ERROR_NONE: 
-      NSCLog("SSL_read(%d) returned SSL_ERROR_NONE",length);
       return 0;
       
      case SSL_ERROR_WANT_READ:
-      NSCLog("SSL_read(%d) returned SSL_ERROR_WANT_READ",length);
       return 0;
 
      default :;
@@ -234,7 +214,6 @@ NSCLog("%s %d",__FUNCTION__,__LINE__);
 /* SSL_pending() is useless here because it doesn't actually process anything, it will return 0 when there are bytes
    available post-processing.
  */
-NSCLog("%s %d",__FUNCTION__,__LINE__);
    if([_readBuffer length]>0)
     return [_readBuffer length];
    else {
@@ -249,7 +228,6 @@ NSCLog("%s %d",__FUNCTION__,__LINE__);
 }
 
 -(NSInteger)readPlaintext:(uint8_t *)buffer maxLength:(NSUInteger)length {
-NSCLog("%s %d",__FUNCTION__,__LINE__);
    if([_readBuffer length]>0){
     NSInteger qty=MIN([_readBuffer length],length);
     
@@ -262,7 +240,6 @@ NSCLog("%s %d",__FUNCTION__,__LINE__);
 }
 
 -(NSInteger)transferOneBufferFromSSLToSocket:(NSSocket *)socket {
-NSCLog("%s %d",__FUNCTION__,__LINE__);
    NSInteger available=[self readEncrypted:_stableBuffer maxLength:_stableBufferCapacity];
    
    if(available<=0)
@@ -271,16 +248,14 @@ NSCLog("%s %d",__FUNCTION__,__LINE__);
     NSInteger check=[socket write:_stableBuffer maxLength:available];
     
     if(check!=available)
-     NSCLog("FAILURE socket write:%d=%d",available,check);
+     NSCLog("failure socket write:%d=%d",available,check);
    
     return check;
    }
 }
 
 -(NSInteger)transferOneBufferFromSocketToSSL:(NSSocket *)socket {
-NSCLog("%s %d",__FUNCTION__,__LINE__);
    NSInteger result=[socket read:_stableBuffer maxLength:_stableBufferCapacity];
-NSCLog("%s %d result=%d",__FUNCTION__,__LINE__,result);
      
    if(result<=0)
     return result;
@@ -295,18 +270,14 @@ NSCLog("%s %d result=%d",__FUNCTION__,__LINE__,result);
 }
 
 -(void)runHandshakeIfNeeded:(NSSocket *)socket {
-   while([self isHandshaking]){
-     NSCLog("SSL_do_handshake");
-     
+   while([self isHandshaking]){     
     int check=SSL_do_handshake(_connection);
     
     if(check==1){
-     NSCLog("successful handshake");
      break;
     }
     
     if(check==0){
-     NSCLog("failed handshake");
      break;
     }
     
@@ -323,24 +294,19 @@ NSCLog("%s %d result=%d",__FUNCTION__,__LINE__,result);
 }
 
 -(void)runWithSocket:(NSSocket *)socket {
-NSCLog("%s %d",__FUNCTION__,__LINE__);
     while([self writeBytesAvailable] || [self wantsMoreIncoming]){
      NSInteger check;
-
-NSCLog("%s %d isHandshaking=%s",__FUNCTION__,__LINE__,[self isHandshaking]?"YES":"NO");
      
      if([self writeBytesAvailable]){
       if((check=[self transferOneBufferFromSSLToSocket:socket])<=0)
         break;
      }
-NSCLog("%s %d isHandshaking=%s",__FUNCTION__,__LINE__,[self isHandshaking]?"YES":"NO");
     
      if([self wantsMoreIncoming]){
       if((check=[self transferOneBufferFromSocketToSSL:socket])<=0)
        break;
      }
     }
-NSCLog("%s %d",__FUNCTION__,__LINE__);
 }
 
 #endif

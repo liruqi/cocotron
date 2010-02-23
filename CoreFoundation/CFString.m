@@ -50,7 +50,7 @@ CFStringRef CFStringMakeConstant(const char *cString) {
 CFStringRef CFStringCreateByCombiningStrings(CFAllocatorRef allocator,CFArrayRef array,CFStringRef separator){}
 
 CFStringRef CFStringCreateCopy(CFAllocatorRef allocator,CFStringRef self){
-   return [ToNSString(self) copyWithZone:allocator];
+   return [ToNSString(self) copyWithZone:NULL];
 }
 
 CFStringRef CFStringCreateWithBytes(CFAllocatorRef allocator,const uint8_t *bytes,CFIndex length,CFStringEncoding encoding,Boolean isExternalRepresentation){
@@ -95,7 +95,7 @@ CFStringRef CFStringCreateFromExternalRepresentation(CFAllocatorRef allocator,CF
 }
 
 CFComparisonResult CFStringCompare(CFStringRef self,CFStringRef other,CFOptionFlags options){
-   return [ToNSString(self) compare:other options:options];
+   return [ToNSString(self) compare:(NSString *)other options:options];
 }
 
 

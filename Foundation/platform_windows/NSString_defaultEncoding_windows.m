@@ -13,12 +13,12 @@
 
 NSStringEncoding defaultEncoding()
 {
-#warning fix to not return an unimplemented encoding
-    //don't use objc calls because they call often defaultCStringEncoding
     
     UINT codepage = GetACP();
 	switch(codepage)
 	{
+#if 0
+#warning fix to not return an unimplemented encoding
 		case 1250:
             return NSWindowsCP1250StringEncoding;
 			
@@ -60,7 +60,7 @@ NSStringEncoding defaultEncoding()
             
 		case 28592:
 			return NSISOLatin2StringEncoding;
-			
+#endif			
 		default:
             return NSWindowsCP1252StringEncoding;
 	}

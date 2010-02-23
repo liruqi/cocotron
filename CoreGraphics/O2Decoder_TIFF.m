@@ -70,7 +70,7 @@ static unsigned nextUnsigned16(O2Decoder_TIFF *self) {
 }
 
 unsigned O2DecoderNextUnsigned16_TIFF(O2Decoder_TIFF *self) {
-   nextUnsigned16(self);
+   return nextUnsigned16(self);
 }
 
 static unsigned nextUnsigned32(O2Decoder_TIFF *self) {

@@ -211,11 +211,11 @@ static void *decryptData(void *bytes,unsigned length,unsigned *resultLength){
    crypted.cbData=length;
    
    if(!CryptUnprotectData(&crypted,&description,NULL,NULL,NULL,0,&plaintext)){
-   NSLog(@"CryptUnprotectData failed");
+    NSLog(@"CryptUnprotectData failed");
     *resultLength=0;
     return NULL;
    }
-   NSLog(@"CryptUnprotectData success");
+
    *resultLength=plaintext.cbData;
    void *result=NSZoneMalloc(NULL,*resultLength);
    

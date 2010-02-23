@@ -13,25 +13,18 @@
 
 
 -initWithKeychainOrArray:(CFTypeRef)keychainOrArray itemClass:(SecItemClass)itemClass attributeList:(const SecKeychainAttributeList *)attributeList {
-NSLog(@"%s %d",__FUNCTION__,__LINE__);
    if(keychainOrArray==NULL)
     keychainOrArray=[SecKeychain defaultUserKeychain];
-NSLog(@"%s %d",__FUNCTION__,__LINE__);
     
-   if(![keychainOrArray isKindOfClass:[NSArray class]])
-    keychainOrArray=[NSArray arrayWithObject:keychainOrArray];
-NSLog(@"%s %d",__FUNCTION__,__LINE__);
+   if(![(id)keychainOrArray isKindOfClass:[NSArray class]])
+    keychainOrArray=[NSArray arrayWithObject:(id)keychainOrArray];
    
-   _array=CFRetain(keychainOrArray);
-NSLog(@"%s %d",__FUNCTION__,__LINE__);
+   _array=(CFArrayRef)CFRetain(keychainOrArray);
    _itemClass=itemClass;
-NSLog(@"%s %d",__FUNCTION__,__LINE__);
    _attributeList=SecCopyAttributeList(attributeList);
-NSLog(@"%s %d",__FUNCTION__,__LINE__);
 
    _arrayCursor=0;
    _keychainCursor=nil;
-NSLog(@"%s %d",__FUNCTION__,__LINE__);
    return self;
 }
 
@@ -43,15 +36,15 @@ NSLog(@"%s %d",__FUNCTION__,__LINE__);
 }
 
 -(SecKeychainItemRef)copyNextItem {
-   NSCLog("%s %d",__FUNCTION__,__LINE__);
+   ("%s %d",__FUNCTION__,__LINE__);
   
   while(_arrayCursor<CFArrayGetCount(_array)){
-   SecKeychainRef keychain=CFArrayGetValueAtIndex(_array,_arrayCursor);
-   NSCLog("%s %d",__FUNCTION__,__LINE__);
+   SecKeychainRef keychain=(id)CFArrayGetValueAtIndex(_array,_arrayCursor);
+   ("%s %d",__FUNCTION__,__LINE__);
    
    if(_keychainCursor==nil)
     _keychainCursor=[keychain createCursorForItemClass:_itemClass];
-   NSCLog("%s %d",__FUNCTION__,__LINE__);
+   ("%s %d",__FUNCTION__,__LINE__);
     
    SecKeychainItemRef check=nil;
     
@@ -65,7 +58,7 @@ NSLog(@"%s %d",__FUNCTION__,__LINE__);
    [_keychainCursor release];
    _keychainCursor=nil;
   }
-   NSCLog("%s %d",__FUNCTION__,__LINE__);
+   ("%s %d",__FUNCTION__,__LINE__);
    return nil;
 }
 

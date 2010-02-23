@@ -252,18 +252,18 @@ static inline void byteZero(void *vsrc,size_t size){
 -(NSInteger)read:(uint8_t *)buffer maxLength:(NSUInteger)length {
    NSInteger result;
    
-   NSCLog("recv(%d) ... ",length);
+  //NSCLog("recv(%d) ... ",length);
    result=recv(_handle,(void *)buffer,length,0);
-   NSCLog("recv Done = %d",result);
+  // NSCLog("recv Done = %d",result);
    return result;
 }
 
 -(NSInteger)write:(const uint8_t *)buffer maxLength:(NSUInteger)length {
    NSInteger result;
    
-   NSCLog("send(%d) ... ",length);
+   //NSCLog("send(%d) ... ",length);
    result=send(_handle,(void *)buffer,length,0);
-   NSCLog("send Done = %d",result);
+   //NSCLog("send Done = %d",result);
    return result;
 }
 
@@ -287,7 +287,6 @@ static inline void byteZero(void *vsrc,size_t size){
 -(BOOL)setSSLProperties:(CFDictionaryRef )sslProperties {
    if(_sslHandler==nil){
     _sslHandler=[[CFSSLHandler alloc] initWithProperties:sslProperties];
-    NSCLog("%s created _sslHandler=%p %s",__FUNCTION__,_sslHandler,class_getName([_sslHandler class]));
    }
    else {
     // FIXME: what do we do if different properties are set

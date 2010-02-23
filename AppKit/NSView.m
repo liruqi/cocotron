@@ -27,6 +27,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <Foundation/NSKeyedArchiver.h>
 #import <AppKit/NSPasteboard.h>
 #import <AppKit/NSObject+BindingSupport.h>
+#import <CoreGraphics/O2Context.h>
 #import <AppKit/NSRaise.h>
 
 NSString *NSViewFrameDidChangeNotification=@"NSViewFrameDidChangeNotification";
@@ -91,6 +92,8 @@ NSString *NSViewFocusDidChangeNotification=@"NSViewFocusDidChangeNotification";
     [_subviews makeObjectsPerformSelector:@selector(_setSuperview:) withObject:self];
     _invalidRect=_bounds;
     _trackingAreas=[[NSMutableArray alloc] init];
+    _wantsLayer=[keyed decodeBoolForKey:@"NSViewIsLayerTreeHost"];
+    _contentFilters=[[keyed decodeObjectForKey:@"NSViewContentFilters"] retain];
    }
    else {
     [NSException raise:NSInvalidArgumentException format:@"%@ can not initWithCoder:%@",isa,[coder class]];
@@ -137,7 +140,8 @@ NSString *NSViewFocusDidChangeNotification=@"NSViewFocusDidChangeNotification";
    [_draggedTypes release];
    [_trackingAreas release];
    [self _unbindAllBindings];
-
+   [_contentFilters release];
+   
    [super dealloc];
 }
 
@@ -149,25 +153,40 @@ static void invalidateTransform(NSView *self){
     invalidateTransform(check);
 }
 
--(CGAffineTransform)createTransformToWindow {
-   CGAffineTransform result;
-   NSRect            bounds=[self bounds];
-   NSRect            frame=[self frame];
+static CGAffineTransform concatViewTransform(CGAffineTransform result,NSView *view,NSView *superview,BOOL doFrame,BOOL flip){
+   NSRect bounds=[view bounds];
+   NSRect frame=[view frame];
 
-   if([self superview]==nil)
-    result=CGAffineTransformIdentity;
-   else
-    result=[[self superview] transformToWindow];
+   if(doFrame)
+    result=CGAffineTransformTranslate(result,frame.origin.x,frame.origin.y);
 
-   result=CGAffineTransformTranslate(result,frame.origin.x,frame.origin.y);
-
-   if([self isFlipped]!=[[self superview] isFlipped]){
+   if(flip){
     CGAffineTransform flip=CGAffineTransformMake(1,0,0,-1,0,bounds.size.height);
 
     result=CGAffineTransformConcat(flip,result);
    }
    result=CGAffineTransformTranslate(result,-bounds.origin.x,-bounds.origin.y);
 
+   return result;
+}
+
+-(CGAffineTransform)createTransformToWindow {
+   CGAffineTransform result;
+   NSView *superview=[self superview];
+   BOOL    doFrame=YES;
+   BOOL    flip;
+   
+   if(superview==nil){
+    result=CGAffineTransformIdentity;
+    flip=[self isFlipped];
+   }
+   else {
+    result=[superview transformToWindow];
+    flip=([self isFlipped]!=[superview isFlipped]);
+   }
+
+   result=concatViewTransform(result,self,superview,doFrame,flip);
+   
    return result;
 }
 
@@ -209,6 +228,7 @@ static inline void buildTransformsIfNeeded(NSView *self) {
 
    return _transformToWindow;
 }
+
 
 -(NSRect)frame {
    return _frame;
@@ -934,13 +954,11 @@ static inline void buildTransformsIfNeeded(NSView *self) {
      NSTrackingArea *area=[_trackingAreas objectAtIndex:i];
      NSRect          rectOfInterest;
 
-NSLog(@"area=%@ bounds=%@",NSStringFromRect([area rect]),NSStringFromRect([self bounds]));
-
      rectOfInterest=NSIntersectionRect([area rect], [self bounds]);
-NSLog(@"rectOfInterest=%@",NSStringFromRect(rectOfInterest));
+
      if(rectOfInterest.size.width>0. && rectOfInterest.size.height>0.){
       [area _setView:self];
-NSLog(@"rectInWindow=%@",NSStringFromRect([self convertRect:rectOfInterest toView:nil]));
+
       [area _setRectInWindow:[self convertRect:rectOfInterest toView:nil]];
       [collector addObject:[_trackingAreas objectAtIndex:i]];
      }
@@ -1311,7 +1329,7 @@ NSLog(@"rectInWindow=%@",NSStringFromRect([self convertRect:rectOfInterest toVie
 }
 
 -(void)setWantsLayer:(BOOL)value {
-   NSUnimplementedMethod();
+   _wantsLayer=value;
 }
 
 -(void)setLayer:(CALayer *)value {
@@ -1414,10 +1432,13 @@ NSLog(@"rectInWindow=%@",NSStringFromRect([self convertRect:rectOfInterest toVie
    NSUnimplementedMethod();
 }
 
--(void)lockFocus {
-   NSGraphicsContext *context=[[self window] graphicsContext];
+static NSGraphicsContext *graphicsContextForView(NSView *view){
+   return [[view window] graphicsContext];
+}
 
-   [self lockFocusIfCanDrawInContext:context];
+-(void)lockFocus {
+
+   [self lockFocusIfCanDrawInContext:graphicsContextForView(self)];
 }
 
 -(BOOL)lockFocusIfCanDraw {
@@ -1440,8 +1461,9 @@ NSLog(@"rectInWindow=%@",NSStringFromRect([self convertRect:rectOfInterest toVie
     CGContextResetClip(graphicsPort);
     CGContextSetCTM(graphicsPort,[self transformToWindow]);
     CGContextClipToRect(graphicsPort,[self visibleRect]);
-
+    
     [self setUpGState];
+    
     return YES;
    }
    return NO;
@@ -1547,7 +1569,7 @@ NSLog(@"rectInWindow=%@",NSStringFromRect([self convertRect:rectOfInterest toVie
 }
 
 -(void)displayRectIgnoringOpacity:(NSRect)rect {
-   [self displayRectIgnoringOpacity:rect inContext:[[self window] graphicsContext]];
+   [self displayRectIgnoringOpacity:rect inContext:graphicsContextForView(self)];
 }
 
 -(void)displayRectIgnoringOpacity:(NSRect)rect inContext:(NSGraphicsContext *)context {   
@@ -1566,12 +1588,8 @@ NSLog(@"rectInWindow=%@",NSStringFromRect([self convertRect:rectOfInterest toVie
 
     CGContextClipToRect(graphicsPort,rect);
 
-    NSTimeInterval interval=[NSDate timeIntervalSinceReferenceDate];
     [self drawRect:rect];
-    NSTimeInterval nextInterval=[NSDate timeIntervalSinceReferenceDate];
-    if(nextInterval-interval>0.100)
-     NSCLog("EXPENSIVE -[%s %s] cost=%f",class_getName(isa),_cmd,nextInterval-interval);
-
+    
     int i,count=[_subviews count];
     
     for(i=0;i<count;i++){

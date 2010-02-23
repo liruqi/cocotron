@@ -78,8 +78,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(BOOL)setProperty:property forKey:(NSString *)key {
-   if([key isEqualToString:kCFStreamPropertySSLSettings])
-    return [_socket setSSLProperties:property];
+   if([key isEqualToString:(NSString *)kCFStreamPropertySSLSettings])
+    return [_socket setSSLProperties:(CFDictionaryRef)property];
 
    NSUnimplementedMethod();
    return NO;
@@ -151,7 +151,7 @@ static BOOL socketHasSpaceAvailable(NSSocket *socket){
 }
 
 -(NSInteger)write:(const uint8_t *)buffer maxLength:(NSUInteger)length {
-NSCLog("%s %d",__FUNCTION__,__LINE__);
+
    if(_status!=NSStreamStatusOpen && _status!=NSStreamStatusOpening)
     return -1;
 
@@ -162,14 +162,13 @@ NSCLog("%s %d",__FUNCTION__,__LINE__);
     return [_socket write:buffer maxLength:length];
    }
    else {
-NSCLog("%s %d",__FUNCTION__,__LINE__);
 
     [sslHandler runHandshakeIfNeeded:_socket];
      
     NSInteger check=[sslHandler writePlaintext:buffer maxLength:length];
 
     if(check!=length)
-     NSCLog("FAILURE writePlaintext:%d=%d",length,check);
+     NSCLog("failure writePlaintext:%d=%d",length,check);
     
     [sslHandler runWithSocket:_socket];
     [_inputSource setSelectEventMask:[_inputSource selectEventMask]|NSSelectWriteEvent];

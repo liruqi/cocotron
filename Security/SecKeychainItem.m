@@ -112,7 +112,7 @@ static BOOL bytesAreEqual(uint8_t *bytes1,uint8_t *bytes2,UInt32 length){
 
 -(void)modifyAttributeList:(const SecKeychainAttributeList *)attributeList length:(UInt32)length bytes:(const void *)bytes {
    if(attributeList!=NULL){
-#warning return error
+// FIXME: implement
    }
    
    if(bytes!=NULL){
@@ -126,7 +126,7 @@ static BOOL bytesAreEqual(uint8_t *bytes1,uint8_t *bytes2,UInt32 length){
 
 -(void)copyAttributeInfo:(SecKeychainAttributeInfo *)info itemClass:(SecItemClass *)itemClass attributeList:(SecKeychainAttributeList **)attributeList length:(UInt32 *)length bytes:(void **)bytes {
    if(info!=NULL){
-#warning return error
+// FIXME: implement
    }
    
    if(itemClass!=NULL)

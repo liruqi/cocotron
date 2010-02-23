@@ -14,6 +14,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <Foundation/NSRaise.h>
 #import <Foundation/NSThread-Private.h>
 #import <Foundation/NSObjCRuntime.h>
+#import <Foundation/NSDebug.h>
 #import <stdio.h>
 
 NSString *NSGenericException=@"NSGenericException";
@@ -126,9 +127,10 @@ void NSSetUncaughtExceptionHandler(NSUncaughtExceptionHandler *proc) {
 }
 
 -(void)raise {
-   NSCLog("RAISE %s",[[self description] cString]);
- //  OBJCEnableMsgTracing();
-   return;
+   if(NSDebugEnabled){
+    NSCLog("RAISE %s",[[self description] cString]);
+    return;
+   }
    [_callStack release];
    _callStack=[[NSThread callStackReturnAddresses] retain];
    _NSRaiseException(self);

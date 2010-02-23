@@ -3638,6 +3638,10 @@
 		FEA317C50FD5893300F480D4 /* NSRaise.h in Headers */ = {isa = PBXBuildFile; fileRef = FEA317C10FD5893300F480D4 /* NSRaise.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		FEA3182B0FD5961100F480D4 /* NSRangeEntries.h in Headers */ = {isa = PBXBuildFile; fileRef = FEA318290FD5961100F480D4 /* NSRangeEntries.h */; };
 		FEA3182C0FD5961100F480D4 /* NSRangeEntries.m in Sources */ = {isa = PBXBuildFile; fileRef = FEA3182A0FD5961100F480D4 /* NSRangeEntries.m */; };
+		FEA3F2011133088600690AA2 /* CIAffineTransform.m in Sources */ = {isa = PBXBuildFile; fileRef = FEA3F2001133088600690AA2 /* CIAffineTransform.m */; };
+		FEA3F2021133088600690AA2 /* CIAffineTransform.m in Sources */ = {isa = PBXBuildFile; fileRef = FEA3F2001133088600690AA2 /* CIAffineTransform.m */; };
+		FEA3F2031133088600690AA2 /* CIAffineTransform.m in Sources */ = {isa = PBXBuildFile; fileRef = FEA3F2001133088600690AA2 /* CIAffineTransform.m */; };
+		FEA3F2041133088600690AA2 /* CIAffineTransform.m in Sources */ = {isa = PBXBuildFile; fileRef = FEA3F2001133088600690AA2 /* CIAffineTransform.m */; };
 		FEA661230FF5C6F200E2C03B /* O2Font_gdi.h in Headers */ = {isa = PBXBuildFile; fileRef = FEA661210FF5C6F200E2C03B /* O2Font_gdi.h */; };
 		FEA661240FF5C6F300E2C03B /* O2Font_gdi.m in Sources */ = {isa = PBXBuildFile; fileRef = FEA661220FF5C6F200E2C03B /* O2Font_gdi.m */; };
 		FEA8A98D0CD2CBC000E1E936 /* NSUserInterfaceValidation.h in Headers */ = {isa = PBXBuildFile; fileRef = FEA8A98B0CD2CBC000E1E936 /* NSUserInterfaceValidation.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -4760,6 +4764,7 @@
 		FEA317C10FD5893300F480D4 /* NSRaise.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = NSRaise.h; path = ../Foundation/NSException/NSRaise.h; sourceTree = SOURCE_ROOT; };
 		FEA318290FD5961100F480D4 /* NSRangeEntries.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = NSRangeEntries.h; path = ../../Foundation/NSAttributedString/NSRangeEntries.h; sourceTree = "<group>"; };
 		FEA3182A0FD5961100F480D4 /* NSRangeEntries.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = NSRangeEntries.m; path = ../Foundation/NSAttributedString/NSRangeEntries.m; sourceTree = SOURCE_ROOT; };
+		FEA3F2001133088600690AA2 /* CIAffineTransform.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CIAffineTransform.m; path = ../QuartzCore/CIAffineTransform.m; sourceTree = SOURCE_ROOT; };
 		FEA661210FF5C6F200E2C03B /* O2Font_gdi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = O2Font_gdi.h; sourceTree = "<group>"; };
 		FEA661220FF5C6F200E2C03B /* O2Font_gdi.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = O2Font_gdi.m; sourceTree = "<group>"; };
 		FEA8A98B0CD2CBC000E1E936 /* NSUserInterfaceValidation.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = NSUserInterfaceValidation.h; sourceTree = "<group>"; };
@@ -5947,6 +5952,7 @@
 		FE2BFB2F10FB6EF900D3E136 /* QuartzCore */ = {
 			isa = PBXGroup;
 			children = (
+				FEA3F2001133088600690AA2 /* CIAffineTransform.m */,
 				FE2BFB3010FB6F2300D3E136 /* CAAnimation.m */,
 				FE2BFB3110FB6F2300D3E136 /* CABackingRenderer.m */,
 				FE2BFB3210FB6F2300D3E136 /* CALayer.m */,
@@ -8862,6 +8868,7 @@
 				FE2BFB4C10FB6F2300D3E136 /* CIImage.m in Sources */,
 				FE2BFB4D10FB6F2300D3E136 /* CIVector.m in Sources */,
 				FEF4228E10FB72850027976F /* NSCIImageRep.m in Sources */,
+				FEA3F2021133088600690AA2 /* CIAffineTransform.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -9226,6 +9233,7 @@
 				FE2BFB5610FB6F2300D3E136 /* CIImage.m in Sources */,
 				FE2BFB5710FB6F2300D3E136 /* CIVector.m in Sources */,
 				FEF4229010FB72850027976F /* NSCIImageRep.m in Sources */,
+				FEA3F2031133088600690AA2 /* CIAffineTransform.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -9617,6 +9625,7 @@
 				FE2BFB4210FB6F2300D3E136 /* CIImage.m in Sources */,
 				FE2BFB4310FB6F2300D3E136 /* CIVector.m in Sources */,
 				FEF4228C10FB72850027976F /* NSCIImageRep.m in Sources */,
+				FEA3F2011133088600690AA2 /* CIAffineTransform.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -9983,6 +9992,7 @@
 				FE2BFB6010FB6F2300D3E136 /* CIImage.m in Sources */,
 				FE2BFB6110FB6F2300D3E136 /* CIVector.m in Sources */,
 				FEF4229210FB72850027976F /* NSCIImageRep.m in Sources */,
+				FEA3F2041133088600690AA2 /* CIAffineTransform.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
