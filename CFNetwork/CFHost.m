@@ -202,6 +202,7 @@ static unsigned addressResolverThread(void *arg){
 }
 
 -(void)handleMonitorIndicatesSignaled:(NSHandleMonitor_win32 *)monitor {
+
    if(_request==NULL){
     NSLog(@"CFHost request is NULL %s %d",__FILE__,__LINE__);
     return;
@@ -275,8 +276,12 @@ static CFAddressResolverThreadInfo *startResolverThreadIfNeeded(){
   return asyncInfo;
 }
 
-#warning disable
+#if 1
 #define SYNCHRONOUS 0
+#else
+#warning disable
+#define SYNCHRONOUS 1
+#endif
 
 static void queueHostToAddressResolver(CFHostRef host){
    if(SYNCHRONOUS){
@@ -304,6 +309,7 @@ static void queueHostToAddressResolver(CFHostRef host){
 }
 
 static void cancelHostInAddressResolverIfNeeded(CFHostRef self){
+
    if(self->_request==NULL)
     return;
     

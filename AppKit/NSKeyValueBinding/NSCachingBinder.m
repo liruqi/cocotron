@@ -66,7 +66,6 @@ NSString *NSFormatDisplayPattern(NSString *pattern,id *values,NSUInteger valueCo
    return object;
 }
 
-#warning update
 // This should be updating using NSKVOBinder multiple values code
 - (void)showValue:(id)newValue
 {

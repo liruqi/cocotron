@@ -289,8 +289,11 @@ static void removeObserverInfoForObject(id object,NSObservationInfo *info,NSStri
     return;
    }
 
-   // 10.4 Apple implementation will crash at this point...
-   [NSException raise:@"NSKVOException" format:@"trying to remove observer %@ for unobserved key path %@", observer, keyPath];
+   if(NSDebugEnabled){
+    // 10.4 Apple implementation will crash at this point...
+    // We only raise during debugging, there are still issues with bindings unobserving not-observed objects
+    [NSException raise:@"NSKVOException" format:@"trying to remove observer %@ for unobserved key path %@", observer, keyPath];
+   }
    
 }
 
@@ -455,7 +458,7 @@ static void removeObserverInfoForObject(id object,NSObservationInfo *info,NSStri
      key=check->keyPath;
      rest=nil;
     }      
-#warning problems
+// FIXME:
 // adding an observer with the same options here means the initial option is used, which we don't want during will/did
 
     if(rest){

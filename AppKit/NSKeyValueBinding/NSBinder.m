@@ -217,7 +217,6 @@ static void* NSBinderChangeContext;
 }
 
 - (void)observeValueForKeyPath:(NSString *)kp ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
-NSLog(@"ENTER -[_NSBInder observeValueForKeyPath %@",kp);
    if([self allowsReverseTransformation]){
 
     if(context==&NSBinderChangeContext) {
@@ -225,7 +224,7 @@ NSLog(@"ENTER -[_NSBInder observeValueForKeyPath %@",kp);
 
       //NSLog(@"bind event from %@.%@ alias %@ to %@.%@ (%@)", [_source className], _binding, _bindingPath, [_destination className], _keyPath, self);
       //NSLog(@"new value %@", [_source valueForKeyPath:_bindingPath]);
-   NSLog(@"DST setting %@, for %@",[_source valueForKeyPath:_bindingPath],_keyPath);
+ //  NSLog(@"DST setting %@, for %@",[_source valueForKeyPath:_bindingPath],_keyPath);
       
        id value=[_source valueForKeyPath:_bindingPath];
        
@@ -236,7 +235,6 @@ NSLog(@"ENTER -[_NSBInder observeValueForKeyPath %@",kp);
        [self startObservingChanges];
     }
    }
-NSLog(@"EXIT -[_NSBInder observeValueForKeyPath %@",kp);
 }
 
 -(void)dealloc {

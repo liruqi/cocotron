@@ -13,7 +13,7 @@
 
 -initWithDescriptor:(CFStringRef)descriptor trustedList:(CFArrayRef)trustedList {
    _descriptor=CFRetain(descriptor);
-   _trustedList=CFRetain(trustedList);
+   _trustedList=(CFArrayRef)CFRetain(trustedList);
    return self;
 }
 

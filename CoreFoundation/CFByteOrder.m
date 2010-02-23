@@ -1,5 +1,30 @@
 #import <CoreFoundation/CFByteOrder.h>
 
+Float32 CFConvertFloat32SwappedToHost(CFSwappedFloat32 value) {
+   union {
+    CFSwappedFloat32 w;
+    Float32  f;
+   } swap;
+   swap.w=value;
+
+#ifdef __LITTLE_ENDIAN__
+   swap.w.v=CFSwapInt32(swap.w.v);
+#endif
+
+   return swap.f;
+}
+
+uint32_t CFSwapInt32(uint32_t value) {
+   uint32_t result;
+
+   result=value<<24;
+   result|=(value<<8)&0x00FF0000;
+   result|=(value>>8)&0x0000FF00;
+   result|=value>>24;
+
+   return result;
+}
+
 uint16_t OSReadBigInt16(const void *ptr,size_t offset){
    const uint8_t *bytes=ptr+offset;
    uint16_t result;

@@ -133,6 +133,7 @@ typedef struct NSSelectSetBackgroundInfo {
    
    CRITICAL_SECTION *lock;
    
+   BOOL              shutdown;
    native_set       *inputRead;
    native_set       *inputWrite;
    native_set       *inputExcept;
@@ -144,6 +145,7 @@ typedef struct NSSelectSetBackgroundInfo {
 } NSSelectSetBackgroundInfo;
 
 static WINAPI DWORD selectThread(LPVOID arg){
+   BOOL   shutdown=NO;
    struct NSSelectSetBackgroundInfo *async=arg;
    native_set *activeRead;
    native_set *activeWrite;
@@ -157,7 +159,7 @@ static WINAPI DWORD selectThread(LPVOID arg){
    checkForErrors=native_set_new();
    gotErrors=native_set_new();
    
-   while(YES){
+   while(!shutdown){
     BOOL setEvent;
     
     EnterCriticalSection(async->lock);
@@ -218,7 +220,32 @@ static WINAPI DWORD selectThread(LPVOID arg){
     
     if(setEvent)
      SetEvent(async->eventHandle);
+     
+    EnterCriticalSection(async->lock);
+    shutdown=async->shutdown;
+    LeaveCriticalSection(async->lock);
    }
+   
+   CloseHandle(async->eventHandle);
+   
+   [async->pingRead close];
+   [async->pingRead release];
+   
+   [async->pingWrite close];
+   [async->pingWrite release];
+   
+   native_set_free(async->inputRead);
+   native_set_free(async->inputWrite);
+   native_set_free(async->inputExcept);
+
+   native_set_free(async->outputRead);
+   native_set_free(async->outputWrite);
+   native_set_free(async->outputExcept);
+   native_set_free(async->outputError);
+
+   NSZoneFree(NULL,async->lock);
+   NSZoneFree(NULL,async);
+   
    return 0;
 }
 
@@ -255,6 +282,8 @@ static struct NSSelectSetBackgroundInfo *asyncThreadInfo(){
     result->lock=NSZoneMalloc(NULL,sizeof(CRITICAL_SECTION));
     InitializeCriticalSection(result->lock);
    
+    result->shutdown=NO;
+    
     result->inputRead=native_set_new();
     result->inputWrite=native_set_new();
     result->inputExcept=native_set_new();
@@ -272,6 +301,29 @@ static struct NSSelectSetBackgroundInfo *asyncThreadInfo(){
    }
    
    return result;
+}
+
+void NSSelectSetShutdownForCurrentThread() {
+   pthread_once(&asyncThreadKeyOnce,asyncThreadKeyInitialize);
+   
+   struct NSSelectSetBackgroundInfo *async=pthread_getspecific(asyncThreadKey);
+   if(async!=NULL){
+    pthread_setspecific(asyncThreadKey,NULL);
+    
+    [async->eventMonitor invalidate];
+    [async->eventMonitor release];
+    async->eventMonitor=nil;
+    [async->eventMonitorModes release];
+    async->eventMonitorModes=nil;
+    
+    EnterCriticalSection(async->lock);
+    async->shutdown=YES;
+
+    uint8_t one[1]={ 42 };
+   
+    [async->pingWrite write:one maxLength:1];
+    LeaveCriticalSection(async->lock);
+   }
 }
 
 static void transferSetToNative(NSSet *set,native_set *native){

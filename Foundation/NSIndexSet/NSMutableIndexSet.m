@@ -194,12 +194,10 @@ static void removeRangeAtPosition(NSRange *ranges,NSUInteger length,NSUInteger p
 }
 
 -(void)shiftIndexesStartingAtIndex:(NSUInteger)index by:(NSInteger)delta {
-#warning IMPLEMENT
-   return;
-   
+
    if(delta<0){
     delta=-delta;
-    NSUInteger pos=positionOfRangeLessThanOrEqualToLocation(_ranges,_length,index-delta);
+    NSInteger pos=positionOfRangeLessThanOrEqualToLocation(_ranges,_length,index-delta);
     
     if(pos==NSNotFound)
      return; // raise?
@@ -228,8 +226,8 @@ static void removeRangeAtPosition(NSRange *ranges,NSUInteger length,NSUInteger p
     
    }
    else {
-    NSUInteger pos=positionOfRangeLessThanOrEqualToLocation(_ranges,_length,index);
-    
+    NSInteger pos=positionOfRangeLessThanOrEqualToLocation(_ranges,_length,index);
+        
     if(pos==NSNotFound)
      return; // raise?
     
@@ -246,7 +244,7 @@ static void removeRangeAtPosition(NSRange *ranges,NSUInteger length,NSUInteger p
     
     // move all ranges at or above index by delta
     NSInteger count=_length;
-    
+
     while(--count>=pos){
      if(_ranges[count].location>=index)
       _ranges[count].location+=delta;

@@ -93,7 +93,9 @@ APPKIT_EXPORT NSString *NSViewFocusDidChangeNotification;
    NSFocusRingType   _focusRingType;
    
    BOOL     _wantsLayer;
+   CALayer *_backingLayer;
    CALayer *_layer;
+   NSArray *_contentFilters;
 }
 
 +(NSView *)focusView;

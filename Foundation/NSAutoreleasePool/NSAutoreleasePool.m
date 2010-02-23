@@ -95,29 +95,10 @@ static inline void addObject(NSAutoreleasePool *self,id object){
    int i;
 
    [_childPool release];
-
-   BOOL report=(_nextSlot>100000);
-   if(report)
-    NSCLog("slotCount=%d",_nextSlot);
    
    for(i=0;i<_nextSlot;i++){
     NS_DURING
      id object=_pages[i/PAGESIZE][i%PAGESIZE];
-
-     if(NO && report){
-     int size=0;
-
-     if([object isKindOfClass:[NSData class]])
-      size=[object length];
-     if([object isKindOfClass:[NSString class]])
-      size=[object length];
-     if([object isKindOfClass:[NSArray class]])
-      size=[object count];
-     if([object isKindOfClass:[NSDictionary class]])
-      size=[object count];
-      
-     NSCLog("class=%s size=%d",class_getName([object class]),size);
-     }
      
      [object release];
     NS_HANDLER
