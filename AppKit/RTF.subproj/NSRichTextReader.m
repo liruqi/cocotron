@@ -173,13 +173,13 @@ static inline void flushPreviousString(NSRichTextReader *self) {
    if([self isEqualToString:@"b"]){
     NSFont *font=[_currentAttributes objectForKey:NSFontAttributeName];
 
-    font=[[NSFontManager sharedFontManager] convertFont:font toHaveTrait:argument?NSBoldFontMask:NSUnboldFontMask];
+ //   font=[[NSFontManager sharedFontManager] convertFont:font toHaveTrait:argument?NSBoldFontMask:NSUnboldFontMask];
     [_currentAttributes setObject:font forKey:NSFontAttributeName];
    }
    else if([self isEqualToString:@"i"]){
     NSFont *font=[_currentAttributes objectForKey:NSFontAttributeName];
 
-    font=[[NSFontManager sharedFontManager] convertFont:font toHaveTrait:argument?NSItalicFontMask:NSUnitalicFontMask];
+ //   font=[[NSFontManager sharedFontManager] convertFont:font toHaveTrait:argument?NSItalicFontMask:NSUnitalicFontMask];
     [_currentAttributes setObject:font forKey:NSFontAttributeName];
    }
    else if([self isEqualToString:@"par"]){
@@ -191,7 +191,7 @@ static inline void flushPreviousString(NSRichTextReader *self) {
    else if([self isEqualToString:@"fs"]){
     NSFont *font=[_currentAttributes objectForKey:NSFontAttributeName];
 
-    font=[[NSFontManager sharedFontManager] convertFont:font toSize:argument/2];
+//    font=[[NSFontManager sharedFontManager] convertFont:font toSize:argument/2];
     [_currentAttributes setObject:font forKey:NSFontAttributeName];
    }
    else if([self isEqualToString:@"fonttbl"]){
@@ -251,6 +251,7 @@ static inline void flushPreviousString(NSRichTextReader *self) {
      _range.length++;
     }
     _range.length--;
+#if 0
     {
      NSString         *path=[_imageDirectory stringByAppendingPathComponent:self];
      NSTextAttachment *attachment=[[[NSTextAttachment alloc] initWithContentsOfFile:path] autorelease];
@@ -266,6 +267,7 @@ static inline void flushPreviousString(NSRichTextReader *self) {
       [_currentAttributes removeObjectForKey:NSAttachmentAttributeName];
      }
     }
+#endif
     _range.length++;
     save=_range;
    }

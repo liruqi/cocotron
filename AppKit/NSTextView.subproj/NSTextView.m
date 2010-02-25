@@ -8,33 +8,34 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <AppKit/NSTextView.h>
 #import <AppKit/NSTextContainer.h>
 #import <AppKit/NSTextStorage.h>
+#import <AppKit/NSTextStorage_concrete.h>
 #import <AppKit/NSLayoutManager.h>
-#import <AppKit/NSRulerView.h>
-#import <AppKit/NSRulerMarker.h>
-#import <AppKit/NSApplication.h>
+//#import <AppKit/NSRulerView.h>
+//#import <AppKit/NSRulerMarker.h>
+//#import <AppKit/NSApplication.h>
 #import <AppKit/NSColor.h>
 #import <AppKit/NSGraphics.h>
 #import <AppKit/NSFont.h>
 #import <AppKit/NSStringDrawing.h>
-#import <AppKit/NSEvent.h>
-#import <AppKit/NSWindow.h>
-#import <AppKit/NSClipView.h>
+//#import <AppKit/NSEvent.h>
+//#import <AppKit/NSWindow.h>
+//#import <AppKit/NSClipView.h>
 #import <AppKit/NSAttributedString.h>
 #import <AppKit/NSPasteboard.h>
-#import <AppKit/NSMenu.h>
-#import <AppKit/NSMenuItem.h>
-#import <AppKit/NSCursor.h>
+//#import <AppKit/NSMenu.h>
+//#import <AppKit/NSMenuItem.h>
+//#import <AppKit/NSCursor.h>
 #import <AppKit/NSParagraphStyle.h>
 #import <AppKit/NSTextTab.h>
-#import <AppKit/NSImage.h>
+//#import <AppKit/NSImage.h>
 #import <AppKit/NSRichTextReader.h>
 #import <AppKit/NSRichTextWriter.h>
-#import <AppKit/NSDisplay.h>
+//#import <AppKit/NSDisplay.h>
 #import <AppKit/NSFontManager.h>
-#import <AppKit/NSScrollView.h>
+//#import <AppKit/NSScrollView.h>
 #import <AppKit/NSDragging.h>
 #import <Foundation/NSKeyedArchiver.h>
-#import <AppKit/NSGraphicsStyle.h>
+//#import <AppKit/NSGraphicsStyle.h>
 #import <AppKit/NSGraphicsContext.h>
 #import "NSTextViewSharedData.h"
 #import <AppKit/NSRaise.h>
@@ -64,6 +65,7 @@ NSString *NSOldSelectedCharacterRange=@"NSOldSelectedCharacterRange";
 @implementation NSTextView
 
 -(void)configureMenu {
+#if 0
    static NSMenu *menu=nil;
 
    if(menu==nil){
@@ -79,6 +81,7 @@ NSString *NSOldSelectedCharacterRange=@"NSOldSelectedCharacterRange";
                     action:@selector(selectAll:) keyEquivalent:@""];
    }
    [self setMenu:menu];
+#endif
 }
 
 -(void)encodeWithCoder:(NSCoder *)coder {
@@ -172,15 +175,15 @@ NSString *NSOldSelectedCharacterRange=@"NSOldSelectedCharacterRange";
       [NSColor selectedTextBackgroundColor],NSBackgroundColorAttributeName,
       nil] retain];
 
-   [self setBoundsOrigin:NSMakePoint(-_textContainerInset.width,-_textContainerInset.height)];
+ //  [self setBoundsOrigin:NSMakePoint(-_textContainerInset.width,-_textContainerInset.height)];
    [self configureMenu];
-   [self registerForDraggedTypes:[NSArray arrayWithObject:NSStringPboardType]];
+  // [self registerForDraggedTypes:[NSArray arrayWithObject:NSStringPboardType]];
 
    return self;
 }
 
 -initWithFrame:(NSRect)frame {
-   NSTextStorage   *storage=[[NSTextStorage new] autorelease];
+   NSTextStorage   *storage=[[[NSTextStorage alloc] init] autorelease];
    NSLayoutManager *layout=[[NSLayoutManager new] autorelease];
    NSTextContainer *container=[[[NSTextContainer alloc] initWithContainerSize:frame.size] autorelease];
 
@@ -232,7 +235,7 @@ NSString *NSOldSelectedCharacterRange=@"NSOldSelectedCharacterRange";
 }
 
 -(void)resetCursorRects {
-   [self addCursorRect:[self visibleRect] cursor:[NSCursor IBeamCursor]];
+//   [self addCursorRect:[self visibleRect] cursor:[NSCursor IBeamCursor]];
 }
 
 -(NSTextContainer *)textContainer {
@@ -525,8 +528,10 @@ NSString *NSOldSelectedCharacterRange=@"NSOldSelectedCharacterRange";
    if(NSIsEmptyRect(rect))
     return;
 
-   if(turnedOn)
-    [[self graphicsStyle] drawTextViewInsertionPointInRect:rect color:color];
+   if(turnedOn){
+    [color setFill];
+    NSRectFill(rect);
+   }
    else {
     NSLayoutManager *layoutManager=[self layoutManager];
     NSPoint          origin=[self textContainerOrigin];
@@ -588,6 +593,10 @@ NSString *NSOldSelectedCharacterRange=@"NSOldSelectedCharacterRange";
 -(void)_displayInsertionPointWithState:(BOOL)ison {
    _insertionPointOn=ison;
 
+// FIXME: this is heavy duty
+   [self setNeedsDisplay];
+   return;
+
    [self lockFocus];
    [self drawInsertionPointInRect:_insertionPointRect color:_insertionPointColor turnedOn:_insertionPointOn];
    [self unlockFocus];
@@ -608,7 +617,7 @@ NSString *NSOldSelectedCharacterRange=@"NSOldSelectedCharacterRange";
     _insertionPointRect=[self _viewRectForCharacterRange:[self selectedRange]];
 
    if(restartFlag){
-    float interval=[[NSDisplay currentDisplay] textCaretBlinkInterval];
+    float interval=1.0;//[[NSDisplay currentDisplay] textCaretBlinkInterval];
 
     _insertionPointOn=[self shouldDrawInsertionPoint];
     [_insertionPointTimer invalidate];
@@ -616,11 +625,12 @@ NSString *NSOldSelectedCharacterRange=@"NSOldSelectedCharacterRange";
     _insertionPointTimer=nil;
 
     _insertionPointTimer=[[NSTimer scheduledTimerWithTimeInterval:interval target:self selector:@selector(_insertionPointTimerFired:) userInfo:nil repeats:YES] retain];
-    [[NSRunLoop currentRunLoop] addTimer:_insertionPointTimer forMode:NSModalPanelRunLoopMode];
+  //  [[NSRunLoop currentRunLoop] addTimer:_insertionPointTimer forMode:NSModalPanelRunLoopMode];
    }
 }
 
 -(void)updateRuler {
+#if 0
     NSRulerView *ruler = [[self enclosingScrollView] horizontalRulerView];
 
     if(ruler!=nil){
@@ -644,7 +654,9 @@ NSString *NSOldSelectedCharacterRange=@"NSOldSelectedCharacterRange";
      }
      else
          [ruler addMarkersWithImage:nil measurementUnit:nil];
+        
    }
+#endif
 }
 
 -(void)undo:sender {
@@ -1732,6 +1744,7 @@ NSString *NSOldSelectedCharacterRange=@"NSOldSelectedCharacterRange";
 }
 
 -(void)toggleRuler:sender {
+#if 0
     BOOL flag = ![self usesRuler];
     
     [self setUsesRuler:flag];
@@ -1742,6 +1755,7 @@ NSString *NSOldSelectedCharacterRange=@"NSOldSelectedCharacterRange";
     // NB localize
     if ([sender isKindOfClass:[NSMenuItem class]])
         [sender setTitle:[NSString stringWithFormat:@"%@ Ruler", flag ? @"Hide" : @"Show"]];
+#endif
 }
 
 
@@ -2122,7 +2136,8 @@ NSString *NSOldSelectedCharacterRange=@"NSOldSelectedCharacterRange";
    else {
 
     size.height=MAX([self frame].size.height,size.height);
-    
+
+#if 0    
     NSClipView *clipView=[self superview];
     
     if([clipView isKindOfClass:[NSClipView class]]){
@@ -2131,10 +2146,15 @@ NSString *NSOldSelectedCharacterRange=@"NSOldSelectedCharacterRange";
      if(size.width<[clipView bounds].size.width)
       size.width=[clipView bounds].size.width;
     }
+#endif
    }
 
-   if([self isHorizontallyResizable] || [self isVerticallyResizable])
-    [self setFrameSize:size];
+   if([self isHorizontallyResizable] || [self isVerticallyResizable]){
+    CGRect frame=[self frame];
+    frame.size=size;
+    
+    [self setFrame:frame];
+   }
 }
 
 -(void)scrollRangeToVisible:(NSRange)range {
@@ -2145,6 +2165,7 @@ NSString *NSOldSelectedCharacterRange=@"NSOldSelectedCharacterRange";
 }
 
 -(void)changeFont:sender {
+#if 0
    NSFont *font=[[NSFontManager sharedFontManager] convertFont:[self font]];
 
    if(![self isRichText])
@@ -2152,6 +2173,7 @@ NSString *NSOldSelectedCharacterRange=@"NSOldSelectedCharacterRange";
    else {
     [[self textStorage] addAttribute:NSFontAttributeName value:font range:[self selectedRange]];
    }
+#endif
 }
 
 // making changes to textstorage attributes seems to wipe out the selection in this codebase,
@@ -2276,6 +2298,7 @@ NSString *NSOldSelectedCharacterRange=@"NSOldSelectedCharacterRange";
    [self scrollRangeToVisible:[self selectedRange]];
 }
 
+#if 0
 -(void)keyDown:(NSEvent *)event {
     if([event type]==NSKeyDown && [self isEditable]) {
         _processingKeyEvent = YES;
@@ -2283,6 +2306,7 @@ NSString *NSOldSelectedCharacterRange=@"NSOldSelectedCharacterRange";
         _processingKeyEvent = NO;
     }
 }
+#endif
 
 -(void)doCommandBySelector:(SEL)selector {
     if ([_delegate respondsToSelector:@selector(textView:doCommandBySelector:)])
@@ -2305,6 +2329,10 @@ NSString *NSOldSelectedCharacterRange=@"NSOldSelectedCharacterRange";
 }
 
 -(void)drawRect:(NSRect)rect {
+   NSGraphicsContext *context=[NSGraphicsContext graphicsContextWithGraphicsPort:UIGraphicsGetCurrentContext() flipped:YES];
+   [NSGraphicsContext saveGraphicsState];
+   [NSGraphicsContext setCurrentContext:context];
+   
    NSLayoutManager *layoutManager=[self layoutManager];
    NSPoint          origin=[self textContainerOrigin];
    NSRect           glyphRect=NSInsetRect([self visibleRect],-_textContainerInset.width,-_textContainerInset.height);
@@ -2321,9 +2349,90 @@ NSString *NSOldSelectedCharacterRange=@"NSOldSelectedCharacterRange";
     [self updateInsertionPointStateAndRestartTimer:NO];
     [self drawInsertionPointInRect:_insertionPointRect color:_insertionPointColor turnedOn:_insertionPointOn];
    }
+   [NSGraphicsContext restoreGraphicsState];
 }
 
+- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
+   if([touches count]==1){
+    UITouch *touch=[touches anyObject];
+    CGPoint  point=[touch locationInView:self];
+
+   float    fraction=0;
+   NSRange  firstRange,lastRange,selection;
+   NSSelectionAffinity affinity=NSSelectionAffinityUpstream;
+   NSSelectionGranularity granularity = [touch tapCount]-1;
+
+   if(![self isSelectable])
+    return;
+
+   firstRange.location=[self glyphIndexForPoint:point fractionOfDistanceThroughGlyph:&fraction];
+   firstRange.length=0;
+
+   if(firstRange.location==NSNotFound)
+    return;
+
+   if(fraction>=0.5)
+    firstRange.location++;
+
+   
+   if (firstRange.location<[_textStorage length])
+       firstRange = [self selectionRangeForProposedRange:firstRange granularity:granularity];
+
+   _selectionOrigin = firstRange.location;
+   lastRange=firstRange;
+
+   selection=NSUnionRange(firstRange,lastRange);
+
+   [self setSelectedRange:selection affinity:affinity stillSelecting:YES];
+   }
+   
+}
+
+- (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event {
+NSLog(@"touches moved");
+   if([touches count]==1){
+    UITouch *touch=[touches anyObject];
+    CGPoint  point=[touch previousLocationInView:self];
+   float    fraction=0;
+   NSRange  firstRange,lastRange,selection;
+
+  //  if(!NSMouseInRect(point,[self visibleRect],[self isFlipped]))
+  //  [[self superview] autoscroll:lastDrag];
+
+    lastRange.location=[self glyphIndexForPoint:point fractionOfDistanceThroughGlyph:&fraction];
+    lastRange.length=0;
+
+    if(lastRange.location==NSNotFound)
+     return;
+
+    if(fraction>=0.5)
+     lastRange.location++;
+
+    if(lastRange.location<[_textStorage length])
+       lastRange = [self selectionRangeForProposedRange:lastRange granularity:_selectionGranularity];
+
+    selection=NSUnionRange(firstRange,lastRange);
+    NSSelectionAffinity affinity;
+    if(firstRange.location<=lastRange.location)
+     affinity=NSSelectionAffinityUpstream;
+    else
+     affinity=NSSelectionAffinityDownstream;
+
+    [self setSelectedRange:selection affinity:affinity stillSelecting:YES];
+    }
+}
+
+- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
+   [self setSelectedRange:[self selectedRange] affinity:_selectionAffinity stillSelecting:NO];
+}
+
+- (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event {
+   [self setSelectedRange:[self selectedRange] affinity:_selectionAffinity stillSelecting:NO];
+}
+
+
 -(void)mouseDown:(NSEvent *)event {
+#if 0
    NSEvent *lastDrag=event;
    NSPoint  point=[self convertPoint:[event locationInWindow] fromView:nil];
    float    fraction=0;
@@ -2391,7 +2500,7 @@ NSString *NSOldSelectedCharacterRange=@"NSOldSelectedCharacterRange";
    [NSEvent stopPeriodicEvents];
 
    [self setSelectedRange:selection affinity:affinity stillSelecting:NO];
-
+#endif
 }
 
 -(NSUndoManager *)undoManager {
@@ -2404,6 +2513,7 @@ NSString *NSOldSelectedCharacterRange=@"NSOldSelectedCharacterRange";
     return [super undoManager];
 }
 
+#if 0
 -(BOOL)validateMenuItem:(NSMenuItem *)item {
     if ([item action] == @selector(undo:))
         return _allowsUndo ? [[self undoManager] canUndo] || (_undoString != nil) : NO;
@@ -2412,6 +2522,7 @@ NSString *NSOldSelectedCharacterRange=@"NSOldSelectedCharacterRange";
 
     return YES;
 }
+#endif
 
 -(NSDragOperation)draggingUpdated:(id <NSDraggingInfo>)sender {
    NSPoint   point=[self convertPoint:[sender draggingLocation] fromView:nil];

@@ -13,20 +13,28 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <AppKit/NSTextContainer.h>
 #import <AppKit/NSView.h>
 #import <AppKit/NSGraphicsContextFunctions.h>
-#import <ApplicationServices/ApplicationServices.h>
+#import <CoreGraphics/CoreGraphics.h>
 
 const float NSStringDrawerLargeDimension=1000000.;
 
 @implementation NSStringDrawer
 
 +(NSStringDrawer *)sharedStringDrawer {
-   return NSThreadSharedInstance(@"NSStringDrawer");
+   NSMutableDictionary *shared=[[NSThread currentThread] threadDictionary];
+   NSStringDrawer *result=[shared objectForKey:@"NSStringDrawer"];
+   
+   if(result==nil){
+    result=[[NSStringDrawer alloc] init];
+    [shared setObject:result forKey:@"NSStringDrawer"];
+   }
+   
+   return result;
 }
 
 -(NSStringDrawer *)init {
    self=[super init];
    if (self!=nil) {
-    _textStorage=[NSTextStorage new];
+    _textStorage=[[NSTextStorage alloc] init];
     _layoutManager=[NSLayoutManager new];
     _textContainer=[[NSTextContainer alloc] init];
     [_textStorage addLayoutManager:_layoutManager];

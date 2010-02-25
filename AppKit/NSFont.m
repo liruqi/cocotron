@@ -7,10 +7,9 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
 #import <AppKit/NSFont.h>
-#import <AppKit/NSFontFamily.h>
-#import <AppKit/NSWindow.h>
+//#import <AppKit/NSFontFamily.h>
 #import <AppKit/NSGraphicsContextFunctions.h>
-#import <ApplicationServices/ApplicationServices.h>
+#import <CoreGraphics/CoreGraphics.h>
 #import <Foundation/NSKeyedArchiver.h>
 #import <AppKit/NSRaise.h>
 
@@ -243,7 +242,7 @@ static NSFont **_fontCache=NULL;
 
    [_name release];
    CGFontRelease(_cgFont);
-   [_ctFont release];
+   CFRelease(_ctFont);
    [super dealloc];
 }
 
@@ -291,6 +290,7 @@ static NSFont **_fontCache=NULL;
    return _matrix;
 }
 
+#if 0
 -(NSAffineTransform *)textTransform {
    NSAffineTransform      *result=[NSAffineTransform transform];
    NSAffineTransformStruct fields={
@@ -302,6 +302,7 @@ static NSFont **_fontCache=NULL;
 
    return result;
 }
+#endif
 
 -(NSFontRenderingMode)renderingMode {
    NSUnimplementedMethod();
@@ -316,6 +317,8 @@ static NSFont **_fontCache=NULL;
 -(NSStringEncoding)mostCompatibleStringEncoding {
    return _encoding;
 }
+
+#if 0
 
 -(NSString *)familyName {
    NSString *familyName = [[NSFontFamily fontFamilyWithName:_name]
@@ -335,6 +338,7 @@ arrayWithArray:[_name componentsSeparatedByString:blank]];
 
    return familyName;
 }
+#endif
 
 -(NSString *)displayName {
    NSUnimplementedMethod();
@@ -489,7 +493,15 @@ arrayWithArray:[_name componentsSeparatedByString:blank]];
 }
 
 -(NSPoint)positionOfGlyph:(NSGlyph)current precededByGlyph:(NSGlyph)previous isNominal:(BOOL *)isNominalp {
-   return [_ctFont positionOfGlyph:current precededByGlyph:previous isNominal:isNominalp];
+   if(previous==NSNullGlyph)
+    return NSMakePoint(0,0);
+   
+   NSSize  advancement=[self advancementForGlyph:previous];
+   NSPoint result={0,0};
+   result.x=advancement.width;
+   result.y=advancement.height;
+
+   return result;
 }
 
 -(void)getAdvancements:(NSSize *)advancements forGlyphs:(const NSGlyph *)glyphs count:(unsigned)count {

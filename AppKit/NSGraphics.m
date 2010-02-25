@@ -12,8 +12,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <AppKit/NSView.h>
 #import <AppKit/NSRaise.h>
 
-#import <AppKit/NSDisplay.h>
-#import <ApplicationServices/ApplicationServices.h>
+//#import <AppKit/NSDisplay.h>
+#import <CoreGraphics/CoreGraphics.h>
 
 const float NSBlack=0;
 const float NSDarkGray=0.333;
@@ -483,11 +483,15 @@ void NSHighlightRect(NSRect rect) {
 }
 
 void NSCopyBits(int gState,NSRect rect,NSPoint point) {
+#if 0
    CGContextCopyBits(NSCurrentGraphicsPort(),rect,point,gState);
+#endif
 }
 
 void NSBeep() {
+#if 0
    [[NSDisplay currentDisplay] beep];
+#endif
 }
 
 void NSEnableScreenUpdates(void) {
