@@ -17,7 +17,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <AppKit/NSRangeArray.h>
 #import <AppKit/NSTextAttachment.h>
 #import <AppKit/NSTextTab.h>
-#import <AppKit/NSImage.h>
+//#import <AppKit/NSImage.h>
 
 @implementation NSTypesetter_concrete
 

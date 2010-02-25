@@ -37,6 +37,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    return self;
 }
 
+-init {
+   return [self initWithString:@""];
+}
+
 -(void)dealloc {
    [_string release];
    NSFreeRangeEntries(_rangeToAttributes);

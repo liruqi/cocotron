@@ -25,7 +25,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     NSMutableDictionary *attributes=[[[self attributesAtIndex:location effectiveRange:&effectiveRange] mutableCopy] autorelease];
     NSFont              *font=NSFontAttributeInDictionary(attributes);
 
-    font=[[NSFontManager sharedFontManager] convertFont:font toHaveTrait:traits];
+//    font=[[NSFontManager sharedFontManager] convertFont:font toHaveTrait:traits];
     [attributes setObject:font forKey:NSFontAttributeName];
 
     if(effectiveRange.location<location){

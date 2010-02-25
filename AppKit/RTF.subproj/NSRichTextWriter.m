@@ -95,7 +95,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     NSRange         effectiveRange;
     NSDictionary   *attributes=[_attributedString attributesAtIndex:location effectiveRange:&effectiveRange];
     NSFont         *font=NSFontAttributeInDictionary(attributes);
-    NSFontTraitMask traits=[[NSFontManager sharedFontManager] traitsOfFont:font];
+    NSFontTraitMask traits=0;//[[NSFontManager sharedFontManager] traitsOfFont:font];
 
     if(effectiveRange.location<location){
      effectiveRange.length=NSMaxRange(effectiveRange)-location;

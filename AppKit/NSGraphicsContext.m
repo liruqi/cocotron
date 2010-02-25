@@ -6,10 +6,11 @@ The above copyright notice and this permission notice shall be included in all c
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. */
 #import <AppKit/NSGraphicsContext.h>
-#import <AppKit/NSWindow-Private.h>
-#import <AppKit/NSCachedImageRep.h>
-#import <AppKit/NSBitmapImageRep-Private.h>
-#import <ApplicationServices/ApplicationServices.h>
+//#import <AppKit/NSWindow-Private.h>
+//#import <AppKit/NSCachedImageRep.h>
+//#import <AppKit/NSBitmapImageRep-Private.h>
+#import <AppKit/NSView.h>
+#import <CoreGraphics/CoreGraphics.h>
 
 @class NSColor;
 
@@ -27,7 +28,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 -initWithGraphicsPort:(CGContextRef)context flipped:(BOOL)flipped {
    _graphicsPort=CGContextRetain(context);
    _focusStack=[NSMutableArray new];
-   _isDrawingToScreen=NO;
+   _isDrawingToScreen=YES;
    _isFlipped=flipped;
    return self;
 }
@@ -75,7 +76,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 +(NSMutableArray *)_contextStack {
-   NSMutableDictionary *shared=[NSCurrentThread() sharedDictionary];
+   NSMutableDictionary *shared=[[NSThread currentThread] threadDictionary];
    NSMutableArray      *stack=[shared objectForKey:@"NSGraphicsContext.stack"];
 
    if(stack==nil){
@@ -87,7 +88,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 static NSGraphicsContext *_currentContext() {
-   return NSThreadSharedInstanceDoNotCreate(@"NSGraphicsContext");
+   NSMutableDictionary *shared=[[NSThread currentThread] threadDictionary];
+   return [shared objectForKey:@"NSGraphicsContext"];
 }
 
 CGContextRef NSCurrentGraphicsPort() {
@@ -114,7 +116,8 @@ NSMutableArray *NSCurrentFocusStack() {
 }
 
 +(void)setCurrentContext:(NSGraphicsContext *)context {
-   [NSCurrentThread() setSharedObject:context forClassName:@"NSGraphicsContext"];
+   NSMutableDictionary *shared=[[NSThread currentThread] threadDictionary];
+   [shared setObject:context forKey:@"NSGraphicsContext"];
 }
 
 +(void)saveGraphicsState {

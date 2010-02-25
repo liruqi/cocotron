@@ -1,5 +1,5 @@
 #import <AppKit/NSColor.h>
-#import <ApplicationServices/ApplicationServices.h>
+#import <CoreGraphics/CoreGraphics.h>
 
 @interface NSColor(NSAppKitPrivate)
 -(CGColorRef)createCGColorRef;

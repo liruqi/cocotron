@@ -8,7 +8,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 #import <AppKit/NSColor_catalog.h>
 #import <AppKit/NSGraphics.h>
-#import <AppKit/NSDisplay.h>
+//#import <AppKit/NSDisplay.h>
 #import <AppKit/NSColor-Private.h>
 
 @implementation NSColor_catalog
@@ -69,6 +69,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(NSColor *)colorUsingColorSpaceName:(NSString *)colorSpace device:(NSDictionary *)device {
+#if 1
+   return nil;
+#else
  NSColor *result;
 
     if ([colorSpace isEqualToString:[self colorSpaceName]])
@@ -78,28 +81,37 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    if(result==nil)
     NSLog(@"result ==nil %@ %@",_colorName,colorSpace);
    return result;
+#endif
 }
 
 -(CGColorRef)createCGColorRef {
+#if 1
+   return NULL;
+#else
    return [[[NSDisplay currentDisplay] colorWithName:_colorName] createCGColorRef];
+#endif
 }
 
 -(void)setFill {
+#if 0
     NSColor *color=[[NSDisplay currentDisplay] colorWithName:_colorName];
     
     if(color==nil)
         [NSException raise:@"NSUnknownColor" format:@"Unknown color %@ in catalog %@",_colorName,_catalogName];
     
     [color setFill];
+#endif
 }
 
 -(void)setStroke {
+#if 0
     NSColor *color=[[NSDisplay currentDisplay] colorWithName:_colorName];
     
     if(color==nil)
         [NSException raise:@"NSUnknownColor" format:@"Unknown color %@ in catalog %@",_colorName,_catalogName];
     
     [color setStroke];
+#endif
 }
 
 @end
