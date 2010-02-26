@@ -834,7 +834,8 @@ NSString *NSWindowDidEndLiveResizeNotification=@"NSWindowDidEndLiveResizeNotific
 
 -(void)setAlphaValue:(float)value {
    _alphaValue=value;
-   NSUnimplementedMethod();
+// FIXME:
+//   NSUnimplementedMethod();
 }
 
 -(void)_toolbarSizeDidChangeFromOldHeight:(CGFloat)oldHeight {
@@ -912,7 +913,7 @@ NSString *NSWindowDidEndLiveResizeNotification=@"NSWindowDidEndLiveResizeNotific
 
 -(void)setHasShadow:(BOOL)value {
    _hasShadow=value;
-   NSUnimplementedMethod();
+   // FIXME: implement
 }
 
 -(void)setIgnoresMouseEvents:(BOOL)value {
@@ -2414,8 +2415,12 @@ NSString *NSWindowDidEndLiveResizeNotification=@"NSWindowDidEndLiveResizeNotific
 }
 
 -(BOOL)platformWindowSetCursorEvent:(CGWindow *)window {
+   NSMutableArray *exited=[NSMutableArray array];
+   NSMutableArray *entered=[NSMutableArray array];
+   NSMutableArray *moved=[NSMutableArray array];
+   NSMutableArray *update=[NSMutableArray array];
+   
    NSPoint     mousePoint={-1,-1};
-   NSView     *mouseView=nil;
    BOOL        cursorIsSet=NO;
    BOOL        raiseToolTipWindow=NO;
    NSUInteger  i,count;
@@ -2473,9 +2478,9 @@ NSString *NSWindowDidEndLiveResizeNotification=@"NSWindowDidEndLiveResizeNotific
       mouseIsInside=NO;
      }
      if(options&NSTrackingInVisibleRect){
-      if(mouseView==nil) // lazy initialisation
-       mouseView=[_backgroundView _hiddenHitTest:mousePoint];
-      if(mouseView!=[area _view])
+      NSPoint check=[[area _view] convertPoint:mousePoint fromView:nil];
+      
+      if(!NSMouseInRect(check,[[area _view] visibleRect],[[area _view] isFlipped]))
        mouseIsInside=NO;
      }
      
@@ -2485,23 +2490,32 @@ NSString *NSWindowDidEndLiveResizeNotification=@"NSWindowDidEndLiveResizeNotific
      }
 
      // Send appropriate events.
-     if(options&NSTrackingMouseEnteredAndExited &&
-        mouseWasInside==NO && mouseIsInside==YES &&
-        [owner respondsToSelector:@selector(mouseEntered:)]==YES){
-      NSEvent *event=[NSEvent enterExitEventWithType:NSMouseEntered
-                                            location:mousePoint
-                                       modifierFlags:[NSEvent modifierFlags]
-                                           timestamp:[NSDate timeIntervalSinceReferenceDate]
-                                        windowNumber:(int)self
-                                             context:[self graphicsContext]
-                                         eventNumber:0 // NSEvent currently ignores this.
-                                      trackingNumber:(NSInteger)area
-                                            userData:[area userInfo]];
-      [owner mouseEntered:event];
+     if(options&NSTrackingMouseEnteredAndExited && mouseWasInside==NO && mouseIsInside==YES){
+      [entered addObject:area];
      }
-     if(options&NSTrackingMouseEnteredAndExited &&
-        mouseWasInside==YES && mouseIsInside==NO &&
-        [owner respondsToSelector:@selector(mouseExited:)]==YES){
+     if(options&NSTrackingMouseEnteredAndExited && mouseWasInside==YES && mouseIsInside==NO){
+      [exited addObject:area];
+     }
+     if(options&NSTrackingMouseMoved && [self acceptsMouseMovedEvents]==YES){
+      [moved addObject:area];
+     }
+     if(options&NSTrackingCursorUpdate && mouseWasInside==NO && mouseIsInside==YES && !(options&NSTrackingActiveAlways)){
+      [update addObject:area];
+     }
+     if(options&NSTrackingCursorUpdate && mouseIsInside==YES)
+      cursorIsSet=YES;
+    } // (not) ToolTip
+
+    [area _setMouseInside:mouseIsInside];
+   }
+
+// Exited events need to be sent before entered events
+// The order of the other two is not specific at this time
+   
+   for(NSTrackingArea *check in exited){
+    id owner=[check owner];
+    
+    if([owner respondsToSelector:@selector(mouseExited:)]){
       NSEvent *event=[NSEvent enterExitEventWithType:NSMouseExited
                                             location:mousePoint
                                        modifierFlags:[NSEvent modifierFlags]
@@ -2509,13 +2523,33 @@ NSString *NSWindowDidEndLiveResizeNotification=@"NSWindowDidEndLiveResizeNotific
                                         windowNumber:(int)self
                                              context:[self graphicsContext]
                                          eventNumber:0 // NSEvent currently ignores this.
-                                      trackingNumber:(NSInteger)area
-                                            userData:[area userInfo]];
+                                      trackingNumber:(NSInteger)check
+                                            userData:[check userInfo]];
       [owner mouseExited:event];
-     }
-     if(options&NSTrackingMouseMoved &&
-        [self acceptsMouseMovedEvents]==YES &&
-        [owner respondsToSelector:@selector(mouseMoved:)]==YES){
+    }
+   }
+   
+   for(NSTrackingArea *check in entered){
+    id owner=[check owner];
+    
+    if([owner respondsToSelector:@selector(mouseEntered:)]){
+      NSEvent *event=[NSEvent enterExitEventWithType:NSMouseEntered
+                                            location:mousePoint
+                                       modifierFlags:[NSEvent modifierFlags]
+                                           timestamp:[NSDate timeIntervalSinceReferenceDate]
+                                        windowNumber:(int)self
+                                             context:[self graphicsContext]
+                                         eventNumber:0 // NSEvent currently ignores this.
+                                      trackingNumber:(NSInteger)check
+                                            userData:[check userInfo]];
+      [owner mouseEntered:event];
+    }
+   }
+   
+   for(NSTrackingArea *check in moved){
+    id owner=[check owner];
+    
+    if([owner respondsToSelector:@selector(mouseMoved:)]){
       NSEvent *event=[NSEvent mouseEventWithType:NSMouseMoved
                                         location:mousePoint
                                    modifierFlags:[NSEvent modifierFlags]
@@ -2526,11 +2560,13 @@ NSString *NSWindowDidEndLiveResizeNotification=@"NSWindowDidEndLiveResizeNotific
                                       clickCount:0
                                         pressure:0.];
       [owner mouseMoved:event];
-     }
-     if(options&NSTrackingCursorUpdate &&
-        mouseWasInside==NO && mouseIsInside==YES &&
-        !(options&NSTrackingActiveAlways) && // documented
-        [owner respondsToSelector:@selector(cursorUpdate:)]==YES){
+    }
+   }
+   
+   for(NSTrackingArea *check in update){
+    id owner=[check owner];
+    
+    if([owner respondsToSelector:@selector(cursorUpdate:)]){
       NSEvent *event=[NSEvent enterExitEventWithType:NSCursorUpdate
                                             location:mousePoint
                                        modifierFlags:[NSEvent modifierFlags]
@@ -2538,15 +2574,10 @@ NSString *NSWindowDidEndLiveResizeNotification=@"NSWindowDidEndLiveResizeNotific
                                         windowNumber:(int)self
                                              context:[self graphicsContext]
                                          eventNumber:0 // NSEvent currently ignores this.
-                                      trackingNumber:(NSInteger)area
-                                            userData:[area userInfo]];
+                                      trackingNumber:(NSInteger)check
+                                            userData:[check userInfo]];
       [owner cursorUpdate:event];
-     }
-     if(options&NSTrackingCursorUpdate && mouseIsInside==YES)
-      cursorIsSet=YES;
-    } // (not) ToolTip
-
-    [area _setMouseInside:mouseIsInside];
+    }
    }
    
    if(raiseToolTipWindow==YES){
