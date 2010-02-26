@@ -383,7 +383,6 @@ APPKIT_EXPORT NSString *NSViewFocusDidChangeNotification;
 -(NSArray *)_draggedTypes;
 -(void)_setWindow:(NSWindow *)window;
 -(void)_collectTrackingAreasForWindowInto:(NSMutableArray *)collector;
--(NSView *)_hiddenHitTest:(NSPoint)point;
 
 @end
 

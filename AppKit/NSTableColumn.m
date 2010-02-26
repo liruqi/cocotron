@@ -60,6 +60,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     [_identifier release];
     [_headerCell release];
     [_dataCell release];
+    [_headerToolTip release];
 	[_sortDescriptorPrototype release];
 	
     [super dealloc];
@@ -84,6 +85,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -(NSCell *)dataCell {
     return _dataCell;
+}
+
+-(NSString *)headerToolTip {
+   return _headerToolTip;
 }
 
 -(float)width {
@@ -125,6 +130,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    cell=[cell retain];
    [_dataCell release];
    _dataCell = cell;
+}
+
+-(void)setHeaderToolTip:(NSString *)value {
+   value=[value copy];
+   [_headerToolTip release];
+   _headerToolTip=value;
 }
 
 -(void)setWidth:(float)width {

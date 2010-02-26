@@ -545,30 +545,6 @@ static inline void buildTransformsIfNeeded(NSView *self) {
    }
 }
 
-// Exactly the same as above, but hidden from overrides. Not elegant.
--(NSView *)_hiddenHitTest:(NSPoint)point {
-   if(_isHidden)
-    return nil;
-
-   point=[self convertPoint:point fromView:[self superview]];
-
-   if(!NSMouseInRect(point,[self visibleRect],[self isFlipped]))
-    return nil;
-   else {
-    NSArray *subviews=[self subviews];
-    int      count=[subviews count];
-
-    while(--count>=0){ // front to back
-     NSView *check=[subviews objectAtIndex:count];
-     NSView *hit=[check _hiddenHitTest:point];
-
-     if(hit!=nil)
-      return hit;
-    }
-    return self;
-   }
-}
-
 -(NSPoint)convertPoint:(NSPoint)point fromView:(NSView *)viewOrNil {
    NSView           *fromView=(viewOrNil!=nil)?viewOrNil:[[self window] _backgroundView];
    CGAffineTransform toWindow=[fromView transformToWindow];
@@ -732,6 +708,8 @@ static inline void buildTransformsIfNeeded(NSView *self) {
    _window=window;
    [_subviews makeObjectsPerformSelector:_cmd withObject:window];
    _validTrackingAreas=NO;
+
+   [self viewDidMoveToWindow];
 }
 
 -(void)_setSuperview:superview {
@@ -960,6 +938,7 @@ static inline void buildTransformsIfNeeded(NSView *self) {
       [area _setView:self];
 
       [area _setRectInWindow:[self convertRect:rectOfInterest toView:nil]];
+
       [collector addObject:[_trackingAreas objectAtIndex:i]];
      }
     }
@@ -1077,7 +1056,7 @@ static inline void buildTransformsIfNeeded(NSView *self) {
 }
 
 -(void)viewDidMoveToWindow {
-   NSUnimplementedMethod();
+   // Default implementation does nothing
 }
 
 -(BOOL)shouldDelayWindowOrderingForEvent:(NSEvent *)event {
