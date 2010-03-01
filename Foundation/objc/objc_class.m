@@ -16,6 +16,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <objc/deprecated.h>
 #import <objc/message.h>
 #import <Foundation/objc_forward_ffi.h>
+#import <Foundation/NSRaiseException.h>
 
 #ifdef WIN32
 #import <windows.h>

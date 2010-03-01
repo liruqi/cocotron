@@ -1,6 +1,7 @@
 #import "CFSSLHandler_openssl.h"
 #import <Foundation/NSSocket.h>
 #import <Foundation/NSData.h>
+#import <Foundation/NSRaiseException.h>
 #import <pthread.h>
 
 #ifdef OPENSSL_ENABLED

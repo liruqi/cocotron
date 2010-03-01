@@ -15,6 +15,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <Foundation/NSData.h>
 #import <Foundation/CFSSLHandler.h>
 #import <CFNetwork/CFSocketStream.h>
+#import <Foundation/NSRaiseException.h>
 
 @implementation NSOutputStream_socket
 
