@@ -537,6 +537,29 @@ static void cgArcApply(void *info,const CGPathElement *element) {
      else
       [self lineToPoint:element->points[0]];
      break;
+          
+    case kCGPathElementAddCurveToPoint:
+     [self curveToPoint:element->points[2] controlPoint1:element->points[0] controlPoint2:element->points[1]];
+     break;
+   }
+   
+}
+
+static void cgArcFromApply(void *info,const CGPathElement *element) {
+   NSBezierPath *self=(NSBezierPath *)info;
+   
+   switch(element->type){
+   
+    case kCGPathElementMoveToPoint:
+     if([self isEmpty])
+      [self moveToPoint:element->points[0]];
+     else
+      [self lineToPoint:element->points[0]];
+     break;
+     
+    case kCGPathElementAddLineToPoint:
+     [self lineToPoint:element->points[0]];
+     break;
      
     case kCGPathElementAddCurveToPoint:
      [self curveToPoint:element->points[2] controlPoint1:element->points[0] controlPoint2:element->points[1]];
@@ -554,10 +577,17 @@ static void cgArcApply(void *info,const CGPathElement *element) {
 }
 
 -(void)appendBezierPathWithArcFromPoint:(NSPoint)point toPoint:(NSPoint)toPoint radius:(float)radius {
-   CGMutablePathRef path=CGPathCreateMutable();
+   if(_numberOfPoints==0){
+    NSLog(@"-[%@ %s] no current point",isa,_cmd);
+    return;
+   }
    
+   CGMutablePathRef path=CGPathCreateMutable();
+   CGPoint          start=_points[_numberOfPoints-1];
+   
+   CGPathMoveToPoint(path,NULL,start.x,start.y);
    CGPathAddArcToPoint(path,NULL,point.x,point.y,toPoint.x,toPoint.y,radius);
-   CGPathApply(path,self,cgApplier);
+   CGPathApply(path,self,cgArcFromApply);
    CGPathRelease(path);
 }
 

@@ -281,9 +281,93 @@ void O2PathAddArc(O2MutablePathRef self,const O2AffineTransform *matrix,O2Float 
 }
 
 void O2PathAddArcToPoint(O2MutablePathRef self,const O2AffineTransform *matrix,O2Float tx1,O2Float ty1,O2Float tx2,O2Float ty2,O2Float radius) {
+#if 0
 #warning fix
 // ignores arc and draws a sharp corner
    O2PathAddLineToPoint(self,matrix,tx1,ty1);
+#else
+   if(self->_numberOfPoints==0)
+    return;
+    
+   O2Point start=self->_points[self->_numberOfPoints-1];
+   O2Point mid=O2PointMake(tx1,ty1);
+   O2Point end=O2PointMake(tx2,ty2);
+   
+   if(matrix!=NULL){
+// The start point is already transformed, so we have to transform the other points up front.
+
+    mid=O2PointApplyAffineTransform(mid,*matrix);
+    end=O2PointApplyAffineTransform(end,*matrix);
+    
+    CGPoint rp=O2PointMake(radius,0);
+    rp=O2PointApplyAffineTransform(rp,*matrix);
+    radius=sqrt(rp.x*rp.x+rp.y*rp.y);
+   }
+   
+   double x1=start.x-mid.x;
+   double y1=start.y-mid.y;
+   double x2=end.x-mid.x;
+   double y2=end.y-mid.y;
+   double n1=sqrt(x1*x1+y1*y1);
+   double n2=sqrt(x2*x2+y2*y2);
+   
+   float startAngle=acos(x1/n1);
+   if(y1<0)
+    startAngle=M_PI*2-startAngle;
+    
+   float endAngle=acos(x2/n2);
+   if(y2<0) 
+    endAngle=M_PI*2-endAngle;
+    
+   float angleBetweenLines = (endAngle-startAngle);
+   int clockwise=1;
+   float clockwiseRotate=0;
+   
+   if(angleBetweenLines<0)
+    angleBetweenLines=M_PI*2+angleBetweenLines;
+
+   CGFloat arcAngle=M_PI-angleBetweenLines;
+
+   if(angleBetweenLines>M_PI){
+    arcAngle=M_PI*2-angleBetweenLines;
+    clockwise=0;
+    clockwiseRotate=M_PI;
+   }
+
+   /* The triangle formed by the center of the arc, the midpoint and where the radius and tangent line meet
+   
+      Using the law of sines we can figure the other two sides of the triangle using the radius and the angles.
+      
+      The radius meets the tangent at 90 degrees.
+      The tangent meets the mid->center line at half the angle between the tangents
+      The radius meets the mid->center line at 180 - the other angles
+    */
+   CGFloat angleOfRadiusAndTangent=M_PI/2;
+   CGFloat angleOfTangentAndLineToCenter=angleBetweenLines/2.0;
+   
+   CGFloat midToCenterLength=(radius*sin(angleOfRadiusAndTangent))/sin(angleOfTangentAndLineToCenter);
+   
+   CGPoint center;
+   center.x=cos(startAngle+angleBetweenLines/2+clockwiseRotate)*midToCenterLength;
+   center.y=sin(startAngle+angleBetweenLines/2+clockwiseRotate)*midToCenterLength;
+   center.x+=mid.x;
+   center.y+=mid.y;
+
+   CGFloat arcStartAngle;
+   CGFloat arcEndAngle;
+
+   if(clockwise){
+    arcStartAngle=(M_PI*2-(M_PI/2-startAngle));
+    arcEndAngle=(arcStartAngle-arcAngle);
+   }
+   else {
+    arcStartAngle=(M_PI*2-(M_PI/2-startAngle))+clockwiseRotate;
+    arcEndAngle=(arcStartAngle-arcAngle)+clockwiseRotate;
+   }
+      
+   O2PathAddArc(self,NULL,center.x,center.y,radius,arcStartAngle,arcEndAngle,clockwise);
+#endif
+
 }
 
 void O2PathAddEllipseInRect(O2MutablePathRef self,const O2AffineTransform *matrix,O2Rect rect) {

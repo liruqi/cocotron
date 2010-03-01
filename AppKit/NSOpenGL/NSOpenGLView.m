@@ -102,8 +102,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 	return YES;
 }
 
-- (void)lockFocus {
-	[super lockFocus];
+-(BOOL)lockFocusIfCanDrawInContext:(NSGraphicsContext *)context {
+	[super lockFocusIfCanDrawInContext:context];
 
 	[[self openGLContext] makeCurrentContext];
 

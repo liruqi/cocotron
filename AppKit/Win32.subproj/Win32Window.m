@@ -749,6 +749,7 @@ static const char *Win32ClassNameForStyleMask(unsigned styleMask) {
      [[Win32Display currentDisplay] invalidateSystemColors];
      [_delegate platformWindowStyleChanged:self];
      return 0;
+ //   case WM_ERASEBKGND: return 1;
 
 #if 0
 // doesn't seem to work
