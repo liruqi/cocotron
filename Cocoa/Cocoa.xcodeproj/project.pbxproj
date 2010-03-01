@@ -130,6 +130,20 @@
 			remoteGlobalIDString = FE5A8BE310C6F50E005E348A;
 			remoteInfo = "AppKit-FreeBSD-i386";
 		};
+		FE9AE15B113C3F79006B4A12 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FE9AE154113C3F79006B4A12 /* Security.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 8DC2EF5B0486A6940098B216;
+			remoteInfo = "Security-Windows-i386";
+		};
+		FE9AE15D113C3F89006B4A12 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FE9AE154113C3F79006B4A12 /* Security.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 8DC2EF4F0486A6940098B216;
+			remoteInfo = "Security-Windows-i386";
+		};
 		FECC1DD9108D027000BD4A91 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = FE7135460B36427F006C9493 /* AppKit.xcodeproj */;
@@ -169,6 +183,7 @@
 		FE3217D10BB41D16004F000A /* ApplicationServices.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ApplicationServices.xcodeproj; path = ../ApplicationServices/ApplicationServices.xcodeproj; sourceTree = SOURCE_ROOT; };
 		FE5A873F10C6F1E8005E348A /* Cocoa.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Cocoa.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		FE7135460B36427F006C9493 /* AppKit.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = AppKit.xcodeproj; path = ../AppKit/AppKit.xcodeproj; sourceTree = SOURCE_ROOT; };
+		FE9AE154113C3F79006B4A12 /* Security.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Security.xcodeproj; path = ../Security/Security.xcodeproj; sourceTree = SOURCE_ROOT; };
 		FECC1DD6108D025D00BD4A91 /* Cocoa.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Cocoa.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		FEF3B23A0B35C74700A76FD1 /* Cocoa.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Cocoa.h; sourceTree = "<group>"; };
 		FEF3B2780B35CB9D00A76FD1 /* Cocoa.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Cocoa.m; sourceTree = "<group>"; };
@@ -228,6 +243,7 @@
 		0867D691FE84028FC02AAC07 /* Cocoa */ = {
 			isa = PBXGroup;
 			children = (
+				FE9AE154113C3F79006B4A12 /* Security.xcodeproj */,
 				FE3217D10BB41D16004F000A /* ApplicationServices.xcodeproj */,
 				FE7135460B36427F006C9493 /* AppKit.xcodeproj */,
 				08FB77AEFE84172EC02AAC07 /* Classes */,
@@ -311,6 +327,14 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		FE9AE155113C3F79006B4A12 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				FE9AE15C113C3F79006B4A12 /* Security.framework */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -385,6 +409,7 @@
 			dependencies = (
 				FEF80ABE0C5D9F3000FF7CA5 /* PBXTargetDependency */,
 				FEF80AC00C5D9F3400FF7CA5 /* PBXTargetDependency */,
+				FE9AE15E113C3F89006B4A12 /* PBXTargetDependency */,
 			);
 			name = "Cocoa-Windows-i386";
 			productInstallPath = "$(HOME)/Library/Frameworks";
@@ -453,6 +478,10 @@
 				{
 					ProductGroup = FE3217D20BB41D16004F000A /* Products */;
 					ProjectRef = FE3217D10BB41D16004F000A /* ApplicationServices.xcodeproj */;
+				},
+				{
+					ProductGroup = FE9AE155113C3F79006B4A12 /* Products */;
+					ProjectRef = FE9AE154113C3F79006B4A12 /* Security.xcodeproj */;
 				},
 			);
 			projectRoot = "";
@@ -527,6 +556,13 @@
 			fileType = wrapper.framework;
 			path = AppKit.framework;
 			remoteRef = FE5A8CB710C828A5005E348A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		FE9AE15C113C3F79006B4A12 /* Security.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = Security.framework;
+			remoteRef = FE9AE15B113C3F79006B4A12 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
@@ -607,6 +643,11 @@
 			isa = PBXTargetDependency;
 			name = "ApplicationServices-Darwin-i386";
 			targetProxy = C8E0BFB10F0E6B6C00677729 /* PBXContainerItemProxy */;
+		};
+		FE9AE15E113C3F89006B4A12 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "Security-Windows-i386";
+			targetProxy = FE9AE15D113C3F89006B4A12 /* PBXContainerItemProxy */;
 		};
 		FECC1DDA108D027000BD4A91 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;

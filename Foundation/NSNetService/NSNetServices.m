@@ -24,6 +24,7 @@
 #import <Foundation/NSSelectInputSource.h>
 #import <Foundation/NSSocket.h>
 #import <Foundation/NSHost.h>
+#import <Foundation/NSDebug.h>
 
 #ifdef WIN32
 #import <winsock2.h> // for ntohs
@@ -233,7 +234,8 @@ NSString *NSNetServicesErrorDomain = @"NSNetServicesErrorDomain";
         break;
       
       default:
-        NSLog(@"-[%@ %s] Don't know how to handle rrtype <%d>",isa,_cmd,rrtype);
+        if(NSDebugEnabled)
+         NSLog(@"-[%@ %s] Don't know how to handle rrtype <%d>",isa,_cmd,rrtype);
         break;
     }
   

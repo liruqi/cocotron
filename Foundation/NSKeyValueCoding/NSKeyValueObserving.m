@@ -155,7 +155,7 @@ static NSObservationInfo *observerInfoForObject(id object,id observer,NSString *
       if([remainingKeyPath length]) {
        lastPathTried=remainingKeyPath;
        id value=[self valueForKey:key];
-       
+               
        if(value!=nil){
         [value addObserver:info forKeyPath:remainingKeyPath options:options context:context];
        }
@@ -164,7 +164,7 @@ static NSObservationInfo *observerInfoForObject(id object,id observer,NSString *
       // now try all dependent key paths
       for(NSString *path in dependentPathsForKey) {
        lastPathTried=path;
-
+       
        [self addObserver:info forKeyPath:path options:options context:context];
       }
    }
@@ -182,7 +182,8 @@ static NSObservationInfo *observerInfoForObject(id object,id observer,NSString *
          for(NSString *path in dependentPathsForKey) {
             if(path==lastPathTried)
                break; // this is the one that failed
-            [self removeObserver:info forKeyPath:path];
+
+           [self removeObserver:info forKeyPath:path];
          }
       }
       
@@ -275,14 +276,12 @@ static void removeObserverInfoForObject(id object,NSObservationInfo *info,NSStri
       
     NSSet *keysPathsForKey=[isa keyPathsForValuesAffectingValueForKey:key];
     for(NSString *path in keysPathsForKey){
-
      [self removeObserver:info forKeyPath:path];
     }
 
     if([remainingKeyPath length]){
      id value=[self valueForKey:key];
-
-     [value removeObserver:info forKeyPath:remainingKeyPath];
+    [value removeObserver:info forKeyPath:remainingKeyPath];
     }
 
     removeObserverInfoForObject(self,info,key);
@@ -291,8 +290,12 @@ static void removeObserverInfoForObject(id object,NSObservationInfo *info,NSStri
 
    if(NSDebugEnabled){
     // 10.4 Apple implementation will crash at this point...
-    // We only raise during debugging, there are still issues with bindings unobserving not-observed objects
-    [NSException raise:@"NSKVOException" format:@"trying to remove observer %@ for unobserved key path %@", observer, keyPath];
+    
+    /* FIXME: While observing key paths it is possible for an NSObservationInfo to be watching nothing due to a nil value down the path
+       Until that is fixed this shouldn't raise an exception 
+
+      [NSException raise:@"NSKVOException" format:@"trying to remove observer %@ for unobserved key path %@", observer, keyPath];
+     */
    }
    
 }
@@ -389,6 +392,7 @@ static void removeObserverInfoForObject(id object,NSObservationInfo *info,NSStri
 		if(rest) {
          if(!check->_isInvalid){
           id value=[self valueForKey:firstPart];
+
           [value removeObserver:check forKeyPath:rest];
          }
         }
