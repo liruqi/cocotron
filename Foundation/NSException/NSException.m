@@ -15,6 +15,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <Foundation/NSThread-Private.h>
 #import <Foundation/NSObjCRuntime.h>
 #import <Foundation/NSDebug.h>
+#import <Foundation/NSRaiseException.h>
 #import <stdio.h>
 
 NSString *NSGenericException=@"NSGenericException";

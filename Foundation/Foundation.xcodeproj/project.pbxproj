@@ -6509,14 +6509,14 @@
 			isa = PBXContainerItemProxy;
 			containerPortal = FE9AE15F113C3FBA006B4A12 /* CoreServices.xcodeproj */;
 			proxyType = 2;
-			remoteGlobalIDString = 8DC2EF5B0486A6940098B216 /* CoreServices.framework */;
+			remoteGlobalIDString = 8DC2EF5B0486A6940098B216;
 			remoteInfo = "CoreServices-Windows-i386";
 		};
 		FE9AE169113C3FC8006B4A12 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = FE9AE15F113C3FBA006B4A12 /* CoreServices.xcodeproj */;
 			proxyType = 1;
-			remoteGlobalIDString = 8DC2EF4F0486A6940098B216 /* CoreServices-Windows-i386 */;
+			remoteGlobalIDString = 8DC2EF4F0486A6940098B216;
 			remoteInfo = "CoreServices-Windows-i386";
 		};
 		FEA828AA109B74B200C7A732 /* PBXContainerItemProxy */ = {
