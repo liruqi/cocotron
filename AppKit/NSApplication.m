@@ -818,8 +818,6 @@ id NSApp=nil;
 }
 
 -(void)hide:sender {//deactivates the application and hides all windows
-OBJCEnableMsgTracing();
-
 	if (!_isHidden)
 	{
 		[[NSNotificationCenter defaultCenter]postNotificationName:NSApplicationWillHideNotification object:self];

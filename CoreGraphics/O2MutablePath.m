@@ -282,7 +282,6 @@ void O2PathAddArc(O2MutablePathRef self,const O2AffineTransform *matrix,O2Float 
 
 void O2PathAddArcToPoint(O2MutablePathRef self,const O2AffineTransform *matrix,O2Float tx1,O2Float ty1,O2Float tx2,O2Float ty2,O2Float radius) {
 #if 0
-#warning fix
 // ignores arc and draws a sharp corner
    O2PathAddLineToPoint(self,matrix,tx1,ty1);
 #else
@@ -294,14 +293,13 @@ void O2PathAddArcToPoint(O2MutablePathRef self,const O2AffineTransform *matrix,O
    O2Point end=O2PointMake(tx2,ty2);
    
    if(matrix!=NULL){
-// The start point is already transformed, so we have to transform the other points up front.
+// If a matrix is specified, either the start point needs to be transformed, or the arc needs to be
+// transformed. Since we really want the result curve  transformed to get non-uniform scale/skew results to come
+// out correctly, we just back-transform the start point. But the assumption here is that the start point was transformed
+// using the same matrix as is being passed in, otherwise we have to track the last point and the matrix that goes with it
+// which doesn't seem tidy. Further testing required for this case.
 
-    mid=O2PointApplyAffineTransform(mid,*matrix);
-    end=O2PointApplyAffineTransform(end,*matrix);
-    
-    CGPoint rp=O2PointMake(radius,0);
-    rp=O2PointApplyAffineTransform(rp,*matrix);
-    radius=sqrt(rp.x*rp.x+rp.y*rp.y);
+    start=O2PointApplyAffineTransform(start,O2AffineTransformInvert(*matrix));
    }
    
    double x1=start.x-mid.x;
@@ -365,7 +363,7 @@ void O2PathAddArcToPoint(O2MutablePathRef self,const O2AffineTransform *matrix,O
     arcEndAngle=(arcStartAngle-arcAngle)+clockwiseRotate;
    }
       
-   O2PathAddArc(self,NULL,center.x,center.y,radius,arcStartAngle,arcEndAngle,clockwise);
+   O2PathAddArc(self,matrix,center.x,center.y,radius,arcStartAngle,arcEndAngle,clockwise);
 #endif
 
 }
