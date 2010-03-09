@@ -364,7 +364,7 @@ static BOOL isStandardItemIdentifier(NSString *identifier){
    
    _sizeMode=[toolbar sizeMode];
    _displayMode=[toolbar displayMode];
-    NSLog(@"%s %d",__FILE__,__LINE__);
+
    [_window _toolbarSizeDidChangeFromOldHeight:[self visibleHeight]];
 }
 
@@ -374,7 +374,6 @@ static BOOL isStandardItemIdentifier(NSString *identifier){
 }
 
 -(void)itemSizeDidChange {
-    NSLog(@"%s %d",__FILE__,__LINE__);
    [_window _toolbarSizeDidChangeFromOldHeight:[self visibleHeight]];
 }
 
@@ -404,7 +403,6 @@ static BOOL isStandardItemIdentifier(NSString *identifier){
    if([self autosavesConfiguration])
     [self saveConfiguration];
 
-    NSLog(@"%s %d",__FILE__,__LINE__);
    [_window _toolbarSizeDidChangeFromOldHeight:[self visibleHeight]];
    if(global)
     [[NSNotificationCenter defaultCenter] postNotificationName:NSToolbarChangeAppearanceNotification object:self];

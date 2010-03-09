@@ -73,7 +73,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    [_windowView setAutoresizingMask:NSViewWidthSizable|NSViewHeightSizable];
    
    if([_viewClass isKindOfClass:[NSToolbar class]]) {
-    NSLog(@"%s %d",__FILE__,__LINE__);
       [result setToolbar:_viewClass];
    }
 
