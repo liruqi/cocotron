@@ -74,28 +74,13 @@ enum {
    kSOCKS5NoAcceptableMethod     = 0xFF
 };
 
-CFNETWORK_EXPORT Boolean CFSocketStreamPairSetSecurityProtocol (
-   CFReadStreamRef socketReadStream,
-   CFWriteStreamRef socketWriteStream,
-   CFStreamSocketSecurityProtocol securityProtocol
-);
+CFNETWORK_EXPORT Boolean CFSocketStreamPairSetSecurityProtocol (CFReadStreamRef socketReadStream,CFWriteStreamRef socketWriteStream,CFStreamSocketSecurityProtocol securityProtocol);
 
 CFNETWORK_EXPORT SInt32 CFSocketStreamSOCKSGetError(CFStreamError* error);
 
 CFNETWORK_EXPORT SInt32 CFSocketStreamSOCKSGetErrorSubdomain(CFStreamError* error);
 
-CFNETWORK_EXPORT void CFStreamCreatePairWithSocketToCFHost (
-   CFAllocatorRef alloc,
-   CFHostRef host,
-   SInt32 port,
-   CFReadStreamRef *readStream,
-   CFWriteStreamRef *writeStream
-);
+CFNETWORK_EXPORT void CFStreamCreatePairWithSocketToCFHost (CFAllocatorRef alloc,CFHostRef host,SInt32 port,CFReadStreamRef *readStream,CFWriteStreamRef *writeStream);
 
-CFNETWORK_EXPORT void CFStreamCreatePairWithSocketToNetService (
-   CFAllocatorRef alloc,
-   CFNetServiceRef service,
-   CFReadStreamRef *readStream,
-   CFWriteStreamRef *writeStream
-);
+CFNETWORK_EXPORT void CFStreamCreatePairWithSocketToNetService (CFAllocatorRef alloc,CFNetServiceRef service,CFReadStreamRef *readStream,CFWriteStreamRef *writeStream);
 
