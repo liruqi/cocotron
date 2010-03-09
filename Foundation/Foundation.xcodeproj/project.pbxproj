@@ -6505,20 +6505,6 @@
 			remoteGlobalIDString = FE651A9D0FBC84DD00464BFD;
 			remoteInfo = "objc-Darwin-i386 copy";
 		};
-		FE9AE167113C3FBA006B4A12 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = FE9AE15F113C3FBA006B4A12 /* CoreServices.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 8DC2EF5B0486A6940098B216;
-			remoteInfo = "CoreServices-Windows-i386";
-		};
-		FE9AE169113C3FC8006B4A12 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = FE9AE15F113C3FBA006B4A12 /* CoreServices.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = 8DC2EF4F0486A6940098B216;
-			remoteInfo = "CoreServices-Windows-i386";
-		};
 		FEA828AA109B74B200C7A732 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = FEA828A3109B74B200C7A732 /* CoreFoundation.xcodeproj */;
@@ -7281,7 +7267,6 @@
 		FE88A4D50F8A9DE00081CFC1 /* Object.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Object.m; sourceTree = "<group>"; };
 		FE8C913E0FFD1E430027C889 /* NSString_win1252.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NSString_win1252.h; sourceTree = "<group>"; };
 		FE8C913F0FFD1E430027C889 /* NSString_win1252.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NSString_win1252.m; sourceTree = "<group>"; };
-		FE9AE15F113C3FBA006B4A12 /* CoreServices.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = CoreServices.xcodeproj; path = ../CoreServices/CoreServices.xcodeproj; sourceTree = SOURCE_ROOT; };
 		FE9C1B881125A649002DA20B /* CFSSLHandler_openssl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CFSSLHandler_openssl.h; sourceTree = "<group>"; };
 		FE9C1B891125A649002DA20B /* CFSSLHandler_openssl.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CFSSLHandler_openssl.m; sourceTree = "<group>"; };
 		FE9C1B8A1125A649002DA20B /* CFSSLHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CFSSLHandler.h; sourceTree = "<group>"; };
@@ -7537,7 +7522,6 @@
 			children = (
 				FE2569E410F2F936005CE23E /* CFNetwork */,
 				FE2569DB10F2F91C005CE23E /* CFNetwork.xcodeproj */,
-				FE9AE15F113C3FBA006B4A12 /* CoreServices.xcodeproj */,
 				FEA828A3109B74B200C7A732 /* CoreFoundation.xcodeproj */,
 				151B5D1A105EA94F009092D5 /* NSAtomicCompareAndSwap.h */,
 				FE463E54102CD5C700B265D6 /* NSPointerArray.h */,
@@ -8636,14 +8620,6 @@
 				FEE7D30A0ED1D2DE0032DCE0 /* NSNetServices.m */,
 			);
 			path = NSNetService;
-			sourceTree = "<group>";
-		};
-		FE9AE160113C3FBA006B4A12 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				FE9AE168113C3FBA006B4A12 /* CoreServices.framework */,
-			);
-			name = Products;
 			sourceTree = "<group>";
 		};
 		FE9D95260C0386BD006DB214 /* NSValueTransformer */ = {
@@ -11925,7 +11901,6 @@
 			dependencies = (
 				FE01A7F30C5D9B9100AEA51A /* PBXTargetDependency */,
 				FEA828AD109B752F00C7A732 /* PBXTargetDependency */,
-				FE9AE16A113C3FC8006B4A12 /* PBXTargetDependency */,
 			);
 			name = "Foundation-Windows-i386";
 			productInstallPath = "$(HOME)/Library/Frameworks";
@@ -12040,10 +12015,6 @@
 					ProjectRef = FEA828A3109B74B200C7A732 /* CoreFoundation.xcodeproj */;
 				},
 				{
-					ProductGroup = FE9AE160113C3FBA006B4A12 /* Products */;
-					ProjectRef = FE9AE15F113C3FBA006B4A12 /* CoreServices.xcodeproj */;
-				},
-				{
 					ProductGroup = FEB6CC410B4A1922004FADF2 /* Products */;
 					ProjectRef = FEB6CC400B4A1922004FADF2 /* objc.xcodeproj */;
 				},
@@ -12105,13 +12076,6 @@
 			fileType = wrapper.framework;
 			path = objc.framework;
 			remoteRef = FE651AA00FBC84DD00464BFD /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		FE9AE168113C3FBA006B4A12 /* CoreServices.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = CoreServices.framework;
-			remoteRef = FE9AE167113C3FBA006B4A12 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 		FEA828AB109B74B200C7A732 /* CoreFoundation.framework */ = {
@@ -15706,11 +15670,6 @@
 			name = "objc-Darwin";
 			targetProxy = FE6518180FBC844C00464BFD /* PBXContainerItemProxy */;
 		};
-		FE9AE16A113C3FC8006B4A12 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = "CoreServices-Windows-i386";
-			targetProxy = FE9AE169113C3FC8006B4A12 /* PBXContainerItemProxy */;
-		};
 		FEA828AD109B752F00C7A732 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = "CoreFoundation-Windows-i386";
@@ -16022,9 +15981,17 @@
 				GCC_ENABLE_CPP_RTTI = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				HEADER_SEARCH_PATHS = (
+					../../openssl/include,
+					"$(INSTALL_PATH)/CoreFoundation.framework/Headers",
+				);
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = /Developer/Cocotron/1.0/Windows/i386/Frameworks;
+				LIBRARY_SEARCH_PATHS = ../../openssl/lib;
 				OTHER_CFLAGS = (
+					"-DOPENSSL_ENABLED",
+					"-DWINVER=0x500",
+					"-DCFNETWORK_INSIDE_BUILD",
 					"-DFOUNDATION_INSIDE_BUILD",
 					"-DOBJC_INSIDE_BUILD",
 					"-D__LITTLE_ENDIAN__",
@@ -16038,7 +16005,10 @@
 					"-lffi",
 					"-B,dynamic",
 					"-shared",
-					"-lwsock32",
+					"-lssl",
+					"-lcrypto",
+					"-lgdi32",
+					"-lws2_32",
 					"-Wl,--export-all-symbols",
 					"-Wl,--image-base=0x10000000",
 					"-Wl,--out-implib,$TARGET_BUILD_DIR/Foundation.framework/libFoundation.a",
