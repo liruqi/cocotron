@@ -15,7 +15,6 @@ void CFPreferencesAddSuitePreferencesToApp(CFStringRef application,CFStringRef s
 
 Boolean CFPreferencesAppSynchronize(CFStringRef application) {
    NSUnimplementedFunction();
-#warning implement
    return NO;
 }
 
@@ -31,7 +30,6 @@ CFArrayRef CFPreferencesCopyApplicationList(CFStringRef user,CFStringRef host) {
 
 CFPropertyListRef CFPreferencesCopyAppValue(CFStringRef key,CFStringRef application) {
    NSUnimplementedFunction();
-#warning implement
    return nil;
 }
 
@@ -70,7 +68,6 @@ void CFPreferencesSetMultiple(CFDictionaryRef dictionary,CFArrayRef removeTheseK
 
 void CFPreferencesSetValue(CFStringRef key,CFPropertyListRef value,CFStringRef application,CFStringRef user,CFStringRef host) {
    NSUnimplementedFunction();
-#warning implement
 }
 
 void CFPreferencesRemoveSuitePreferencesFromApp(CFStringRef application,CFStringRef suite) {

@@ -43,14 +43,14 @@ static inline NSStringEncoding convertCFEncodingToNSEncoding(CFStringEncoding en
 }
 
 CFStringRef CFStringMakeConstant(const char *cString) {
-#warning implement constify
+// FIXME: constify
    return (CFStringRef)[[[NSString allocWithZone:NULL]initWithUTF8String:cString] autorelease];
 }
 
 CFStringRef CFStringCreateByCombiningStrings(CFAllocatorRef allocator,CFArrayRef array,CFStringRef separator){}
 
 CFStringRef CFStringCreateCopy(CFAllocatorRef allocator,CFStringRef self){
-   return [ToNSString(self) copyWithZone:NULL];
+   return ToCFString([ToNSString(self) copyWithZone:NULL]);
 }
 
 CFStringRef CFStringCreateWithBytes(CFAllocatorRef allocator,const uint8_t *bytes,CFIndex length,CFStringEncoding encoding,Boolean isExternalRepresentation){

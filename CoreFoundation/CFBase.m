@@ -90,7 +90,6 @@ CFTypeRef CFMakeCollectable(CFTypeRef self){
 }
 
 unsigned int sleep(unsigned int seconds) {
-#warning fix
    NSUnimplementedFunction();
    return 0;
 }
