@@ -35,8 +35,8 @@
 
 #import "bonjour.h"
 
-NSString *NSNetServicesErrorCode = @"NSNetServicesErrorCode";
-NSString *NSNetServicesErrorDomain = @"NSNetServicesErrorDomain";
+NSString * const NSNetServicesErrorCode = @"NSNetServicesErrorCode";
+NSString * const NSNetServicesErrorDomain = @"NSNetServicesErrorDomain";
 
 @implementation NSNetService
 

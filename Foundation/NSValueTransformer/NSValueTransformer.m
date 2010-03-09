@@ -15,11 +15,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import "NSValueTransformer_UnarchiveFromData.h"
 
 // Do not change these values
-NSString *NSIsNilTransformerName=@"NSIsNil";
-NSString *NSIsNotNilTransformerName=@"NSIsNotNil";
-NSString *NSNegateBooleanTransformerName=@"NSNegateBoolean";
-NSString *NSUnarchiveFromDataTransformerName=@"NSUnarchiveFromData";
-NSString *NSKeyedUnarchiveFromDataTransformerName=@"NSKeyedUnarchiveFromData";
+NSString * const NSIsNilTransformerName=@"NSIsNil";
+NSString * const NSIsNotNilTransformerName=@"NSIsNotNil";
+NSString * const NSNegateBooleanTransformerName=@"NSNegateBoolean";
+NSString * const NSUnarchiveFromDataTransformerName=@"NSUnarchiveFromData";
+NSString * const NSKeyedUnarchiveFromDataTransformerName=@"NSKeyedUnarchiveFromData";
 
 @implementation NSValueTransformer
 

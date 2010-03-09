@@ -32,8 +32,8 @@ typedef enum {
  NSStreamEventEndEncountered=kCFStreamEventEndEncountered,
 } NSStreamEvent;
 
-FOUNDATION_EXPORT NSString *NSStreamDataWrittenToMemoryStreamKey;
-FOUNDATION_EXPORT NSString *NSStreamFileCurrentOffsetKey;
+FOUNDATION_EXPORT NSString * const NSStreamDataWrittenToMemoryStreamKey;
+FOUNDATION_EXPORT NSString * const NSStreamFileCurrentOffsetKey;
 
 @interface NSStream : NSObject
 

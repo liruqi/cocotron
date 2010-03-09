@@ -12,8 +12,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import "NSInputStream_socket.h"
 #import "NSOutputStream_socket.h"
 
-NSString *NSStreamDataWrittenToMemoryStreamKey=@"kCFStreamPropertyDataWritten";
-NSString *NSStreamFileCurrentOffsetKey=@"kCFStreamPropertyFileCurrentOffset";
+NSString * const NSStreamDataWrittenToMemoryStreamKey=@"kCFStreamPropertyDataWritten";
+NSString * const NSStreamFileCurrentOffsetKey=@"kCFStreamPropertyFileCurrentOffset";
 
 @implementation NSStream
 

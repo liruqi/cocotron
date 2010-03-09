@@ -9,11 +9,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 @class NSArray;
 
-FOUNDATION_EXPORT NSString *NSIsNilTransformerName;
-FOUNDATION_EXPORT NSString *NSIsNotNilTransformerName;
-FOUNDATION_EXPORT NSString *NSNegateBooleanTransformerName;
-FOUNDATION_EXPORT NSString *NSUnarchiveFromDataTransformerName;
-FOUNDATION_EXPORT NSString *NSKeyedUnarchiveFromDataTransformerName;
+FOUNDATION_EXPORT NSString * const NSIsNilTransformerName;
+FOUNDATION_EXPORT NSString * const NSIsNotNilTransformerName;
+FOUNDATION_EXPORT NSString * const NSNegateBooleanTransformerName;
+FOUNDATION_EXPORT NSString * const NSUnarchiveFromDataTransformerName;
+FOUNDATION_EXPORT NSString * const NSKeyedUnarchiveFromDataTransformerName;
 
 @interface NSValueTransformer : NSObject
 
