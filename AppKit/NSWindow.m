@@ -773,6 +773,10 @@ NSString *NSWindowDidEndLiveResizeNotification=@"NSWindowDidEndLiveResizeNotific
    NSUnimplementedMethod();
 }
 
+-(BOOL)_isApplicationWindow {
+   return (![self isKindOfClass:[NSPanel class]] && [self isVisible] && ![self isExcludedFromWindowsMenu])?YES:NO;
+}
+
 -(void)setTitle:(NSString *)title {
    title=[title copy];
    [_title release];
@@ -783,7 +787,7 @@ NSString *NSWindowDidEndLiveResizeNotification=@"NSWindowDidEndLiveResizeNotific
 
    [self _updatePlatformWindowTitle];
 
-   if (![self isKindOfClass:[NSPanel class]] && [self isVisible] && ![self isExcludedFromWindowsMenu])
+   if ([self _isApplicationWindow])
        [NSApp changeWindowsItem:self title:title filename:NO];
 }
 
@@ -792,7 +796,7 @@ NSString *NSWindowDidEndLiveResizeNotification=@"NSWindowDidEndLiveResizeNotific
       [filename lastPathComponent],
       [filename stringByDeletingLastPathComponent]]];
 
-    if (![self isKindOfClass:[NSPanel class]] && [self isVisible] && ![self isExcludedFromWindowsMenu])
+   if ([self _isApplicationWindow])
         [NSApp changeWindowsItem:self title:filename filename:YES];
 }
 
@@ -2259,6 +2263,11 @@ NSString *NSWindowDidEndLiveResizeNotification=@"NSWindowDidEndLiveResizeNotific
     
     [_sheetContext release];
     _sheetContext=nil;
+}
+
+-(void)_flashWindow {
+   if([self _isApplicationWindow])
+    [[self platformWindow] flashWindow];
 }
 
 -(void)platformWindowActivated:(CGWindow *)window displayIfNeeded:(BOOL)displayIfNeeded {

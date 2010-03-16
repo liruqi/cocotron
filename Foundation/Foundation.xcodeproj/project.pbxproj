@@ -6449,12 +6449,19 @@
 			remoteGlobalIDString = FE01A57F0C5D9B3100AEA51A;
 			remoteInfo = "objc-Windows-i386";
 		};
-		FE2569DF10F2F91C005CE23E /* PBXContainerItemProxy */ = {
+		FE2C70AF114ED30400B449D2 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = FE2569DB10F2F91C005CE23E /* CFNetwork.xcodeproj */;
+			containerPortal = FE2C70A7114ED30400B449D2 /* CoreServices.xcodeproj */;
 			proxyType = 2;
-			remoteGlobalIDString = 8DC2EF5B0486A6940098B216;
-			remoteInfo = "CFNetwork-Windows-i386";
+			remoteGlobalIDString = 8DC2EF5B0486A6940098B216 /* CoreServices.framework */;
+			remoteInfo = "CoreServices-Windows-i386";
+		};
+		FE2C70B1114ED32200B449D2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FE2C70A7114ED30400B449D2 /* CoreServices.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 8DC2EF4F0486A6940098B216 /* CoreServices-Windows-i386 */;
+			remoteInfo = "CoreServices-Windows-i386";
 		};
 		FE50C5D90D85891000CD1896 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -7119,12 +7126,12 @@
 		FE1A0D1F0F8BADBA00FC4CC7 /* forwarding.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = forwarding.h; sourceTree = "<group>"; };
 		FE1A0D200F8BADBA00FC4CC7 /* forwarding.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = forwarding.m; sourceTree = "<group>"; };
 		FE1CF95610233D94001414D4 /* illegalCharacterSet.bitmap */ = {isa = PBXFileReference; lastKnownFileType = file; name = illegalCharacterSet.bitmap; path = NSCharacterSet/illegalCharacterSet.bitmap; sourceTree = "<group>"; };
-		FE2569DB10F2F91C005CE23E /* CFNetwork.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = CFNetwork.xcodeproj; path = ../CFNetwork/CFNetwork.xcodeproj; sourceTree = SOURCE_ROOT; };
 		FE2569E610F2F9C7005CE23E /* CFHost.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CFHost.m; sourceTree = "<group>"; };
 		FE2569E710F2F9C7005CE23E /* CFNetServices.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CFNetServices.m; sourceTree = "<group>"; };
 		FE2569E810F2F9C7005CE23E /* CFSocketStream.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CFSocketStream.m; sourceTree = "<group>"; };
 		FE256A8210F387DA005CE23E /* CFDate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CFDate.m; sourceTree = "<group>"; };
 		FE2705C50C5EF3D60004AB37 /* OBJCInitializeProcess_Darwin.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = OBJCInitializeProcess_Darwin.m; sourceTree = "<group>"; };
+		FE2C70A7114ED30400B449D2 /* CoreServices.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = CoreServices.xcodeproj; path = ../CoreServices/CoreServices.xcodeproj; sourceTree = SOURCE_ROOT; };
 		FE30A2FF10C6ED6F00A1BF7F /* Foundation.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Foundation.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		FE35CAEC0B4AB85800FE7AB3 /* objc.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = objc.m; sourceTree = "<group>"; };
 		FE35CBD70B4AD47400FE7AB3 /* NSSocket.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = NSSocket.h; sourceTree = "<group>"; };
@@ -7520,8 +7527,8 @@
 		0867D691FE84028FC02AAC07 /* Foundation */ = {
 			isa = PBXGroup;
 			children = (
+				FE2C70A7114ED30400B449D2 /* CoreServices.xcodeproj */,
 				FE2569E410F2F936005CE23E /* CFNetwork */,
-				FE2569DB10F2F91C005CE23E /* CFNetwork.xcodeproj */,
 				FEA828A3109B74B200C7A732 /* CoreFoundation.xcodeproj */,
 				151B5D1A105EA94F009092D5 /* NSAtomicCompareAndSwap.h */,
 				FE463E54102CD5C700B265D6 /* NSPointerArray.h */,
@@ -8471,14 +8478,6 @@
 			path = platform_darwin;
 			sourceTree = "<group>";
 		};
-		FE2569DC10F2F91C005CE23E /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				FE2569E010F2F91C005CE23E /* CFNetwork.framework */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
 		FE2569E410F2F936005CE23E /* CFNetwork */ = {
 			isa = PBXGroup;
 			children = (
@@ -8488,6 +8487,14 @@
 			);
 			name = CFNetwork;
 			path = ../CFNetwork;
+			sourceTree = "<group>";
+		};
+		FE2C70A8114ED30400B449D2 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				FE2C70B0114ED30400B449D2 /* CoreServices.framework */,
+			);
+			name = Products;
 			sourceTree = "<group>";
 		};
 		FE3B5D350FF3A6CF005E7605 /* platform_solaris */ = {
@@ -11901,6 +11908,7 @@
 			dependencies = (
 				FE01A7F30C5D9B9100AEA51A /* PBXTargetDependency */,
 				FEA828AD109B752F00C7A732 /* PBXTargetDependency */,
+				FE2C70B2114ED32200B449D2 /* PBXTargetDependency */,
 			);
 			name = "Foundation-Windows-i386";
 			productInstallPath = "$(HOME)/Library/Frameworks";
@@ -12007,12 +12015,12 @@
 			projectDirPath = "";
 			projectReferences = (
 				{
-					ProductGroup = FE2569DC10F2F91C005CE23E /* Products */;
-					ProjectRef = FE2569DB10F2F91C005CE23E /* CFNetwork.xcodeproj */;
-				},
-				{
 					ProductGroup = FEA828A4109B74B200C7A732 /* Products */;
 					ProjectRef = FEA828A3109B74B200C7A732 /* CoreFoundation.xcodeproj */;
+				},
+				{
+					ProductGroup = FE2C70A8114ED30400B449D2 /* Products */;
+					ProjectRef = FE2C70A7114ED30400B449D2 /* CoreServices.xcodeproj */;
 				},
 				{
 					ProductGroup = FEB6CC410B4A1922004FADF2 /* Products */;
@@ -12050,11 +12058,11 @@
 			remoteRef = 28D485000FE04DDD00DC03EF /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
-		FE2569E010F2F91C005CE23E /* CFNetwork.framework */ = {
+		FE2C70B0114ED30400B449D2 /* CoreServices.framework */ = {
 			isa = PBXReferenceProxy;
 			fileType = wrapper.framework;
-			path = CFNetwork.framework;
-			remoteRef = FE2569DF10F2F91C005CE23E /* PBXContainerItemProxy */;
+			path = CoreServices.framework;
+			remoteRef = FE2C70AF114ED30400B449D2 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 		FE5A868E10C6EDDC005E348A /* objc.framework */ = {
@@ -15650,6 +15658,11 @@
 			name = "objc-Windows-i386";
 			targetProxy = FE01A7F20C5D9B9100AEA51A /* PBXContainerItemProxy */;
 		};
+		FE2C70B2114ED32200B449D2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "CoreServices-Windows-i386";
+			targetProxy = FE2C70B1114ED32200B449D2 /* PBXContainerItemProxy */;
+		};
 		FE50C5DA0D85891000CD1896 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = FE01A5970C5D9B6900AEA51A /* Foundation-Windows-i386 */;
@@ -15995,7 +16008,6 @@
 					"-DFOUNDATION_INSIDE_BUILD",
 					"-DOBJC_INSIDE_BUILD",
 					"-D__LITTLE_ENDIAN__",
-					"-DHAVE_LIBFFI",
 					"-DDEBUG",
 					"-march=i686",
 					"$(OTHER_CFLAGS)",

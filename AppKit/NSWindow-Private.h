@@ -32,6 +32,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 -(void)_showMenuViewIfNeeded;
 -(void)_invalidateTrackingAreas;
 -(void)_setFrameAutosaveNameNoIO:(NSString *)name;
+-(void)_flashWindow;
 
 -(void)undo:sender;
 -(void)redo:sender;
