@@ -22,18 +22,18 @@ NSString* NSObservedObjectKey=@"NSObservedObject";
 NSString* NSObservedKeyPathKey=@"NSObservedKeyPath";
 NSString* NSOptionsKey=@"NSOptions";
 
-NSString *NSNullPlaceholderBindingOption=@"NSNullPlaceholder"; // Do not change.
-NSString *NSNoSelectionPlaceholderBindingOption=@"NSNoSelectionPlaceholder";
-NSString *NSMultipleValuesPlaceholderBindingOption=@"NSMultipleValuesPlaceholder";
-NSString *NSCreatesSortDescriptorBindingOption=@"NSCreatesSortDescriptors";
-NSString *NSRaisesForNotApplicableKeysBindingOption=@"NSRaisesForNotApplicableKeys";
-NSString *NSAllowsEditingMultipleValuesSelectionBindingOption=@"NSAllowsEditingMultipleValuesSelection";
-NSString *NSValueTransformerNameBindingOption=@"NSValueTransformerName"; // Do not change.
-NSString *NSValueTransformerBindingOption=@"NSValueTransformerBinding";
-NSString *NSConditionallySetsEnabledBindingOption=@"NSConditionallySetsEnabled"; // Do not change.
-NSString *NSConditionallySetsEditableBindingOption=@"NSConditionallySetsEditable"; // Do not change.
-NSString *NSContinuouslyUpdatesValueBindingOption=@"NSContinuouslyUpdatesValue"; // Do not change.
-NSString *NSDisplayPatternBindingOption=@"NSDisplayPattern"; // Do not change.
+NSString * const NSNullPlaceholderBindingOption=@"NSNullPlaceholder"; // Do not change.
+NSString * const NSNoSelectionPlaceholderBindingOption=@"NSNoSelectionPlaceholder";
+NSString * const NSMultipleValuesPlaceholderBindingOption=@"NSMultipleValuesPlaceholder";
+NSString * const NSCreatesSortDescriptorBindingOption=@"NSCreatesSortDescriptors";
+NSString * const NSRaisesForNotApplicableKeysBindingOption=@"NSRaisesForNotApplicableKeys";
+NSString * const NSAllowsEditingMultipleValuesSelectionBindingOption=@"NSAllowsEditingMultipleValuesSelection";
+NSString * const NSValueTransformerNameBindingOption=@"NSValueTransformerName"; // Do not change.
+NSString * const NSValueTransformerBindingOption=@"NSValueTransformerBinding";
+NSString * const NSConditionallySetsEnabledBindingOption=@"NSConditionallySetsEnabled"; // Do not change.
+NSString * const NSConditionallySetsEditableBindingOption=@"NSConditionallySetsEditable"; // Do not change.
+NSString * const NSContinuouslyUpdatesValueBindingOption=@"NSContinuouslyUpdatesValue"; // Do not change.
+NSString * const NSDisplayPatternBindingOption=@"NSDisplayPattern"; // Do not change.
 
 
 @implementation NSObject (BindingSupport)

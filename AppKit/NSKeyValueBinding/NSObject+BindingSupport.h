@@ -62,16 +62,16 @@ APPKIT_EXPORT NSString* NSObservedKeyPathKey;
 APPKIT_EXPORT NSString* NSOptionsKey;
 
 // Binding option keys
-APPKIT_EXPORT NSString *NSNullPlaceholderBindingOption;
-APPKIT_EXPORT NSString *NSNoSelectionPlaceholderBindingOption;
-APPKIT_EXPORT NSString *NSMultipleValuesPlaceholderBindingOption;
-APPKIT_EXPORT NSString *NSCreatesSortDescriptorBindingOption;
-APPKIT_EXPORT NSString *NSRaisesForNotApplicableKeysBindingOption;
-APPKIT_EXPORT NSString *NSAllowsEditingMultipleValuesSelectionBindingOption;
-APPKIT_EXPORT NSString *NSValueTransformerNameBindingOption;
-APPKIT_EXPORT NSString *NSValueTransformerBindingOption;
-APPKIT_EXPORT NSString *NSConditionallySetsEnabledBindingOption;
-APPKIT_EXPORT NSString *NSConditionallySetsEditableBindingOption;
-APPKIT_EXPORT NSString *NSContinuouslyUpdatesValueBindingOption;
-APPKIT_EXPORT NSString *NSDisplayPatternBindingOption;
+APPKIT_EXPORT NSString * const NSNullPlaceholderBindingOption;
+APPKIT_EXPORT NSString * const NSNoSelectionPlaceholderBindingOption;
+APPKIT_EXPORT NSString * const NSMultipleValuesPlaceholderBindingOption;
+APPKIT_EXPORT NSString * const NSCreatesSortDescriptorBindingOption;
+APPKIT_EXPORT NSString * const NSRaisesForNotApplicableKeysBindingOption;
+APPKIT_EXPORT NSString * const NSAllowsEditingMultipleValuesSelectionBindingOption;
+APPKIT_EXPORT NSString * const NSValueTransformerNameBindingOption;
+APPKIT_EXPORT NSString * const NSValueTransformerBindingOption;
+APPKIT_EXPORT NSString * const NSConditionallySetsEnabledBindingOption;
+APPKIT_EXPORT NSString * const NSConditionallySetsEditableBindingOption;
+APPKIT_EXPORT NSString * const NSContinuouslyUpdatesValueBindingOption;
+APPKIT_EXPORT NSString * const NSDisplayPatternBindingOption;
 
