@@ -7,9 +7,9 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
 #import <AppKit/O2DeviceContext_gdi.h>
-#import <CoreGraphics/O2Path.h>
-#import <CoreGraphics/O2Color.h>
-#import <CoreGraphics/O2ColorSpace.h>
+#import <Onyx2D/O2Path.h>
+#import <Onyx2D/O2Color.h>
+#import <Onyx2D/O2ColorSpace.h>
 
 static inline void CMYKAToRGBA(const float *input,float *output){
    float white=1-input[3];
@@ -177,10 +177,10 @@ void O2DeviceContextClipToPath_gdi(HDC dc,O2Path *path,O2AffineTransform xform,O
    XFORM userToDevice={deviceXFORM.a,deviceXFORM.b,deviceXFORM.c,deviceXFORM.d,deviceXFORM.tx,deviceXFORM.ty};
 
    if(!GetWorldTransform(dc,&current))
-    NSLog(@"GetWorldTransform failed");
+    NSLog(@"GetWorldTransform failed %s %d",__FILE__,__LINE__);
 
    if(!SetWorldTransform(dc,&userToDevice))
-    NSLog(@"ModifyWorldTransform failed");
+    NSLog(@"ModifyWorldTransform failed %s %d",__FILE__,__LINE__);
 
    O2DeviceContextEstablishDeviceSpacePath_gdi(dc,path,xform);
    SetPolyFillMode(dc,evenOdd?ALTERNATE:WINDING);
@@ -188,7 +188,7 @@ void O2DeviceContextClipToPath_gdi(HDC dc,O2Path *path,O2AffineTransform xform,O
     NSLog(@"SelectClipPath failed (%i), path size= %d", GetLastError(),O2PathNumberOfElements(path));
 
    if(!SetWorldTransform(dc,&current))
-    NSLog(@"SetWorldTransform failed");
+    NSLog(@"SetWorldTransform failed %s %d",__FILE__,__LINE__);
 }
 
 void O2DeviceContextClipToNonZeroPath_gdi(HDC dc,O2Path *path,O2AffineTransform xform,O2AffineTransform deviceXFORM){

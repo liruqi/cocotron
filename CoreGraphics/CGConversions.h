@@ -2,17 +2,21 @@
 #import <CoreGraphics/CGFunction.h>
 #import <CoreGraphics/CGPath.h>
 #import <CoreGraphics/CGPattern.h>
-#import "O2AffineTransform.h"
-#import "O2Function.h"
-#import "O2Pattern.h"
-#import "O2Path.h"
+#import <Onyx2D/O2AffineTransform.h>
+#import <Onyx2D/O2Function.h>
+#import <Onyx2D/O2Pattern.h>
+#import <Onyx2D/O2Path.h>
 
 static inline CGAffineTransform CGAffineTransformFromO2(O2AffineTransform xform){
-   return *(CGAffineTransform *)&xform;
+   CGAffineTransform result={xform.a,xform.b,xform.c,xform.d,xform.tx,xform.ty};
+
+   return result;
 }
 
 static inline O2AffineTransform O2AffineTransformFromCG(CGAffineTransform xform){
-   return *(O2AffineTransform *)&xform;
+   O2AffineTransform result={xform.a,xform.b,xform.c,xform.d,xform.tx,xform.ty};
+
+   return result;
 }
 
 static inline const O2AffineTransform *O2AffineTransformPtrFromCG(const CGAffineTransform *xform){

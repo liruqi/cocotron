@@ -11,19 +11,19 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import "O2DeviceContext_gdiDIBSection.h"
 #import "O2Surface_DIBSection.h"
 #import "Win32DeviceContextWindow.h"
-#import <CoreGraphics/O2GraphicsState.h>
+#import <Onyx2D/O2GraphicsState.h>
 #import <AppKit/O2DeviceContext_gdi.h>
-#import <CoreGraphics/O2MutablePath.h>
-#import <CoreGraphics/O2Color.h>
-#import <CoreGraphics/O2ColorSpace.h>
-#import <CoreGraphics/O2DataProvider.h>
-#import <CoreGraphics/O2Shading.h>
-#import <CoreGraphics/O2Function.h>
-#import <CoreGraphics/O2Context_builtin.h>
-#import <CoreGraphics/O2PDFContext.h>
+#import <Onyx2D/O2MutablePath.h>
+#import <Onyx2D/O2Color.h>
+#import <Onyx2D/O2ColorSpace.h>
+#import <Onyx2D/O2DataProvider.h>
+#import <Onyx2D/O2Shading.h>
+#import <Onyx2D/O2Function.h>
+#import <Onyx2D/O2Context_builtin.h>
+#import <Onyx2D/O2PDFContext.h>
 #import "O2Font_gdi.h"
-#import <CoreGraphics/O2Image.h>
-#import <CoreGraphics/O2ClipPhase.h>
+#import <Onyx2D/O2Image.h>
+#import <Onyx2D/O2ClipPhase.h>
 #import <AppKit/Win32Font.h>
 #import <AppKit/NSRaise.h>
 
@@ -531,18 +531,18 @@ static inline float axialBandIntervalFromMagnitude(O2Function *function,float ma
     XFORM rotate={cos(angle),sin(angle),-sin(angle),cos(angle),0,0};
      
     if(!GetWorldTransform(_dc,&current))
-     NSLog(@"GetWorldTransform failed");
+     NSLog(@"GetWorldTransform failed %s %d",__FILE__,__LINE__);
      
     if(!ModifyWorldTransform(_dc,&rotate,MWT_RIGHTMULTIPLY))
      NSLog(@"ModifyWorldTransform failed");
     if(!ModifyWorldTransform(_dc,&translate,MWT_RIGHTMULTIPLY))
-     NSLog(@"ModifyWorldTransform failed");
+     NSLog(@"ModifyWorldTransform failed %s %d",__FILE__,__LINE__);
     
     if(!gradientFill(_dc,vertices,vertexIndex,rect,rectIndex,GRADIENT_FILL_RECT_H))
-     NSLog(@"GradientFill failed");
+     NSLog(@"GradientFill failed %s %d",__FILE__,__LINE__);
 
     if(!SetWorldTransform(_dc,&current))
-     NSLog(@"GetWorldTransform failed");
+     NSLog(@"GetWorldTransform failed %s %d",__FILE__,__LINE__);
    }
 }
 
