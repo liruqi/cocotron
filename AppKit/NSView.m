@@ -924,7 +924,7 @@ static inline void buildTransformsIfNeeded(NSView *self) {
     if(!_validTrackingAreas){
      [_trackingAreas removeAllObjects];
      [self updateTrackingAreas];
-     _validTrackingAreas=NO;
+     _validTrackingAreas=YES;
     }
     
     count=[_trackingAreas count];
