@@ -20,6 +20,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <AppKit/NSGraphicsStyle.h>
 #import <AppKit/NSRaise.h>
 
+
 @implementation NSBox
 
 -(void)encodeWithCoder:(NSCoder *)coder {
@@ -36,12 +37,36 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    if([coder allowsKeyedCoding]){
     NSKeyedUnarchiver *keyed=(NSKeyedUnarchiver *)coder;
     
+    _boxType=[keyed decodeIntForKey:@"NSBoxType"];
     _borderType=[keyed decodeIntForKey:@"NSBorderType"];
     _titlePosition=[keyed decodeIntForKey:@"NSTitlePosition"];
     _contentViewMargins=[keyed decodeSizeForKey:@"NSOffsets"];
     _titleCell=[[keyed decodeObjectForKey:@"NSTitleCell"] retain];
     [[_subviews lastObject] setAutoresizingMask: NSViewWidthSizable| NSViewHeightSizable];
     [[_subviews lastObject] setAutoresizesSubviews:YES];
+	   
+    if (_boxType == NSBoxCustom)
+	{
+		id obj;
+		_customData = [[NSMutableDictionary alloc] init];
+		
+		obj = [keyed decodeObjectForKey:@"NSBorderWidth2"];
+		if (obj == nil) obj = [NSNumber numberWithDouble:1];
+		[_customData setObject:obj forKey:@"NSBorderWidth2"];
+		
+		obj = [keyed decodeObjectForKey:@"NSCornerRadius2"];
+		if (obj == nil) obj = [NSNumber numberWithDouble:0];
+
+		[_customData setObject:obj forKey:@"NSCornerRadius2"];
+		
+		obj = [keyed decodeObjectForKey:@"NSBorderColor2"];
+		if (obj == nil) obj = [NSColor colorWithCalibratedWhite:0.000 alpha:0.420];
+		[_customData setObject:obj forKey:@"NSBorderColor2"];
+		
+		obj = [keyed decodeObjectForKey:@"NSFillColor2"];
+		if (obj == nil) obj = [NSColor colorWithCalibratedWhite:0.000 alpha:0.000];
+		[_customData setObject:obj forKey:@"NSFillColor2"];
+	}
    }
    else {
     [NSException raise:NSInvalidArgumentException format:@"%@ can not initWithCoder:%@",isa,[coder class]];
@@ -62,6 +87,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
   
 -(void)dealloc {
+   [_customData release];
    [_titleCell release];
    [super dealloc];
 }
@@ -257,38 +283,95 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 //   [[NSColor controlColor] setFill];
   // NSRectFill(rect);
 
-   switch(_borderType){
-    case NSNoBorder:
-     break;
-
-    case NSLineBorder:
-     [[self graphicsStyle] drawBoxWithLineInRect:grooveRect];
-     break;
-
-    case NSBezelBorder:
-     [[self graphicsStyle] drawBoxWithBezelInRect:grooveRect clipRect:rect];
-     break;
-
-    case NSGrooveBorder:
-     [[self graphicsStyle] drawBoxWithGrooveInRect:grooveRect clipRect:rect];
-     break;
-   }
-
-   if(drawTitle){
+	if (_boxType == NSBoxCustom){
+		
+		// Ignoring corner radius for now.
+		[[self fillColor] set];
+		NSRectFill(rect);
+		
+		if (_borderType != NSNoBorder)
+		{
+			[[self borderColor] set];
+			NSFrameRectWithWidth(_bounds,[self borderWidth]);
+		}
+	}
+	else{
+		switch(_borderType){
+			case NSNoBorder:
+				break;
+				
+			case NSLineBorder:
+				[[self graphicsStyle] drawBoxWithLineInRect:grooveRect];
+				break;
+				
+			case NSBezelBorder:
+				[[self graphicsStyle] drawBoxWithBezelInRect:grooveRect clipRect:rect];
+				break;
+				
+			case NSGrooveBorder:
+				[[self graphicsStyle] drawBoxWithGrooveInRect:grooveRect clipRect:rect];
+				break;
+		}
+	}
+	if(drawTitle){
 #if 0
-    [[NSColor windowBackgroundColor] setFill];
-    titleRect.origin.x-=TEXTGAP;
-    titleRect.size.width+=TEXTGAP*2;
-    NSRectFill(titleRect);
+		[[NSColor windowBackgroundColor] setFill];
+		titleRect.origin.x-=TEXTGAP;
+		titleRect.size.width+=TEXTGAP*2;
+		NSRectFill(titleRect);
 #endif
-    titleRect.origin.x+=TEXTGAP;
-    titleRect.size.width-=TEXTGAP*2;
+		titleRect.origin.x+=TEXTGAP;
+		titleRect.size.width-=TEXTGAP*2;
+		
+		// Ask the cell to draw itself now
+		// TODO: Should we be doing some sort of clipping setup here?
+		[_titleCell setControlView:self];
+		[_titleCell drawWithFrame: titleRect inView: self];
+	}
+}
 
-	// Ask the cell to draw itself now
-	// TODO: Should we be doing some sort of clipping setup here?
-    [_titleCell setControlView:self];
-    [_titleCell drawWithFrame: titleRect inView: self];
-   }
+@end
+
+@implementation NSBox (NSCustomBoxTypeProperties)
+
+- (CGFloat)borderWidth
+{
+	return [[_customData objectForKey:@"NSBorderWidth2"] doubleValue];
+}
+
+- (void)setBorderWidth:(CGFloat)borderWidth
+{
+	[_customData setObject:[NSNumber numberWithDouble:borderWidth] forKey:@"NSBorderWidth2"];
+}
+
+- (CGFloat)cornerRadius;
+{
+	return [[_customData objectForKey:@"NSCornerRadius2"] doubleValue];
+}
+
+- (void)setCornerRadius:(CGFloat)cornerRadius
+{
+	[_customData setObject:[NSNumber numberWithDouble:cornerRadius] forKey:@"NSCornerRadius2"];
+}
+
+- (NSColor *)borderColor;
+{
+   return [_customData objectForKey:@"NSBorderColor2"];
+}
+
+- (void)setBorderColor:(NSColor *)borderColor
+{
+   [_customData setObject:borderColor forKey:@"NSBorderColor2"];
+}
+
+- (NSColor *)fillColor;
+{
+   return [_customData objectForKey:@"NSFillColor2"];
+}
+
+- (void)setFillColor:(NSColor *)fillColor
+{
+   [_customData setObject:fillColor forKey:@"NSFillColor2"];
 }
 
 @end

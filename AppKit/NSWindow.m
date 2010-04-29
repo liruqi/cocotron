@@ -1415,7 +1415,7 @@ NSString * const NSWindowDidEndLiveResizeNotification=@"NSWindowDidEndLiveResize
 }
 
 -(void)recalculateKeyViewLoop {
-   NSUnimplementedMethod();
+//   NSUnimplementedMethod();
 }
 
 -(NSSelectionDirection)keyViewSelectionDirection {
