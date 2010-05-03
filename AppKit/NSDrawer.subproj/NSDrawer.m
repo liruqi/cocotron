@@ -191,10 +191,6 @@ NSString * const NSDrawerDidCloseNotification = @"NSDrawerDidCloseNotification";
     return _delegate;
 }
 
--(NSDrawerWindow *)drawerWindow {
-   return _drawerWindow;
-}
-
 - (NSWindow *)parentWindow {
     return _parentWindow;
 }
@@ -348,6 +344,7 @@ NSString * const NSDrawerDidCloseNotification = @"NSDrawerDidCloseNotification";
 //    start.size = [self drawerWindow:_drawerWindow constrainSize:start.size];
     [_drawerWindow setFrame:start display:YES animate:NO];
     
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(drawerDidOpen:) name:NSWindowDidAnimateNotification object:_drawerWindow];
     _state = NSDrawerOpeningState;
     [self _resetWindowOrdering:nil];
     [_drawerWindow setFrame:frame display:YES animate:YES];
@@ -366,6 +363,7 @@ NSString * const NSDrawerDidCloseNotification = @"NSDrawerDidCloseNotification";
 
     [[NSNotificationCenter defaultCenter] postNotificationName:NSDrawerWillCloseNotification object:self];
 
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(drawerDidClose:) name:NSWindowDidAnimateNotification object:_drawerWindow];
     _state = NSDrawerClosingState;
     
     [_drawerWindow setFrame:frame display:YES animate:YES];

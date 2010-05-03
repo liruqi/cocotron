@@ -78,6 +78,25 @@ NSUInteger NSGetISOLatin1CStringWithMaxLength(const unichar *characters,NSUInteg
     
 }
 
+NSString *NSISOLatin1CStringNewWithCharacters(NSZone *zone,
+                                               const unichar *characters,NSUInteger length,BOOL lossy) {
+    NSString    *string;
+    NSUInteger  bytesLength;
+    char        *bytes;
+    
+    bytes=NSUnicodeToISOLatin1(characters,length,lossy,&bytesLength,zone, NO);
+    
+    if(bytes==NULL)
+        string=nil;
+    else{
+        string=NSString_isoLatin1NewWithBytes(zone,bytes,bytesLength);
+        NSZoneFree(zone,bytes);
+    }
+    
+    return string;
+}
+
+
 @implementation NSString_isoLatin1
 
 NSString *NSString_isoLatin1NewWithBytes(NSZone *zone,

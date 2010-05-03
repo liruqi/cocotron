@@ -66,7 +66,6 @@ extern NSMutableArray *_liveTasks; // = nil;
      wstat(3XFN).
  */
 +(void)signalPipeReadNotification:(NSNotification *)note {
-   NSEnumerator *taskEnumerator = [_liveTasks objectEnumerator];
    NSTask *task;
    pid_t pid;
    int status;
@@ -83,6 +82,8 @@ extern NSMutableArray *_liveTasks; // = nil;
       // [NSException raise:NSInternalInconsistencyException format:@"wait4() returned 0, but data was fed to the pipe!"];
    }
    else {
+       @synchronized(_liveTasks) {
+           NSEnumerator *taskEnumerator = [_liveTasks objectEnumerator];
        while (task = [taskEnumerator nextObject]) {
            if ([task processIdentifier] == pid) {
                if (WIFEXITED(status))
@@ -96,6 +97,7 @@ extern NSMutableArray *_liveTasks; // = nil;
 
                return;
            }
+       }
        }
 
        // something got out of synch here

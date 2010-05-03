@@ -52,7 +52,18 @@ extern NSString *NSPlatformClassName;
    return Nil;
 }
 
+-(Class)conditionClass;
+{
+	NSInvalidAbstractInvocation();
+	return Nil;
+}
+
 -(Class)persistantDomainClass {
+   NSInvalidAbstractInvocation();
+   return Nil;
+}
+
+-(Class)timeZoneClass {
    NSInvalidAbstractInvocation();
    return Nil;
 }
@@ -87,11 +98,6 @@ extern NSString *NSPlatformClassName;
    return nil;
 }
 
--(NSTimeZone *)systemTimeZone {
-   NSInvalidAbstractInvocation();
-   return nil;
-}
-
 -(NSString *)hostName {
    NSInvalidAbstractInvocation();
    return nil;
@@ -103,6 +109,11 @@ extern NSString *NSPlatformClassName;
 }
 
 -(NSArray *)addressesForDNSHostName:(NSString *)name {
+   NSInvalidAbstractInvocation();
+   return nil;
+}
+
+-(NSString *)hostNameByAddress:(NSString *)address{
    NSInvalidAbstractInvocation();
    return nil;
 }

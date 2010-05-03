@@ -534,19 +534,20 @@ NSString * const NSOldSelectedCharacterRange=@"NSOldSelectedCharacterRange";
    NSPoint          origin=[self textContainerOrigin];
 
    NSRange          glyphRange;
+   NSRect           glyphRect=rect;
 
    [_backgroundColor setFill];
    NSRectFill(rect);
 
-   rect.origin.x-=_textContainerInset.width;
-   rect.origin.y-=_textContainerInset.height;
+   glyphRect.origin.x-=_textContainerInset.width;
+   glyphRect.origin.y-=_textContainerInset.height;
 
-   if(NSIntersectsRect(rect,[[self layoutManager] extraLineFragmentRect])){
+   if(NSIntersectsRect(glyphRect,[[self layoutManager] extraLineFragmentRect])){
     glyphRange.location=[layoutManager numberOfGlyphs]-1;
     glyphRange.length=1;
    }
    else {
-    glyphRange=[layoutManager glyphRangeForBoundingRect:rect inTextContainer:[self textContainer]];
+    glyphRange=[layoutManager glyphRangeForBoundingRect:glyphRect inTextContainer:[self textContainer]];
    }
    [layoutManager drawBackgroundForGlyphRange:glyphRange atPoint:origin];
    [layoutManager drawGlyphsForGlyphRange:glyphRange atPoint:origin];

@@ -39,22 +39,23 @@ void childSignalHandler(int sig) {
     }
 }
 
++(void)registerNotification {
+    NSFileHandle *forReading;
+    forReading=[_taskPipe fileHandleForReading];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(signalPipeReadNotification:)
+                                                 name:NSFileHandleReadCompletionNotification object:forReading];
+    [forReading readInBackgroundAndNotifyForModes:[NSArray arrayWithObject:NSDefaultRunLoopMode]];
+    
+}
+
 +(void)signalPipeReadNotification:(NSNotification *)note {
    [[_taskPipe fileHandleForReading] readInBackgroundAndNotifyForModes:[NSArray arrayWithObject:NSDefaultRunLoopMode]];
 }
 
 +(void)initialize {
    if(self==[NSTask_posix class]){
-    NSFileHandle *forReading;
-    
     _liveTasks=[[NSMutableArray alloc] init];
     _taskPipe=[[NSPipe alloc] init];
-    forReading=[_taskPipe fileHandleForReading];
-    
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(signalPipeReadNotification:)
-      name:NSFileHandleReadCompletionNotification object:forReading];
-    
-    [forReading readInBackgroundAndNotifyForModes:[NSArray arrayWithObject:NSDefaultRunLoopMode]];
    }
 }
 
@@ -70,62 +71,79 @@ void childSignalHandler(int sig) {
    _processID = fork(); 
    if (_processID == 0) {  // child process
        NSMutableArray *array = [[arguments mutableCopy] autorelease];
-       const char     *path = [launchPath cString];
+        const char     *path = [launchPath fileSystemRepresentation];
        NSInteger            i,count=[array count];
-       char          *args[count+1];
+        const char          *args[count+2];
        
        if (array == nil)
            array = [NSMutableArray array];
 
-       [array insertObject:launchPath atIndex:0];
+        args[0]=path;
        for(i=0;i<count;i++)
-        args[i]=(char *)[[[array objectAtIndex:i] description] cString];
-       args[i]=NULL;
+            args[i+1]=(char *)[[[array objectAtIndex:i] description] cString];
+        args[count+1]=NULL;
        
-       if ([standardOutput isKindOfClass:[NSFileHandle class]] || [standardOutput isKindOfClass:[NSPipe class]]) {
+        
+        if ([standardInput isKindOfClass:[NSFileHandle class]] || [standardInput isKindOfClass:[NSPipe class]]) {
            int fd = -1;
            
-           close(STDIN_FILENO);
            if ([standardInput isKindOfClass:[NSFileHandle class]])
-               fd = [(NSFileHandle_posix *)standardOutput fileDescriptor];
+                fd = [(NSFileHandle_posix *)standardInput fileDescriptor];
            else
-               fd = [(NSFileHandle_posix *)[standardOutput fileHandleForReading] fileDescriptor];
+                fd = [(NSFileHandle_posix *)[standardInput fileHandleForReading] fileDescriptor];
+            dup2(fd, STDIN_FILENO);
 
-           dup2(fd, STDIN_FILENO);
+            
        }
        if ([standardOutput isKindOfClass:[NSFileHandle class]] || [standardOutput isKindOfClass:[NSPipe class]]) {
            int fd = -1;
 
-           close(STDOUT_FILENO);
            if ([standardOutput isKindOfClass:[NSFileHandle class]])
                fd = [(NSFileHandle_posix *)standardOutput fileDescriptor];
            else
                fd = [(NSFileHandle_posix *)[standardOutput fileHandleForWriting] fileDescriptor];
 
            dup2(fd, STDOUT_FILENO);
+            
        }
        if ([standardError isKindOfClass:[NSFileHandle class]] || [standardError isKindOfClass:[NSPipe class]]) {
            int fd = -1;
 
-           close(STDERR_FILENO);
            if ([standardError isKindOfClass:[NSFileHandle class]])
                fd = [(NSFileHandle_posix *)standardError fileDescriptor];
            else
                fd = [(NSFileHandle_posix *)[standardError fileHandleForWriting] fileDescriptor];
+            dup2(fd, STDERR_FILENO);
 
-           dup2(fd, STDERR_FILENO);
        }
 
+        //close all other file handles..see FD_CLOEXEC
+        for (i = 3; i < 256; i++) {
+            close(i);
+        }
+        
        chdir([currentDirectoryPath fileSystemRepresentation]);
 
-       execve(path, args, NSPlatform_environ());
+        execve(path, (char**)args, NSPlatform_environ());
        [NSException raise:NSInvalidArgumentException
                    format:@"NSTask: execve(%s) returned: %s", path, strerror(errno)];
    }
    else if (_processID != -1) {
+        
        isRunning = YES;
+        
+        @synchronized(_liveTasks) {
        [_liveTasks addObject:self];
    }
+        
+        if([standardInput isKindOfClass:[NSPipe class]])
+            [[standardInput fileHandleForReading] closeFile];
+        if([standardOutput isKindOfClass:[NSPipe class]])
+            [[standardOutput fileHandleForWriting] closeFile];
+        if([standardError isKindOfClass:[NSPipe class]])
+            [[standardError fileHandleForWriting] closeFile];
+        
+    }
    else
        [NSException raise:NSInvalidArgumentException
                    format:@"fork() failed: %s", strerror(errno)];
@@ -133,7 +151,9 @@ void childSignalHandler(int sig) {
 
 -(void)terminate {
    kill(_processID, SIGTERM);
+    @synchronized(_liveTasks) {
    [_liveTasks removeObject:self];
+}
 }
 
 -(int)terminationStatus { return _terminationStatus; }			// OSX specs this
@@ -141,7 +161,9 @@ void childSignalHandler(int sig) {
 
 -(void)taskFinished {
    isRunning = NO;
+    @synchronized(_liveTasks) {
    [_liveTasks removeObject:self];
+}
 }
 
 @end

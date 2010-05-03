@@ -40,9 +40,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(void)encodeWithCoder:(NSCoder *)coder {
-   [coder encodeObject:_title forKey:@"NSMenu title"];
-   [coder encodeObject:_itemArray forKey:@"NSMenu itemArray"];
-   [coder encodeBool:_autoenablesItems forKey:@"NSMenu autoenablesItems"];
+   [coder encodeObject:_title forKey:@"NSTitle"];
+   [coder encodeObject:_name forKey:@"NSName"];
+   [coder encodeObject:_itemArray forKey:@"NSMenuItems"];
+   [coder encodeBool:!_autoenablesItems forKey:@"NSNoAutoenable"];
 }
 
 -initWithCoder:(NSCoder *)coder {

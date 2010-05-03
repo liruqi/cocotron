@@ -27,7 +27,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <Foundation/NSKeyedArchiver.h>
 #import <AppKit/NSPasteboard.h>
 #import <AppKit/NSObject+BindingSupport.h>
-#import <CoreGraphics/O2Context.h>
+#import <Onyx2D/O2Context.h>
 #import <AppKit/NSRaise.h>
 
 NSString * const NSViewFrameDidChangeNotification=@"NSViewFrameDidChangeNotification";
@@ -840,9 +840,7 @@ static inline void buildTransformsIfNeeded(NSView *self) {
 -(NSToolTipTag)addToolTipRect:(NSRect)rect owner:object userData:(void *)userData {
    NSTrackingArea *area=nil;
 
-   // Send the unspecified pointer userData as NSDictionary
-   // pointer userInfo. This matches NSEvent's documentation.
-   area=[[NSTrackingArea alloc] _initWithRect:rect options:0 owner:object userInfo:userData isToolTip:YES isLegacy:NO];
+   area=[[NSTrackingArea alloc] _initWithRect:rect options:0 owner:object userData:userData retainUserData:NO isToolTip:YES isLegacy:NO];
    [_trackingAreas addObject:area];
    [area release];
 
@@ -870,7 +868,7 @@ static inline void buildTransformsIfNeeded(NSView *self) {
    NSCursorRect *cursorRect=[[NSCursorRect alloc] initWithCursor:cursor];
    NSTrackingArea *area=nil;
 
-   area=[[NSTrackingArea alloc] _initWithRect:rect options:NSTrackingCursorUpdate|NSTrackingActiveInKeyWindow owner:cursorRect userInfo:nil isToolTip:NO isLegacy:YES];
+   area=[[NSTrackingArea alloc] _initWithRect:rect options:NSTrackingCursorUpdate|NSTrackingActiveInKeyWindow owner:cursorRect userData:NULL retainUserData:NO isToolTip:NO isLegacy:YES];
    [_trackingAreas addObject:area];
    [area release];
    [cursorRect release];
@@ -980,9 +978,7 @@ static inline void buildTransformsIfNeeded(NSView *self) {
    if(assumeInside==YES)
     options|=NSTrackingAssumeInside;
 
-   // Send the unspecified pointer userData as NSDictionary
-   // pointer userInfo. This obviously matches Apple Cocoa's behaviour.
-   area=[[NSTrackingArea alloc] _initWithRect:rect options:options owner:owner userInfo:userData isToolTip:NO isLegacy:NO];
+   area=[[NSTrackingArea alloc] _initWithRect:rect options:options owner:owner userData:NULL retainUserData:NO isToolTip:NO isLegacy:NO];
    [_trackingAreas addObject:area];
    [area release];
 
@@ -1415,9 +1411,24 @@ static NSGraphicsContext *graphicsContextForView(NSView *view){
    return [[view window] graphicsContext];
 }
 
--(void)lockFocus {
+-(void)_lockFocusInContext:(NSGraphicsContext *)context {
+    CGContextRef graphicsPort=[context graphicsPort];
 
-   [self lockFocusIfCanDrawInContext:graphicsContextForView(self)];
+    [NSGraphicsContext saveGraphicsState];
+    [NSGraphicsContext setCurrentContext:context];
+   
+    [[context focusStack] addObject:self];
+
+    CGContextSaveGState(graphicsPort);
+    CGContextResetClip(graphicsPort);
+    CGContextSetCTM(graphicsPort,[self transformToWindow]);
+    CGContextClipToRect(graphicsPort,[self visibleRect]);
+    
+    [self setUpGState];
+}
+    
+-(void)lockFocus {
+   [self _lockFocusInContext:graphicsContextForView(self)];
 }
 
 -(BOOL)lockFocusIfCanDraw {
@@ -1430,26 +1441,18 @@ static NSGraphicsContext *graphicsContextForView(NSView *view){
 
 -(BOOL)lockFocusIfCanDrawInContext:(NSGraphicsContext *)context {
    if(context!=nil){
-    CGContextRef graphicsPort=[context graphicsPort];
-
-    [NSGraphicsContext saveGraphicsState];
-    [NSGraphicsContext setCurrentContext:context];
-   
-    [[context focusStack] addObject:self];
-
-    CGContextResetClip(graphicsPort);
-    CGContextSetCTM(graphicsPort,[self transformToWindow]);
-    CGContextClipToRect(graphicsPort,[self visibleRect]);
-    
-    [self setUpGState];
-    
+    [self _lockFocusInContext:context];
     return YES;
    }
    return NO;
 }
 
 -(void)unlockFocus {
-   [[[NSGraphicsContext currentContext] focusStack] removeLastObject];
+   NSGraphicsContext *context=[NSGraphicsContext currentContext];
+   
+   CGContextRestoreGState([context graphicsPort]);
+
+   [[context focusStack] removeLastObject];
    [NSGraphicsContext restoreGraphicsState];
 }
 
@@ -1548,10 +1551,6 @@ static NSGraphicsContext *graphicsContextForView(NSView *view){
 }
 
 -(void)displayRectIgnoringOpacity:(NSRect)rect {
-   [self displayRectIgnoringOpacity:rect inContext:graphicsContextForView(self)];
-}
-
--(void)displayRectIgnoringOpacity:(NSRect)rect inContext:(NSGraphicsContext *)context {   
    if(NSContainsRect(rect,_invalidRect)){
     _invalidRect=NSZeroRect;
    }
@@ -1562,7 +1561,8 @@ static NSGraphicsContext *graphicsContextForView(NSView *view){
     return;
     
    if([self canDraw]){    
-    [self lockFocusIfCanDrawInContext:context];
+    [self lockFocus];
+    NSGraphicsContext *context=[NSGraphicsContext currentContext];
     CGContextRef       graphicsPort=[context graphicsPort];
 
     CGContextClipToRect(graphicsPort,rect);
@@ -1578,7 +1578,7 @@ static NSGraphicsContext *graphicsContextForView(NSView *view){
      check=NSIntersectionRect(check,[view bounds]);
      
      if(!NSIsEmptyRect(check)){
-      [view displayRectIgnoringOpacity:check inContext:context];
+      [view displayRectIgnoringOpacity:check];
      }
     }
     [self unlockFocus];
@@ -1587,6 +1587,10 @@ static NSGraphicsContext *graphicsContextForView(NSView *view){
 /*  We do the flushWindow here. If any of the display* methods are being used, you want it to update on screen immediately. If the view hierarchy is being displayed as needed at the end of an event, flushing will be disabled and this will just mark the window as needing flushing which will happen when all the views have finished being displayed */
  
    [[self window] flushWindow];
+}
+
+-(void)displayRectIgnoringOpacity:(NSRect)rect inContext:(NSGraphicsContext *)context {   
+   NSUnimplementedMethod();
 }
 
 -(void)drawRect:(NSRect)rect {

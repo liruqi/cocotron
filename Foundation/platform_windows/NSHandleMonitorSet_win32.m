@@ -74,25 +74,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    return nil;
 }
 
-static HANDLE goEvent;
-
-#if 0
-#warning COOPERATIVE THREADING ON
-static BOOL cooperative=YES;
-#else
-static BOOL cooperative=NO;
-+(void)goCooperative {
-  cooperative=YES;
-    goEvent=CreateEvent(NULL,FALSE,FALSE,NULL);
-}
-
-#endif
-
-+(void)initialize {
-   if(cooperative)
-    goEvent=CreateEvent(NULL,FALSE,FALSE,NULL);
-}
-
 -(NSHandleMonitor_win32 *)waitForHandleActivityBeforeDate:(NSDate *)date mode:(NSString *)mode {
    NSSet                 *validSources=[self validInputSources];
    NSEnumerator          *state=[validSources objectEnumerator];
@@ -115,15 +96,6 @@ static BOOL cooperative=NO;
 
    msec=interval*1000;
 
-   if(cooperative){
-    SetEvent(goEvent);
-    }
-
-   if(msec==0){
-    // If we're not waiting, yield
-    SwitchToThread();
-   }
-   
    if(_eventInputSource!=nil){
     waitResult=[_eventInputSource waitForEventsAndMultipleObjects:objectList count:objectCount milliseconds:msec];
    }
@@ -135,9 +107,6 @@ static BOOL cooperative=NO;
     else {
      waitResult=WaitForMultipleObjects(objectCount,objectList,FALSE,msec);
     }
-   }
-   if(cooperative){
-    WaitForSingleObject(goEvent,INFINITE);
    }
 
    if(waitResult==WAIT_FAILED)

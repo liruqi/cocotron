@@ -13,8 +13,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <Foundation/NSFileHandle_posix.h>
 #import <Foundation/NSFileManager_posix.h>
 #import <Foundation/NSLock_posix.h>
+#import <Foundation/NSCondition_posix.h>
 #import <Foundation/NSConditionLock_posix.h>
 #import <Foundation/NSPersistantDomain_posix.h>
+#import <Foundation/NSTimeZone_posix.h>
 #import <Foundation/NSTask_posix.h>
 #import <Foundation/NSPipe_posix.h>
 #import <Foundation/NSRaiseException.h>
@@ -43,7 +45,17 @@ BOOL NSCurrentLocaleIsMetric(){
 @implementation NSPlatform_posix
 
 -(Class)taskClass {
-   return [NSTask_posix class];
+    static Class NSTaskClass = Nil;
+    
+    @synchronized(self)
+	{
+        if (NSTaskClass == Nil) {
+            NSTaskClass = [NSTask_posix class];
+            [NSTaskClass registerNotification];
+}
+    }
+
+    return NSTaskClass;
 }
 
 -(Class)pipeClass {
@@ -60,6 +72,14 @@ BOOL NSCurrentLocaleIsMetric(){
 
 -(Class)persistantDomainClass {
    return [NSPersistantDomain_posix class];
+}
+
+-(Class)timeZoneClass {
+    return [NSTimeZone_posix class];
+}
+
+-(Class)conditionClass {
+	return [NSCondition_posix class];
 }
 
 static struct passwd *pwent = NULL;
@@ -188,11 +208,26 @@ NSUInteger NSPlatformThreadID() {
     }
 }
 
+-(NSString *)hostNameByAddress:(NSString *)address
+{
+    struct in_addr addr;
+    struct hostent *remoteHost;
+    addr.s_addr = inet_addr([address cString]);
+    if (addr.s_addr == INADDR_NONE) {
+        return nil;
+    }
+    remoteHost = gethostbyaddr((char *) &addr, 4, AF_INET);
+    if(remoteHost == NULL)
+        return nil;
+    
+    return [NSString stringWithCString:remoteHost->h_name];
+}
+
 void NSPlatformLogString(NSString *string) {
     fprintf(stderr, "%s\n", [string UTF8String]);
 }
 
-void *NSPlatformContentsOfFile(NSString *path,NSUInteger *length) {
+void *NSPlatformContentsOfFile(NSString *path,NSUInteger *lengthp) {
     int fd = open([path fileSystemRepresentation], O_RDONLY);
     char *buf;
     off_t pos, total = 0;

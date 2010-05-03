@@ -94,7 +94,7 @@ static CGColorRef createCGColor(float r,float g,float b,float a){
    CGDataProviderRelease(provider);
    
    
-   NSString *path=[[NSBundle bundleForClass:[self class]] pathForResource:@"pattern" ofType:@"jpg"];
+   NSString *path=[[NSBundle bundleForClass:[self class]] pathForResource:@"pattern" ofType:@"png"];
  //  NSString *path=[[NSBundle bundleForClass:[self class]] pathForResource:@"redLZWSquare" ofType:@"tif"];
    NSData   *data=[NSData dataWithContentsOfFile:path];
    CGImageSourceRef source=CGImageSourceCreateWithData((CFDataRef)data,nil);

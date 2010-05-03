@@ -297,6 +297,21 @@ const int NSTableViewDefaultRowHeight=16.;
    return _tableColumns;
 }
 
+-(NSInteger)columnWithIdentifier:(id)identifier {
+    NSEnumerator *tableColumnEnumerator = [_tableColumns objectEnumerator];
+    NSTableColumn *column;
+	
+	int idx = 0;
+    while ((column = [tableColumnEnumerator nextObject])!=nil) {
+        if ([[column identifier] isEqual:identifier])
+            return idx;
+		
+		idx++;
+	}
+	
+    return -1;
+}
+
 -(NSTableColumn *)tableColumnWithIdentifier:identifier {
     NSEnumerator *tableColumnEnumerator = [_tableColumns objectEnumerator];
     NSTableColumn *column;
@@ -625,6 +640,10 @@ static float rowHeightAtIndex(NSTableView *self,int index){
     [_headerView setNeedsDisplay:YES];
 }
 
+-(void)moveColumn:(NSInteger)columnIndex toColumn:(NSInteger)newIndex {
+	NSUnimplementedMethod();
+}
+
 -(int)editedRow {
     return _editedRow;
 }
@@ -871,12 +890,20 @@ _dataSource);
    return result;
 }
 
+// Deprecated in Mac OS X 10.3.
 -(NSEnumerator *)selectedRowEnumerator {
-    NSUnimplementedMethod();
-    return nil;
+   NSMutableArray *rows=[NSMutableArray array];
+   NSUInteger i,count=[_selectedRowIndexes count];
+   NSUInteger buffer[count];
+   
+   [_selectedRowIndexes getIndexes:buffer maxCount:count inIndexRange:NULL];
+   for(i=0;i<count;i++)
+    [rows addObject:[NSNumber numberWithInteger:buffer[i]]];
+   
+   return [rows objectEnumerator];
 }
 
-// Deprecated since Mac OS X 10.3.
+// Deprecated in Mac OS X 10.3.
 -(void)selectRow:(int)row byExtendingSelection:(BOOL)extend  {
 
    if (extend)

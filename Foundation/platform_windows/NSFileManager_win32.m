@@ -37,6 +37,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 -(NSDictionary *)attributesOfFileSystemForPath:(NSString *)path error:(NSError **)errorp {
    DWORD serialNumber;
    
+   if(path == nil) {
+    return nil;
+   }
    if(![path hasSuffix:@"\\"])
     path=[path stringByAppendingString:@"\\"];
     
@@ -47,33 +50,34 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(NSDictionary *)attributesOfItemAtPath:(NSString *)path error:(NSError **)error {
-   NSMutableDictionary       *result=[NSMutableDictionary dictionary];
    WIN32_FILE_ATTRIBUTE_DATA  fileData;
-   NSDate                    *date;
 
-   if(!GetFileAttributesExW([path fileSystemRepresentationW],GetFileExInfoStandard,&fileData))
+   if(path == nil) {
     return nil;
+   }
 
-   date=[NSDate dateWithTimeIntervalSinceReferenceDate:Win32TimeIntervalFromFileTime(fileData.ftLastWriteTime)];
+   if (!GetFileAttributesExW( [path fileSystemRepresentationW],GetFileExInfoStandard,&fileData) ) {
+	   // TODO: set error
+	   return nil;
+   }
+
+	NSMutableDictionary *result = [NSMutableDictionary dictionary];
+	NSDate *date = [NSDate dateWithTimeIntervalSinceReferenceDate:Win32TimeIntervalFromFileTime(fileData.ftLastWriteTime)];
    [result setObject:date forKey:NSFileModificationDate];
 
-   // dth
    NSString* fileType = NSFileTypeRegular;
-   if (fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-          fileType = NSFileTypeDirectory;
-   // FIX: Support for links and other attributes needed!
+	if (fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) fileType = NSFileTypeDirectory;
 
    [result setObject:fileType forKey:NSFileType];
    [result setObject:@"USER" forKey:NSFileOwnerAccountName];
    [result setObject:@"GROUP" forKey:NSFileGroupOwnerAccountName];
-   [result setObject:[NSNumber numberWithUnsignedLong:0666]
-              forKey:NSFilePosixPermissions];
+	[result setObject:[NSNumber numberWithUnsignedLong:0666] forKey:NSFilePosixPermissions];
+
 	uint64_t sizeOfFile = fileData.nFileSizeLow;
 	uint64_t sizeHigh = fileData.nFileSizeHigh;
 	sizeOfFile |= sizeHigh << 32;
 	
-	[result setObject:[NSNumber numberWithUnsignedLongLong:sizeOfFile]
-			   forKey:NSFileSize];	
+	[result setObject:[NSNumber numberWithUnsignedLongLong:sizeOfFile] forKey:NSFileSize];	
 
    return result;
 }
@@ -81,7 +85,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 -(NSArray *)contentsOfDirectoryAtPath:(NSString *)path error:(NSError **)error {
    NSMutableArray *result=[NSMutableArray array];
    WIN32_FIND_DATAW findData;
-   HANDLE          handle=FindFirstFileW([[path stringByAppendingString:@"\\*.*"] fileSystemRepresentationW],&findData);
+   HANDLE           handle;
+
+   if(path == nil) {
+    return nil;
+   }
+   
+   handle=FindFirstFileW([[path stringByAppendingString:@"\\*.*"] fileSystemRepresentationW],&findData);
 
    if(handle==INVALID_HANDLE_VALUE)
     return nil;
@@ -104,7 +114,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 -(NSArray *)directoryContentsAtPath:(NSString *)path {
    NSMutableArray *result=[NSMutableArray array];
    WIN32_FIND_DATAW findData;
-   HANDLE          handle=FindFirstFileW([[path stringByAppendingString:@"\\*.*"] fileSystemRepresentationW],&findData);
+   HANDLE           handle;
+
+   if(path == nil) {
+        return nil;
+   }
+    
+   handle=FindFirstFileW([[path stringByAppendingString:@"\\*.*"] fileSystemRepresentationW],&findData);
 
    if(handle==INVALID_HANDLE_VALUE)
     return nil;
@@ -125,6 +141,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(BOOL)fileExistsAtPath:(NSString *)path isDirectory:(BOOL *)isDirectory {
+   if(path == nil) {
+    return NO;
+   }
+   
    DWORD attributes=GetFileAttributesW([path fileSystemRepresentationW]);
 
    if(attributes==0xFFFFFFFF)
@@ -152,6 +172,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 // we dont want to use fileExists... because it chases links 
 -(BOOL)_isDirectory:(NSString *)path {
+   if(path == nil) {
+    return NO;
+   }
    DWORD attributes=GetFileAttributesW([path fileSystemRepresentationW]);
 
    if(attributes==0xFFFFFFFF)
@@ -161,6 +184,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(BOOL)removeFileAtPath:(NSString *)path handler:handler {
+   if(path == nil) {
+    return NO;
+   }
+    
    const unichar *fsrep=[path fileSystemRepresentationW];
    DWORD       attribute=GetFileAttributesW(fsrep);
 
@@ -197,11 +224,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(BOOL)movePath:(NSString *)src toPath:(NSString *)dest handler:handler {
+    if(src == nil || dest == nil) {
+        return NO;
+    }
    return MoveFileW([src fileSystemRepresentationW],[dest fileSystemRepresentationW])?YES:NO;
 }
 
 -(BOOL)copyPath:(NSString *)src toPath:(NSString *)dest handler:handler {
    BOOL isDirectory;
+   if(src == nil || dest == nil) {
+    return NO;
+   }
 
    if(![self fileExistsAtPath:src isDirectory:&isDirectory])
     return NO;
@@ -232,63 +265,40 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(NSDictionary *)fileAttributesAtPath:(NSString *)path traverseLink:(BOOL)traverse {
-// FIXME: use attributesOfItemAtPath
-   NSMutableDictionary       *result=[NSMutableDictionary dictionary];
-   WIN32_FILE_ATTRIBUTE_DATA  fileData;
-   NSDate                    *date;
-
-   if(!GetFileAttributesExW([path fileSystemRepresentationW],GetFileExInfoStandard,&fileData))
-    return nil;
-
-   date=[NSDate dateWithTimeIntervalSinceReferenceDate:Win32TimeIntervalFromFileTime(fileData.ftLastWriteTime)];
-   [result setObject:date forKey:NSFileModificationDate];
-
-   // dth
-   NSString* fileType = NSFileTypeRegular;
-   if (fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-          fileType = NSFileTypeDirectory;
-   // FIX: Support for links and other attributes needed!
-
-   [result setObject:fileType forKey:NSFileType];
-   [result setObject:@"USER" forKey:NSFileOwnerAccountName];
-   [result setObject:@"GROUP" forKey:NSFileGroupOwnerAccountName];
-   [result setObject:[NSNumber numberWithUnsignedLong:0666]
-              forKey:NSFilePosixPermissions];
-	uint64_t sizeOfFile = fileData.nFileSizeLow;
-	uint64_t sizeHigh = fileData.nFileSizeHigh;
-	sizeOfFile |= sizeHigh << 32;
-	
-	[result setObject:[NSNumber numberWithUnsignedLongLong:sizeOfFile]
-			   forKey:NSFileSize];	
-
-   return result;
+	return [self attributesOfItemAtPath: path error: 0];
 }
 
 -(BOOL)isReadableFileAtPath:(NSString *)path {
+    if(path == nil) {
+     return NO;
+    }
    DWORD attributes=GetFileAttributesW([path fileSystemRepresentationW]);
 
    if(attributes==-1)
-    return NO;
-
-   if(attributes&FILE_ATTRIBUTE_DIRECTORY)
     return NO;
 
    return YES;
 }
 
 -(BOOL)isWritableFileAtPath:(NSString *)path {
+   if(path == nil) {
+    return NO;
+   }
    DWORD attributes=GetFileAttributesW([path fileSystemRepresentationW]);
 
    if(attributes==-1)
     return NO;
 
-   if(attributes&(FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_READONLY))
+   if(attributes&FILE_ATTRIBUTE_READONLY)
     return NO;
 
    return YES;
 }
 
 -(BOOL)isExecutableFileAtPath:(NSString *)path {
+   if(path == nil) {
+     return NO;
+   }
    DWORD attributes=GetFileAttributesW([path fileSystemRepresentationW]);
 
    if(attributes==-1)
@@ -326,7 +336,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(BOOL)changeCurrentDirectoryPath:(NSString *)path {
-
+   if(path == nil) { 
+    return NO;
+   }
    if (SetCurrentDirectoryW([self fileSystemRepresentationWithPathW:path]))
     return YES;
    Win32Assert("SetCurrentDirectory");
@@ -334,51 +346,60 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    return NO;
 }
 
+-(NSString *)stringWithFileSystemRepresentation:(const char *)string length:(NSUInteger)length {
+   return [NSString stringWithCString:string length:length];
+}
 
--(const unichar*)fileSystemRepresentationWithPathW:(NSString *)path {
-   NSUInteger i,length=[path length];
+static NSString *TranslatePath( NSString *path )
+{
+    NSUInteger length = [path length];
+    if (0 == length) return path;
+    
    unichar  buffer[length];
-   BOOL     converted=NO;
 
    [path getCharacters:buffer];
 
-   for(i=0;i<length;i++){
+    BOOL converted=NO;
+
+    for (NSUInteger i = 0; i < length; i++ ) {
     if(buffer[i]=='/'){
      buffer[i]='\\';
      converted=YES;
     }
    }
 
+    unichar *begin = buffer;
+    if (length >= 4 && begin[0] == '\\' && (begin[2] == ':' || begin[2] == '|') && begin[3] == '\\') {
+        // Begin of path matches URL style drive spec \c:\path or \c|\path, both need to be translated to c:\path
+        begin[2] = ':';
+        converted = YES;
+        ++begin; 
+        --length;
+    }
+
    if(converted){
-    //NSLog(@"%s %@",sel_getName(_cmd),path);
-    path=[NSString stringWithCharacters:buffer length:length];
+        path = [NSString stringWithCharacters:begin length:length];
    }
 
+    return path;
+}
+
+-(const unichar*)fileSystemRepresentationWithPathW:(NSString *)path {
+    path = TranslatePath( path );
    return (const unichar *)[path cStringUsingEncoding:NSUnicodeStringEncoding];
 }
 
 -(const char*)fileSystemRepresentationWithPath:(NSString *)path {
-	NSUInteger i,length=[path length];
-	char  buffer[length];
-	BOOL     converted=NO;
-	
-	[path getCString:buffer];
-	
-	for(i=0;i<length;i++){
-		if(buffer[i]=='/'){
-			buffer[i]='\\';
-			converted=YES;
-		}
-	}
-	
-	if(converted){
-		//NSLog(@"%s %@",sel_getName(_cmd),path);
-		path=[NSString stringWithCString:buffer length:length];
-	}
-	//	NSLog(path);
-   return [path cString];
+    path = TranslatePath( path );
+    return [path cString];
 }
-
-
+	
+-(NSString *)destinationOfSymbolicLinkAtPath:(NSString *)path error:(NSError **)error {
+	
+    //see http://download.microsoft.com/download/B/0/B/B0B199DB-41E6-400F-90CD-C350D0C14A53/%5BMS-SHLLINK%5D.pdf
+    NSUnimplementedMethod();
+    return 0;
+		}
+	
 
 @end

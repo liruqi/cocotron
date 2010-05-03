@@ -102,10 +102,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 	return YES;
 }
 
--(BOOL)lockFocusIfCanDrawInContext:(NSGraphicsContext *)context {
-	BOOL result=[super lockFocusIfCanDrawInContext:context];
+- (void)lockFocus {
+	[super lockFocus];
 
-    if(result){
   	 [[self openGLContext] makeCurrentContext];
 
 	 if (_needsPrepare){
@@ -118,8 +117,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 		_needsReshape = NO;
 	 }
     }
-    return result;
-}
 
 - (void)unlockFocus {
 	[[self openGLContext] flushBuffer];

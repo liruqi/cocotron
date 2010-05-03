@@ -83,10 +83,6 @@ typedef struct CGRect {
 typedef int mach_port_t;
 #endif
 
-// FIXME:
-typedef int OSStatus;
-typedef uint32_t OSType;
-
 typedef unsigned short UniChar;
 typedef unsigned long UTF32Char;
 typedef float Float32;
@@ -95,9 +91,14 @@ typedef double Float64;
 
 typedef unsigned CFUInteger;
 typedef int CFInteger;
+typedef int8_t SInt8;
+typedef uint8_t UInt8;
+typedef int16_t SInt16;
+typedef uint16_t UInt16;
 typedef int32_t SInt32;
 typedef uint32_t UInt32;
-typedef signed char SInt8;
+typedef int64_t SInt64;
+typedef uint64_t UInt64;
 
 typedef const void *CFTypeRef;
 typedef CFUInteger CFTypeID;
@@ -105,6 +106,12 @@ typedef CFUInteger CFHashCode;
 typedef char       Boolean;
 typedef CFInteger  CFIndex;
 typedef CFUInteger CFOptionFlags;
+
+typedef SInt32 OSStatus;
+typedef SInt16 OSErr;
+
+typedef UInt32 FourCharCode;
+typedef FourCharCode OSType;
 
 typedef struct {
    CFIndex location;
@@ -200,5 +207,4 @@ COREFOUNDATION_EXPORT void bzero(void *ptr,size_t size);
 COREFOUNDATION_EXPORT void bcopy(const void *s1, void *s2, size_t n);
 COREFOUNDATION_EXPORT int bcmp(const void *s1, void *s2, size_t n);
 #endif
-
 

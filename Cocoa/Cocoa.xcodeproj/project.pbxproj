@@ -53,20 +53,6 @@
 /* End PBXBuildRule section */
 
 /* Begin PBXContainerItemProxy section */
-		5026AB82113EF59C0055C470 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 5026AB7E113EF59C0055C470 /* Security.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 8DC2EF5B0486A6940098B216;
-			remoteInfo = "Security-Windows-i386";
-		};
-		5026AB84113EF5A80055C470 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 5026AB7E113EF59C0055C470 /* Security.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = 8DC2EF4F0486A6940098B216;
-			remoteInfo = "Security-Windows-i386";
-		};
 		C8724ABF0EC706C200DBDDAD /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = FE7135460B36427F006C9493 /* AppKit.xcodeproj */;
@@ -151,6 +137,20 @@
 			remoteGlobalIDString = C889741E0EA0BF3100D0A0A2;
 			remoteInfo = "AppKit-Linux-i386";
 		};
+		FEDE6413118A707E009C3494 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FEDE640B118A707E009C3494 /* Security.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 8DC2EF5B0486A6940098B216;
+			remoteInfo = "Security-Windows-i386";
+		};
+		FEDE6417118A7088009C3494 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FEDE640B118A707E009C3494 /* Security.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 8DC2EF4F0486A6940098B216;
+			remoteInfo = "Security-Windows-i386";
+		};
 		FEE044C210C99F84000BCEB8 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = FE7135460B36427F006C9493 /* AppKit.xcodeproj */;
@@ -177,7 +177,6 @@
 /* Begin PBXFileReference section */
 		0867D69BFE84028FC02AAC07 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
 		0867D6A5FE840307C02AAC07 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
-		5026AB7E113EF59C0055C470 /* Security.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Security.xcodeproj; path = ../Security/Security.xcodeproj; sourceTree = SOURCE_ROOT; };
 		8DC2EF5A0486A6940098B216 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		C8E0BFAA0F0E6B0E00677729 /* Cocoa.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Cocoa.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		FE01AB210C5D9C3400AEA51A /* Cocoa.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Cocoa.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -185,6 +184,7 @@
 		FE5A873F10C6F1E8005E348A /* Cocoa.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Cocoa.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		FE7135460B36427F006C9493 /* AppKit.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = AppKit.xcodeproj; path = ../AppKit/AppKit.xcodeproj; sourceTree = SOURCE_ROOT; };
 		FECC1DD6108D025D00BD4A91 /* Cocoa.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Cocoa.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		FEDE640B118A707E009C3494 /* Security.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Security.xcodeproj; path = ../Security/Security.xcodeproj; sourceTree = SOURCE_ROOT; };
 		FEF3B23A0B35C74700A76FD1 /* Cocoa.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Cocoa.h; sourceTree = "<group>"; };
 		FEF3B2780B35CB9D00A76FD1 /* Cocoa.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Cocoa.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -243,9 +243,9 @@
 		0867D691FE84028FC02AAC07 /* Cocoa */ = {
 			isa = PBXGroup;
 			children = (
+				FEDE640B118A707E009C3494 /* Security.xcodeproj */,
 				FE3217D10BB41D16004F000A /* ApplicationServices.xcodeproj */,
 				FE7135460B36427F006C9493 /* AppKit.xcodeproj */,
-				5026AB7E113EF59C0055C470 /* Security.xcodeproj */,
 				08FB77AEFE84172EC02AAC07 /* Classes */,
 				32C88DFF0371C24200C91783 /* Other Sources */,
 				089C1665FE841158C02AAC07 /* Resources */,
@@ -304,14 +304,6 @@
 			name = "Other Sources";
 			sourceTree = "<group>";
 		};
-		5026AB7F113EF59C0055C470 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				5026AB83113EF59C0055C470 /* Security.framework */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
 		FE3217D20BB41D16004F000A /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -331,6 +323,14 @@
 				C8E0BF930F0E6AF300677729 /* AppKit.framework */,
 				FE1362640FE7167F00DE15FA /* AppKit.framework */,
 				FE5A8CB810C828A5005E348A /* AppKit.framework */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		FEDE640C118A707E009C3494 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				FEDE6414118A707E009C3494 /* Security.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -409,7 +409,7 @@
 			dependencies = (
 				FEF80ABE0C5D9F3000FF7CA5 /* PBXTargetDependency */,
 				FEF80AC00C5D9F3400FF7CA5 /* PBXTargetDependency */,
-				5026AB85113EF5A80055C470 /* PBXTargetDependency */,
+				FEDE6418118A7088009C3494 /* PBXTargetDependency */,
 			);
 			name = "Cocoa-Windows-i386";
 			productInstallPath = "$(HOME)/Library/Frameworks";
@@ -480,8 +480,8 @@
 					ProjectRef = FE3217D10BB41D16004F000A /* ApplicationServices.xcodeproj */;
 				},
 				{
-					ProductGroup = 5026AB7F113EF59C0055C470 /* Products */;
-					ProjectRef = 5026AB7E113EF59C0055C470 /* Security.xcodeproj */;
+					ProductGroup = FEDE640C118A707E009C3494 /* Products */;
+					ProjectRef = FEDE640B118A707E009C3494 /* Security.xcodeproj */;
 				},
 			);
 			projectRoot = "";
@@ -495,13 +495,6 @@
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
-		5026AB83113EF59C0055C470 /* Security.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = Security.framework;
-			remoteRef = 5026AB82113EF59C0055C470 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
 		C8724AC00EC706C200DBDDAD /* AppKit.framework */ = {
 			isa = PBXReferenceProxy;
 			fileType = wrapper.framework;
@@ -563,6 +556,13 @@
 			fileType = wrapper.framework;
 			path = AppKit.framework;
 			remoteRef = FE5A8CB710C828A5005E348A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		FEDE6414118A707E009C3494 /* Security.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = Security.framework;
+			remoteRef = FEDE6413118A707E009C3494 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
@@ -634,11 +634,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		5026AB85113EF5A80055C470 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = "Security-Windows-i386";
-			targetProxy = 5026AB84113EF5A80055C470 /* PBXContainerItemProxy */;
-		};
 		C8E0BFB00F0E6B6600677729 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = "AppKit-Darwin-i386";
@@ -653,6 +648,11 @@
 			isa = PBXTargetDependency;
 			name = "AppKit-Linux-i386";
 			targetProxy = FECC1DD9108D027000BD4A91 /* PBXContainerItemProxy */;
+		};
+		FEDE6418118A7088009C3494 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "Security-Windows-i386";
+			targetProxy = FEDE6417118A7088009C3494 /* PBXContainerItemProxy */;
 		};
 		FEE044C310C99F84000BCEB8 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -710,7 +710,7 @@
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = Cocoa;
-				SYMROOT = /Developer/Cocotron/1.0/build/Cocoa/Windows;
+				SYMROOT = build/Windows/i386;
 			};
 			name = Debug;
 		};
@@ -733,7 +733,7 @@
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = Cocoa;
-				SYMROOT = /Developer/Cocotron/1.0/build/Cocoa/Darwin;
+				SYMROOT = build/Darwin/i386;
 			};
 			name = Release;
 		};
@@ -756,7 +756,7 @@
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = Cocoa;
-				SYMROOT = /Developer/Cocotron/1.0/build/Cocoa/Darwin;
+				SYMROOT = build/Darwin/i386;
 			};
 			name = Debug;
 		};
@@ -786,7 +786,7 @@
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = Cocoa;
-				SYMROOT = /Developer/Cocotron/1.0/build/Cocoa/Windows;
+				SYMROOT = build/Windows/i386;
 			};
 			name = Release;
 		};
@@ -825,7 +825,7 @@
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = Cocoa;
-				SYMROOT = /Developer/Cocotron/1.0/build/Cocoa/FreeBSD/i386;
+				SYMROOT = build/FreeBSD/i386;
 			};
 			name = Release;
 		};
@@ -849,7 +849,7 @@
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = Cocoa;
-				SYMROOT = /Developer/Cocotron/1.0/build/Cocoa/FreeBSD/i386;
+				SYMROOT = build/FreeBSD/i386;
 			};
 			name = Debug;
 		};
@@ -873,7 +873,7 @@
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = Cocoa;
-				SYMROOT = /Developer/Cocotron/1.0/build/Cocoa/Linux/i386;
+				SYMROOT = build/Linux/i386;
 			};
 			name = Release;
 		};
@@ -897,7 +897,7 @@
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = Cocoa;
-				SYMROOT = /Developer/Cocotron/1.0/build/Cocoa/Linux/i386;
+				SYMROOT = build/Linux/i386;
 			};
 			name = Debug;
 		};

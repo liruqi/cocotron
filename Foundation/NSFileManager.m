@@ -17,14 +17,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <Foundation/NSPathUtilities.h>
 
 NSString * const NSFileType = @"NSFileType";
-NSString *NSFileTypeRegular = @"NSFileTypeRegular";
-NSString *NSFileTypeDirectory = @"NSFileTypeDirectory";
-NSString *NSFileTypeSymbolicLink = @"NSFileTypeSymbolicLink";
-NSString *NSFileTypeCharacterSpecial = @"NSFileTypeCharacterSpecial";
-NSString *NSFileTypeBlockSpecial = @"NSFileTypeBlockSpecial";
-NSString *NSFileTypeFIFO = @"NSFileTypeFIFO";
-NSString *NSFileTypeSocket = @"NSFileTypeSocket";
-NSString *NSFileTypeUnknown = @"NSFileTypeUnknown";
+NSString * const NSFileTypeRegular = @"NSFileTypeRegular";
+NSString * const NSFileTypeDirectory = @"NSFileTypeDirectory";
+NSString * const NSFileTypeSymbolicLink = @"NSFileTypeSymbolicLink";
+NSString * const NSFileTypeCharacterSpecial = @"NSFileTypeCharacterSpecial";
+NSString * const NSFileTypeBlockSpecial = @"NSFileTypeBlockSpecial";
+NSString * const NSFileTypeFIFO = @"NSFileTypeFIFO";
+NSString * const NSFileTypeSocket = @"NSFileTypeSocket";
+NSString * const NSFileTypeUnknown = @"NSFileTypeUnknown";
 
 NSString * const NSFileSize = @"NSFileSize";
 NSString * const NSFileModificationDate = @"NSFileModificationDate";
@@ -35,8 +35,8 @@ NSString * const NSFileReferenceCount = @"NSFileReferenceCount";
 NSString * const NSFileIdentifier = @"NSFileIdentifier";
 NSString * const NSFileDeviceIdentifier = @"NSFileDeviceIdentifier";
 NSString * const NSFilePosixPermissions = @"NSFilePosixPermissions";
-NSString *NSFileHFSCreatorCode = @"NSFileHFSCreatorCode";
-NSString *NSFileHFSTypeCode = @"NSFileHFSTypeCode";
+NSString * const NSFileHFSCreatorCode = @"NSFileHFSCreatorCode";
+NSString * const NSFileHFSTypeCode = @"NSFileHFSTypeCode";
 
 NSString * const NSFileSystemNumber=@"NSFileSystemNumber";
 NSString * const NSFileSystemSize=@"NSFileSystemSize";
@@ -85,7 +85,7 @@ NSString * const NSFileSystemFreeSize=@"NSFileSystemFreeSize";
    return 0;
 }
 -(NSString *)destinationOfSymbolicLinkAtPath:(NSString *)path error:(NSError **)error {
-   NSUnimplementedMethod();
+   NSInvalidAbstractInvocation();
    return 0;
 }
 
@@ -140,7 +140,7 @@ NSString * const NSFileSystemFreeSize=@"NSFileSystemFreeSize";
    return 0;
 }
 
--(NSArray *)_subpathsAtPath:(NSString *)path basePath:(NSString*)basePath 
+-(void)_subpathsAtPath:(NSString *)path basePath:(NSString*)basePath 
 paths:(NSMutableArray*)paths
 {
 	NSArray* files = [self directoryContentsAtPath:path];

@@ -3,7 +3,7 @@
 @implementation NSKVOInfoPerObject
 
 -init {
-   _lock=PTHREAD_MUTEX_INITIALIZER;
+   _lock=(pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
    _dictionary=[[NSMutableDictionary allocWithZone:NULL] init];
    return self;
 }

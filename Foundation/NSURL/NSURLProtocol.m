@@ -27,6 +27,20 @@ static NSMutableArray *_registeredClasses=nil;
 
 +(BOOL)registerClass:(Class)cls {
    [_registeredClasses addObject:cls];
+   return YES;
+}
+
++(Class)_URLProtocolClassForRequest:(NSURLRequest *)request {
+   NSArray  *classes=[NSURLProtocol _registeredClasses];
+   NSInteger count=[classes count];
+   
+   while(--count>=0){
+    Class check=[classes objectAtIndex:count];
+    
+    if([check canInitWithRequest:request])
+     return check;
+   }
+   return nil;
 }
 
 +(void)unregisterClass:(Class)cls {

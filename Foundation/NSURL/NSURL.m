@@ -91,7 +91,8 @@ static void consume_next(urlScanner *scanner){
 }
 
 static NSString *allocPart(urlScanner *scanner){
-   return [[NSString alloc] initWithCharacters:scanner->part length:scanner->partLength];
+	if (scanner->partLength > 0) return [[NSString alloc] initWithCharacters:scanner->part length:scanner->partLength];
+	else return nil;
 }
 
 static BOOL consume_reserved(urlScanner *scanner){
@@ -364,13 +365,13 @@ static void scan_net_loc(urlScanner *scanner,NSURL *url){
     
     port++;
     NSString  *string=[[NSString alloc] initWithCharacters:scanner->part+port length:portEnd-port];
-    NSScanner *scanner=[[NSScanner alloc] initWithString:string];
+    NSScanner *portScanner=[[NSScanner alloc] initWithString:string];
     int        portNumber;
     
-    if([scanner scanInt:&portNumber] && [scanner isAtEnd])
+    if([portScanner scanInt:&portNumber] && [portScanner isAtEnd])
      url->_port=[[NSNumber alloc] initWithInt:portNumber];
 
-    [scanner release];
+    [portScanner release];
     [string release];
    }
    
@@ -472,17 +473,10 @@ static BOOL scanURL(urlScanner *scanner,NSURL *url){
 }
 
 -initFileURLWithPath:(NSString *)path {
-   if(path==nil){
-    [self dealloc];
-    [NSException raise:NSInvalidArgumentException format:@"-[%@ %s] path is nil",isa,_cmd];
-    return nil;
+	if (![path hasPrefix: @"/"]) path = [@"/" stringByAppendingString: path];
+	return [self initWithScheme: NSURLFileScheme host: @"localhost" path: [path stringByAddingPercentEscapesUsingEncoding: NSASCIIStringEncoding]];
    }
    
-   _scheme=NSURLFileScheme;
-   _path=[path copy];
-   return self;
-}
-
 -initWithString:(NSString *)string {
    return [self initWithString:string relativeToURL:nil];
 }
@@ -594,6 +588,8 @@ static BOOL scanURL(urlScanner *scanner,NSURL *url){
 -(BOOL)isEqual:other {
    NSURL *otherURL;
    
+	if (self == other) return YES;
+	
    if(![other isKindOfClass:[NSURL class]])
     return NO;
     
@@ -610,97 +606,125 @@ static BOOL scanURL(urlScanner *scanner,NSURL *url){
    return YES;
 }
 
--(NSString *)_hostWithPercents {
-   if(_host==nil)
-    return [_baseURL _hostWithPercents];
-
-   return _host;
+-(NSString *)_hostWithPercents 
+{
+   if (!_scheme && !_host) return [_baseURL _hostWithPercents];
+   else return _host;
 }
 
--(NSString *)_userWithPercents {
-   if(_user==nil && _host==nil)
-    return [_baseURL _userWithPercents];
-
-   return _user;
+-(NSString *)_userWithPercents 
+{
+   if (!_user && !_host && !_scheme ) return [_baseURL _userWithPercents];
+   else return _user;
 }
 
--(NSString *)_passwordWithPercents {
-   if(_password==nil && _user==nil && _host==nil)
-    return [_baseURL _passwordWithPercents];
-
-   return _password;
+-(NSString *)_passwordWithPercents 
+{
+	if (!_password && !_user && !_host && !_scheme)  return [_baseURL _passwordWithPercents];
+	else return _password;
 }
 
--(NSString *)_pathWithPercents {
-   NSString *result;
+static NSString *NormalizePath( NSString *path )
+{
+	NSArray *components = [path componentsSeparatedByString: @"/"];
+	NSMutableArray *actualComponents = [NSMutableArray arrayWithCapacity: [components count]];
+	
+	NSString *lastComponent = [components lastObject];
+	if (![lastComponent isEqualToString: @".."]) components = [components subarrayWithRange: NSMakeRange( 0, [components count] - 1 )];
+	
+	for (NSString *part in components) {
+		if ([part isEqualToString: @".."]) {
+			if ([actualComponents count] > 0 && ![[actualComponents lastObject] isEqualToString: @".."]) [actualComponents removeLastObject];
+			else [actualComponents addObject: part];
+		} else if (![part isEqualToString: @"."] && ![part isEqualToString: @""]) {
+			[actualComponents addObject: part];
+}
+	}
+
+	if ([lastComponent isEqualToString: @"."] || [lastComponent isEqualToString: @".."]) {
+		[actualComponents addObject: @""];
+	} else {
+		[actualComponents addObject: lastComponent];
+	}
+
+	return [actualComponents componentsJoinedByString: @"/"];	
+}
+
+-(NSString *)_pathWithPercents 
+{
+	NSString *result = _path;
    
-   if(_path==nil && _host==nil)
-    return [_baseURL _pathWithPercents];
-
-   if(_baseURL==nil || [_path hasPrefix:@"/"])
-    result=_path;
-   else {
+	if (!_host && !_scheme && _baseURL && ![_path hasPrefix: @"/"]) {
     result=[_baseURL _pathWithPercents];
 
-    if(![result hasSuffix:@"/"])
-     result=[result stringByAppendingString:@"/"];
+		if (_path ) {
+			if (![result hasSuffix:@"/"]) result = [result stringByDeletingLastPathComponent];
+			result = [result stringByAppendingFormat: @"/%@", _path];    
+		}
     
-    if(_path!=nil)
-     result=[result stringByAppendingString:_path];    
+		result = NormalizePath( result );
+		
+		result = [@"/" stringByAppendingString: result];
    }
 
    return result;
 }
 
+static void AppendValueWithPrefix( NSMutableString *orig, NSString *prefix, NSString *value )
+{
+	if (nil != value) {
+		[orig appendString: prefix];
+		[orig appendString: value];
+	}
+}
 
--(NSString *)_buildResourceSpecifier {
-   NSMutableString *result=[NSMutableString string];
-   NSString        *part;
-
-   part=[self _hostWithPercents];
-   if(part!=nil){
+static NSMutableString *AssembleResourceSpecifier( NSMutableString *result, NSString *host, NSString *user, NSString *password, NSString *path, NSString *parameterString, NSString * query, NSString *fragment )
+{
+	if (host) {
     [result appendString:@"//"];
-    part=[self _userWithPercents];
-    if(part!=nil){
-     [result appendString:part];
-     part=[self _passwordWithPercents];
-     if(part!=nil){
+		if (user) {
+			[result appendString: user];
+			if (password) {
       [result appendString:@":"];
-      [result appendString:part];
+				[result appendString: password];
      }
      [result appendString:@"@"];
     }
-    [result appendString:[self _hostWithPercents]];
+		[result appendString: host];
    }
 
-   [result appendString:[self _pathWithPercents]];
-   part=[self parameterString];
-   if(part!=nil){
-    [result appendString:@";"];
-    [result appendString:part];
-   }
-   part=[self query];
-   if(part!=nil){
-    [result appendString:@"?"];
-    [result appendString:part];
-   }
-   part=[self fragment];
-   if(part!=nil){
-    [result appendString:@"#"];
-    [result appendString:part];
-   }
+	[result appendString: path];
 
+	AppendValueWithPrefix( result, @";", parameterString );
+	AppendValueWithPrefix( result, @"?", query );
+	AppendValueWithPrefix( result, @"#", fragment );
+	
    return result;
 }
 
--(NSString *)absoluteString {
-   if(_scheme!=nil)
+-(NSString *)_buildResourceSpecifier 
+{
+	NSString *host = [self _hostWithPercents];
+	NSString *user = [self _userWithPercents];
+	NSString *password = [self _passwordWithPercents];
+	NSString *path = [self _pathWithPercents];
+	NSString *parameterString = [self parameterString];
+	NSString *query = [self query];
+	NSString *fragment = [self fragment];
+	
+	return AssembleResourceSpecifier( [NSMutableString string], host, user, password, path, parameterString, query, fragment );
+}
+
+-(NSString *)absoluteString 
+{
+   if(_scheme && _string) {
     return _string;
-   else {
+   } else {
     NSMutableString *result=[NSMutableString string];
    
-    if([self scheme]!=nil){
-     [result appendString:[self scheme]];
+	   NSString *scheme = [self scheme];
+	   if(scheme){
+		   [result appendString: scheme];
      [result appendString:@":"];
     }
     [result appendString:[self _buildResourceSpecifier]];
@@ -709,8 +733,10 @@ static BOOL scanURL(urlScanner *scanner,NSURL *url){
    }
 }
 
--(NSString *)parameterString {
-   return _parameter;
+-(NSString *)parameterString 
+{
+	if (!_scheme && !_host && !_path && !_parameter) return [_baseURL parameterString];
+	else return _parameter;
 }
 
 -propertyForKey:(NSString *)key {
@@ -718,11 +744,10 @@ static BOOL scanURL(urlScanner *scanner,NSURL *url){
    return nil;
 }
 
--(NSString *)scheme {
-   if(_scheme==nil)
-    return [_baseURL scheme];
-
-   return _scheme;
+-(NSString *)scheme 
+{
+	if (!_scheme) return [_baseURL scheme];
+	else return _scheme;
 }
 
 -(NSString *)host {
@@ -737,11 +762,10 @@ static BOOL scanURL(urlScanner *scanner,NSURL *url){
    return [[self _passwordWithPercents] stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
 }
 
--(NSString *)fragment {
-   if(_fragment==nil && _query==nil && _path==nil)
-    return [_baseURL fragment];
-
-   return _fragment;
+-(NSString *)fragment 
+{
+	if (!_fragment && !_query && !_parameter && !_path && !_scheme && !_host) return [_baseURL fragment];
+	else return _fragment;
 }
 
 -(NSString *)path {
@@ -760,11 +784,10 @@ static BOOL scanURL(urlScanner *scanner,NSURL *url){
    return _port;
 }
 
--(NSString *)query {
-   if(_query==nil && _path==nil)
-    return [_baseURL query];
-
-   return _query;
+-(NSString *)query 
+{
+	if (!_scheme && !_host && !_path && !_parameter && !_query) return [_baseURL query];
+	else return _query;
 }
 
 -(NSString *)relativePath {
@@ -780,11 +803,10 @@ static BOOL scanURL(urlScanner *scanner,NSURL *url){
    return _string;
 }
 
--(NSString *)resourceSpecifier {
-   if(_baseURL!=nil && _scheme==nil)
-    return _string;
-   else
-    return [self _buildResourceSpecifier];
+-(NSString *)resourceSpecifier 
+{
+   if (_baseURL && !_scheme ) return _string;
+   else return [self _buildResourceSpecifier];
 }
 
 -(BOOL)isFileURL {
@@ -794,6 +816,11 @@ static BOOL scanURL(urlScanner *scanner,NSURL *url){
 -(NSURL *)standardizedURL {
    NSUnimplementedMethod();
    return nil;
+}
+
+- (NSString *)description;
+{
+	return [self absoluteString];
 }
 
 -(NSURL *)absoluteURL {

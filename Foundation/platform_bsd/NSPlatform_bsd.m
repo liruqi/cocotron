@@ -38,20 +38,6 @@ NSString	*NSPlatformClassName = @"NSPlatform_bsd";
 
 @implementation NSPlatform_bsd
 
-- (NSTimeZone *)systemTimeZone
-{
-	struct tm	 tmz;
-	time_t		 curtime;
-
-	bzero(&tmz, sizeof(tmz));
-	tzset();
-
-	curtime = time(NULL);
-	localtime_r(&curtime, &tmz);
-	mktime(&tmz);
-	return [NSTimeZone timeZoneForSecondsFromGMT:(NSInteger)tmz.tm_gmtoff];
-}
-
 void NSPlatformSleepThreadForTimeInterval(NSTimeInterval interval) {
 	 if (interval <= 0.0)
 		  return;
@@ -84,7 +70,17 @@ NSString *NSPlatformLoadableObjectFilePrefix=@"lib";
 
 - (Class)taskClass
 {
-	return [NSTask_bsd class];
+    static Class NSTaskClass = Nil;
+    
+    @synchronized(self)
+	{
+        if (NSTaskClass == Nil) {
+            NSTaskClass = [NSTask_bsd class];
+            [NSTaskClass registerNotification];
+}
+    }
+
+    return NSTaskClass;
 }
 
 @end

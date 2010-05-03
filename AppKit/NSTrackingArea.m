@@ -21,16 +21,20 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 @implementation NSTrackingArea
 
 -(id)initWithRect:(NSRect)rect options:(NSTrackingAreaOptions)options owner:(id)owner userInfo:(NSDictionary *)userInfo {
- return [self _initWithRect:(NSRect)rect options:(NSTrackingAreaOptions)options owner:(id)owner userInfo:(NSDictionary *)userInfo isToolTip:NO isLegacy:NO];
+ return [self _initWithRect:rect options:options owner:owner userData:userInfo retainUserData:YES isToolTip:NO isLegacy:NO];
 }
 
--(id)_initWithRect:(NSRect)rect options:(NSTrackingAreaOptions)options owner:(id)owner userInfo:(NSDictionary *)userInfo isToolTip:(BOOL)isToolTip isLegacy:(BOOL)legacy {
+-(id)_initWithRect:(NSRect)rect options:(NSTrackingAreaOptions)options owner:(id)owner userData:(void *)userData retainUserData:(BOOL)retainUserData isToolTip:(BOOL)isToolTip isLegacy:(BOOL)legacy {
    self=[super init];
    if(self!=nil){
     _rect=rect;
     _options=options;
     _owner=[owner retain];
-    _userInfo=[userInfo retain];
+    _userData=userData;
+    _retainUserData=retainUserData;
+    if(_retainUserData)
+     _userData=[(id)userData retain];
+     
     if(_options&NSTrackingAssumeInside)
      _mouseInside=YES;
     else
@@ -45,7 +49,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -(void)dealloc {
    [_owner release];
-   [_userInfo release];
+   if(_retainUserData)
+    [(id)_userData release];
    [_view release];
    [super dealloc];
 }
@@ -63,7 +68,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(NSDictionary *)userInfo {
-   return _userInfo;
+   return (id)_userData;
 }
 
 -(NSRect)_rectInWindow {
@@ -107,7 +112,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(NSString *)description {
-   return [NSString stringWithFormat:@"<%@[0x%lx] rect:%@ options:%d owner:%@ userInfo:%p view:%@ rectInWindow:%@ mouseInside:%@ isToolTip:%@>", [self class], self, NSStringFromRect(_rect), _options, [_owner class], _userInfo, [_view class], NSStringFromRect(_rectInWindow), _mouseInside ? @"YES" : @"NO", _isToolTip ? @"YES" : @"NO"];
+   return [NSString stringWithFormat:@"<%@[0x%lx] rect:%@ options:%d owner:%@ userInfo:%p view:%@ rectInWindow:%@ mouseInside:%@ isToolTip:%@>", [self class], self, NSStringFromRect(_rect), _options, [_owner class], _userData, [_view class], NSStringFromRect(_rectInWindow), _mouseInside ? @"YES" : @"NO", _isToolTip ? @"YES" : @"NO"];
 }
 
 @end

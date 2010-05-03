@@ -23,8 +23,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    if(self!=nil){
     _string=[string copy];
     _location=0;
-    _skipSet=[[NSCharacterSet whitespaceCharacterSet] retain];
-    _isCaseSensitive=YES;
+    _skipSet=[[NSCharacterSet whitespaceAndNewlineCharacterSet] retain];
+    _isCaseSensitive=NO;
     _locale=nil;
    }
 
@@ -131,6 +131,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
      continue;
     else if(!hasSign && unicode=='-'){
      sign=-1;
+     hasSign=YES;
+    }
+    else if(!hasSign && unicode=='+'){
+     sign=1;
      hasSign=YES;
     }
     else if(unicode>='0' && unicode<='9'){
@@ -493,22 +497,48 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -(BOOL)scanString:(NSString *)string intoString:(NSString **)stringp {
     NSInteger length=[_string length];
+    NSStringCompareOptions compareOption = 0;
+    NSRange range = {0,[string length]};
+    NSInteger oldLocation =_location;
 
+    BOOL result = NO;
+    
+    if(!_isCaseSensitive) {
+        compareOption = NSCaseInsensitiveSearch;
+    }
+    
     for(;_location<length;_location++) {
         unichar unicode=[_string characterAtIndex:_location];
+        NSString    *subStr = [_string substringFromIndex:_location];
+        if([subStr length] < [string length]) {
+            result = NO;
+            break;
+        }
 
-        if ([[_string substringFromIndex:_location] hasPrefix:string]) {
+        if([_skipSet characterIsMember:unicode] == YES) 
+        {
+            continue;
+        }
+        if ([subStr compare:string options:compareOption range:range] == NSOrderedSame) {
             if (stringp != NULL)
                 *stringp = string;
 
             _location += [string length];
-            return YES;
+            result = YES;
+            break;
         }
-        else if (![_skipSet characterIsMember:unicode])
-            return NO;
+        else {
+            result = NO;
+            break;
     }
 
-    return NO;
+}
+
+    if(result == NO) {
+        _location = oldLocation;
+    }
+    
+    return result;
 }
 
 -(BOOL)scanUpToString:(NSString *)string intoString:(NSString **)stringp {
@@ -516,17 +546,30 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     unichar result[length];
     int resultLength = 0;
     BOOL scanStarted = NO;
+    NSStringCompareOptions compareOption = 0;
+    NSRange range = {0,[string length]};
+    NSInteger oldLocation =_location;
+
+    if(!_isCaseSensitive) {
+        compareOption = NSCaseInsensitiveSearch;
+    }
 
     for(;_location<length;_location++) {
         unichar unicode=[_string characterAtIndex:_location];
-        if ([[_string substringFromIndex:_location] hasPrefix:string]) {
+        NSString    *subStr = [_string substringFromIndex:_location];
+        
+        if([subStr length] < [string length]) {
+            _location = oldLocation;  
+            return NO;
+        } 
+        if ([subStr compare:string options:compareOption range:range] == NSOrderedSame  && scanStarted == YES) {
             if (stringp != NULL)
                 *stringp = [NSString stringWithCharacters:result length:resultLength];
 
             return YES;
         }
         else if ([_skipSet characterIsMember:unicode] && scanStarted == NO)
-            ;
+            continue;
         else {
             scanStarted = YES;
             result[resultLength++] = unicode;
@@ -539,8 +582,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
         return YES;
     }
-    else
+    else {
+        _location = oldLocation;  
         return NO;
+}
 }
 
 -(BOOL)scanCharactersFromSet:(NSCharacterSet *)charset intoString:(NSString **)stringp
@@ -587,14 +632,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     unichar result[length];
     int resultLength = 0;
     BOOL scanStarted = NO;
+    NSInteger oldLocation =_location;
 
     for(;_location<length;_location++) {
         unichar unicode=[_string characterAtIndex:_location];
 
-        if ([charset characterIsMember:unicode])
+        if ([_skipSet characterIsMember:unicode] && scanStarted == NO)
+            continue;
+        else if ([charset characterIsMember:unicode])
             break;
-        else if ([_skipSet characterIsMember:unicode] && scanStarted == NO)
-            ;
         else {
             scanStarted = YES;
             result[resultLength++] = unicode;
@@ -607,8 +653,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
         return YES;
     }
-    else
+    else {
+        _location = oldLocation;
+        
         return NO;
+}
 }
 
 @end

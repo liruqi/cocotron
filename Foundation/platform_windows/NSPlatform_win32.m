@@ -15,6 +15,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <Foundation/NSPipe_win32.h>
 #import <Foundation/NSLock_win32.h>
 #import <Foundation/NSPersistantDomain_win32.h>
+#import <Foundation/NSTimeZone_win32.h>
 #import <Foundation/NSString.h>
 #import <Foundation/NSArray.h>
 #import <Foundation/NSPathUtilities.h>
@@ -32,10 +33,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <Foundation/NSSocket_windows.h>
 #import <Foundation/NSParentDeathMonitor_win32.h>
 #import <Foundation/NSSelectInputSourceSet.h>
+#import <Foundation/NSCondition_win32.h>
 #import <stdio.h>
 
 #import <objc/runtime.h>
-#import <Foundation/ObjCModule.h>
 
 NSString *NSPlatformClassName=@"NSPlatform_win32";
 
@@ -108,6 +109,14 @@ static NSString *processName(){
 
 -(Class)persistantDomainClass {
    return [NSPersistantDomain_win32 class];
+}
+
+-(Class)timeZoneClass {
+    return [NSTimeZone_win32 class];
+}
+
+-(Class)conditionClass {
+	return [NSCondition_win32 class];
 }
 
 -(NSString *)userName {
@@ -233,31 +242,6 @@ NSTimeInterval NSPlatformTimeIntervalSinceReferenceDate() {
    return Win32TimeIntervalFromFileTime(fileTime);
 }
 
--(NSTimeZone *)systemTimeZone {
-    TIME_ZONE_INFORMATION timeZoneInfo;
-    DWORD timeZoneID;
-    NSString *timeZoneName;
-    int secondsFromGMT;
-    BOOL isDaylightSavingTime;
-
-    timeZoneID = GetTimeZoneInformation(&timeZoneInfo);
-    if (timeZoneID == TIME_ZONE_ID_DAYLIGHT) {
-        timeZoneName = NSStringFromNullTerminatedUnicode(timeZoneInfo.DaylightName);
-        secondsFromGMT = 0 - (timeZoneInfo.Bias * 60 +timeZoneInfo.DaylightBias  * 60);
-        isDaylightSavingTime = YES;
-    }
-//    else if (timeZoneID == TIME_ZONE_ID_STANDARD || timeZoneID == TIME_ZONE_ID_UNKNOWN) {
-    else {
-        timeZoneName = NSStringFromNullTerminatedUnicode(timeZoneInfo.StandardName);
-        secondsFromGMT = 0 - (timeZoneInfo.Bias * 60 +timeZoneInfo. StandardBias  * 60);
-        isDaylightSavingTime = NO;
-    }
-
-//    NSLog(@"hmm... %@ %d %d", timeZoneName, secondsFromGMT, isDaylightSavingTime);
-// FIX there needs to be a better way to map this to the UNIX-style zones
-    return [NSTimeZone timeZoneForSecondsFromGMT:secondsFromGMT];
-}
-
 int NSPlatformProcessID() {
    return GetCurrentProcessId();
 }
@@ -323,6 +307,21 @@ NSUInteger NSPlatformThreadID() {
 
     return result;
    }
+}
+
+-(NSString *)hostNameByAddress:(NSString *)address
+{
+    struct in_addr addr;
+    struct hostent *remoteHost;
+    addr.s_addr = inet_addr([address cString]);
+    if (addr.s_addr == INADDR_NONE) {
+        return nil;
+    }
+    remoteHost = gethostbyaddr((char *) &addr, 4, AF_INET);
+    if(remoteHost == NULL)
+        return nil;
+    
+    return [NSString stringWithCString:remoteHost->h_name];
 }
 
 void NSPlatformSleepThreadForTimeInterval(NSTimeInterval interval) {

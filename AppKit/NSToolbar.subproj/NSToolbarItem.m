@@ -502,6 +502,7 @@ extern NSSize _NSToolbarIconSizeSmall;
           
      imageRect.origin.y=bounds.origin.y+labelHeight;
      imageRect.origin.x=bounds.origin.x+floor((bounds.size.width-imageRect.size.width)/2);
+
      [image drawInRect:imageRect fromRect:NSZeroRect operation:NSCompositeSourceOver fraction:highlighted?0.5:1.0];
     }        
    }

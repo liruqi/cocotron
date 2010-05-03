@@ -18,9 +18,9 @@ static NSMutableDictionary *bindersForObjects=nil;
 static NSDictionary *defaultBindingOptions=nil;
 static NSMutableDictionary *defaultBindingOptionsCache=nil;
 
-NSString* NSObservedObjectKey=@"NSObservedObject";
-NSString* NSObservedKeyPathKey=@"NSObservedKeyPath";
-NSString* NSOptionsKey=@"NSOptions";
+NSString * const NSObservedObjectKey=@"NSObservedObject";
+NSString * const NSObservedKeyPathKey=@"NSObservedKeyPath";
+NSString * const NSOptionsKey=@"NSOptions";
 
 NSString * const NSNullPlaceholderBindingOption=@"NSNullPlaceholder"; // Do not change.
 NSString * const NSNoSelectionPlaceholderBindingOption=@"NSNoSelectionPlaceholder";

@@ -49,7 +49,6 @@ APPKIT_EXPORT NSString * const NSDrawerDidCloseNotification;
 -(id)initWithContentSize:(NSSize)contentSize preferredEdge:(NSRectEdge)edge;
 
 -(id)delegate;
--(NSDrawerWindow *)drawerWindow;
 -(NSWindow *)parentWindow;
 -(NSView *)contentView;
 -(NSSize)contentSize;

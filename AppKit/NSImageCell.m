@@ -91,7 +91,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       
      imageSize.width*=scale;
      imageSize.height*=scale;
-      
+
      return imageSize;
      }
      
@@ -173,6 +173,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 		CGContextClipToRect(ctx,frame);
 
         frame=[self _scaledAndAlignedImageFrame:frame];        
+
         [[self _imageValue] drawInRect:frame fromRect:NSZeroRect operation:NSCompositeSourceOver fraction:1.0];
         
 		CGContextRestoreGState(ctx);

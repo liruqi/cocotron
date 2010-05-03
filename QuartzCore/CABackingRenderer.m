@@ -1,6 +1,6 @@
 #import <QuartzCore/CABackingRenderer.h>
 #import <OpenGL/OpenGL.h>
-#import <CoreGraphics/O2Surface.h>
+#import <Onyx2D/O2Surface.h>
 
 @implementation CABackingRenderer
 
@@ -37,6 +37,9 @@
 
    glEnable (GL_BLEND);
    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
+   width=O2ImageGetWidth(surface);
+   height=O2ImageGetHeight(surface);
 
    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, [surface pixelBytes]);
 

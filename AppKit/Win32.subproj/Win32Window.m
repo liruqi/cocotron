@@ -10,8 +10,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <AppKit/Win32Event.h>
 #import <AppKit/Win32Display.h>
 #import <Foundation/NSString_win32.h>
-#import <CoreGraphics/O2Context.h>
-#import <CoreGraphics/O2Surface.h>
+#import <Onyx2D/O2Context.h>
+#import <Onyx2D/O2Surface.h>
 #import <AppKit/O2Context_gdi.h>
 
 #import <AppKit/NSWindow.h>
@@ -208,6 +208,9 @@ static const char *Win32ClassNameForStyleMask(unsigned styleMask) {
    _ignoreMinMaxMessage=NO;
    _sentBeginSizing=NO;
    _deviceDictionary=[NSMutableDictionary new];
+   NSString *check=[[NSUserDefaults standardUserDefaults] stringForKey:@"CGBackingRasterizer"];
+   if([check isEqual:@"Onyx"] || [check isEqual:@"GDI"])
+    [_deviceDictionary setObject:check forKey:@"CGContext"];
    
    return self;
 }

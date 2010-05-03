@@ -30,6 +30,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <AppKit/NSTextView.h>
 #import <AppKit/NSTrackingArea.h>
 #import <AppKit/NSToolbar.h>
+#import <AppKit/NSWindowAnimationContext.h>
 #import <AppKit/NSToolTipWindow.h>
 #import <AppKit/NSDisplay.h>
 #import <AppKit/NSRaise.h>
@@ -49,11 +50,22 @@ NSString * const NSWindowWillMoveNotification=@"NSWindowWillMoveNotification";
 NSString * const NSWindowWillStartLiveResizeNotification=@"NSWindowWillStartLiveResizeNotification";
 NSString * const NSWindowDidEndLiveResizeNotification=@"NSWindowDidEndLiveResizeNotification";
 
+NSString * const NSWindowWillAnimateNotification=@"NSWindowWillAnimateNotification";
+NSString * const NSWindowAnimatingNotification=@"NSWindowAnimatingNotification";
+NSString * const NSWindowDidAnimateNotification=@"NSWindowDidAnimateNotification";
+
+
 @interface NSToolbar (NSToolbar_privateForWindow)
 - (void)_setWindow:(NSWindow *)window;
 - (NSView *)_view;
 -(CGFloat)visibleHeight;
 -(void)layoutFrameSizeWithWidth:(CGFloat)width;
+@end
+
+@interface NSWindow ()
+
+- (NSRect) zoomedFrame;
+
 @end
 
 @implementation NSWindow
@@ -117,6 +129,7 @@ NSString * const NSWindowDidEndLiveResizeNotification=@"NSWindowDidEndLiveResize
 
    _frame=[isa frameRectForContentRect:contentRect styleMask:styleMask];
    backgroundFrame.size=_frame.size;
+   _savedFrame = _frame;
    
    _styleMask=styleMask;
    _backingType=backing;
@@ -673,6 +686,56 @@ NSString * const NSWindowDidEndLiveResizeNotification=@"NSWindowDidEndLiveResize
    [self setFrame:frame display:display animate:NO];
 }
 
+- (void)_animateWithContext:(NSWindowAnimationContext *)context
+{
+    NSRect frame = [self frame];
+    NSDictionary *userInfo = [NSDictionary dictionaryWithObjectsAndKeys:context, @"NSWindowAnimationContext", nil];
+    
+    if (_animationContext == nil)
+        _animationContext = [context retain];
+    
+    if (_animationContext != context) 
+        [NSException raise:NSInvalidArgumentException
+                    format:@"-[%@ %@]: attempt to animate frame while animation still in progress",
+            [self class], NSStringFromSelector(_cmd)];
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:NSWindowWillAnimateNotification object:self userInfo:userInfo];
+    
+    [context decrement];
+    
+    if ([context stepCount] > 0) {
+        frame.origin.x += [context stepRect].origin.x;
+        frame.origin.y += [context stepRect].origin.y;
+        frame.size.width += [context stepRect].size.width;
+        frame.size.height += [context stepRect].size.height;
+    }
+    else
+        frame = [context targetRect];
+    
+    [self setFrame:frame display:[context display]];
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:NSWindowAnimatingNotification object:self userInfo:userInfo];
+    
+    if ([context stepCount] > 0) {
+        [self performSelector:_cmd withObject:context afterDelay:[context stepInterval]];
+    }
+    else {
+        [[NSNotificationCenter defaultCenter] postNotificationName:NSWindowDidAnimateNotification object:self userInfo:userInfo];
+        
+        [_animationContext release];
+        _animationContext = nil;
+#if 0
+        if ([_backgroundView cachesImageForAnimation])
+            [_backgroundView invalidateCachedImage];
+#endif
+    }
+}
+
+- (NSWindowAnimationContext *)_animationContext
+{
+    return _animationContext;
+}
+
 -(void)setFrame:(NSRect)newFrame display:(BOOL)display animate:(BOOL)animate  {
    _frame=newFrame;
    _makeSureIsOnAScreen=YES;
@@ -684,6 +747,14 @@ NSString * const NSWindowDidEndLiveResizeNotification=@"NSWindowDidEndLiveResize
 
    if(display)
     [self display];
+
+   if(animate){
+     NSWindowAnimationContext *context;
+
+     context = [NSWindowAnimationContext contextToTransformWindow:self startRect:[self frame] targetRect:newFrame resizeTime:    [self animationResizeTime:newFrame] display:display];
+
+    [self _animateWithContext:context];
+}
 }
 
 -(void)setContentSize:(NSSize)size {
@@ -1179,8 +1250,8 @@ NSString * const NSWindowDidEndLiveResizeNotification=@"NSWindowDidEndLiveResize
 }
 
 -(BOOL)isZoomed {
-   NSUnimplementedMethod();
-   return 0;
+	NSRect zoomedFrame = [self zoomedFrame];
+	return NSEqualRects( _frame, zoomedFrame );
 }
 
 -(BOOL)isVisible {
@@ -1384,7 +1455,7 @@ NSString * const NSWindowDidEndLiveResizeNotification=@"NSWindowDidEndLiveResize
 }
 
 - (NSTimeInterval)animationResizeTime:(NSRect)frame {
-    return 0.000001;
+    return 0.20;
 }
 
 -(void)selectNextKeyView:sender {
@@ -1415,7 +1486,7 @@ NSString * const NSWindowDidEndLiveResizeNotification=@"NSWindowDidEndLiveResize
 }
 
 -(void)recalculateKeyViewLoop {
-   NSUnimplementedMethod();
+   // NSUnimplementedMethod();
 }
 
 -(NSSelectionDirection)keyViewSelectionDirection {
@@ -2015,11 +2086,39 @@ NSString * const NSWindowDidEndLiveResizeNotification=@"NSWindowDidEndLiveResize
 }
 
 -(void)performZoom:sender {
-   NSUnimplementedMethod();
+	[self zoom: sender];
+}
+
+- (NSRect) zoomedFrame; 
+{
+	NSScreen *screen = [self screen];
+	NSRect zoomedFrame = [screen visibleFrame];
+	
+	if (_delegate && [_delegate respondsToSelector: @selector(windowWillUseStandardFrame:defaultFrame:)]) {
+		zoomedFrame = [_delegate windowWillUseStandardFrame: self defaultFrame: zoomedFrame];
+	} else if ([self respondsToSelector: @selector( windowWillUseStandardFrame:defaultFrame: )]) {
+		zoomedFrame = [self windowWillUseStandardFrame: self defaultFrame: zoomedFrame];
+	}
+	//	zoomedFrame = [self constrainFrameRect: zoomedFrame toScreen: screen];
+
+	return zoomedFrame;
 }
 
 -(void)zoom:sender {
-   NSUnimplementedMethod();
+	NSRect zoomedFrame = [self zoomedFrame];
+	if (NSEqualRects( _frame, zoomedFrame )) zoomedFrame = _savedFrame;
+	
+	BOOL shouldZoom = YES;
+	if (_delegate && [_delegate respondsToSelector: @selector( windowShouldZoom:toFrame: )]) {
+		shouldZoom = [_delegate windowShouldZoom: self toFrame: zoomedFrame];
+	} else if ([self respondsToSelector: @selector( windowShouldZoom:toFrame: )]) {
+		shouldZoom = [self windowShouldZoom: self toFrame: zoomedFrame];
+}
+
+	if (shouldZoom) {
+		_savedFrame = [self frame];
+		[self setFrame: zoomedFrame display: YES];
+	}
 }
 
 -(void)miniaturize:sender {
@@ -2239,7 +2338,7 @@ NSString * const NSWindowDidEndLiveResizeNotification=@"NSWindowDidEndLiveResize
    [_sheetContext autorelease];
    _sheetContext=[sheetContext retain];
 
-   [(NSWindowBackgroundView *)[sheet _backgroundView] setBorderType:NSButtonBorder];
+   [(NSWindowBackgroundView *)[sheet _backgroundView] setWindowBorderType:NSWindowSheetBorderType];
    
    [self _setSheetOrigin];
    sheetFrame = [sheet frame];   
@@ -2487,6 +2586,8 @@ NSString * const NSWindowDidEndLiveResizeNotification=@"NSWindowDidEndLiveResize
       mouseIsInside=NO;
      }
      if(options&NSTrackingInVisibleRect){
+      // This does not do hit testing, it just checks if it's inside the visible rect,
+      // child views will cause the test to fail if they aren't tracking anything
       NSPoint check=[[area _view] convertPoint:mousePoint fromView:nil];
       
       if(!NSMouseInRect(check,[[area _view] visibleRect],[[area _view] isFlipped]))

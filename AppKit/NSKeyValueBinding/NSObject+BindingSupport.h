@@ -57,9 +57,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 -(void)objectDidEndEditing:editor;
 @end
 
-APPKIT_EXPORT NSString* NSObservedObjectKey;
-APPKIT_EXPORT NSString* NSObservedKeyPathKey;
-APPKIT_EXPORT NSString* NSOptionsKey;
+APPKIT_EXPORT NSString * const NSObservedObjectKey;
+APPKIT_EXPORT NSString * const NSObservedKeyPathKey;
+APPKIT_EXPORT NSString * const NSOptionsKey;
 
 // Binding option keys
 APPKIT_EXPORT NSString * const NSNullPlaceholderBindingOption;

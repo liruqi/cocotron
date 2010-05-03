@@ -19,7 +19,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <float.h>
 #import <limits.h>
 #import <math.h>
-
 #import <stdarg.h>
 #import <stddef.h>
 #import <stdio.h>
@@ -71,6 +70,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <Foundation/NSGeometry.h>
 #import <Foundation/NSHashTable.h>
 #import <Foundation/NSHost.h>
+#import <Foundation/NSHTTPURLResponse.h>
 #import <Foundation/NSIndexPath.h>
 #import <Foundation/NSIndexSet.h>
 #import <Foundation/NSInvocation.h>
@@ -104,6 +104,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <Foundation/NSNumberFormatter.h>
 #import <Foundation/NSObjCRuntime.h>
 #import <Foundation/NSObject.h>
+#import <Foundation/NSOperation.h>
+#import <Foundation/NSOperationQueue.h>
 #import <Foundation/NSPathUtilities.h>
 #import <Foundation/NSPipe.h>
 #import <Foundation/NSPortCoder.h>

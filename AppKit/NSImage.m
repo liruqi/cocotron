@@ -673,6 +673,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    [self drawInRect:NSMakeRect(point.x,point.y,size.width,size.height) fromRect:source operation:operation fraction:fraction];
 }
 
+#warning check callers rect
 -(void)drawInRect:(NSRect)rect fromRect:(NSRect)source operation:(NSCompositingOperation)operation fraction:(float)fraction {
    NSAutoreleasePool *pool=[NSAutoreleasePool new];
    NSImageRep        *any=[self _bestUncachedFallbackCachedRepresentationForDevice:nil];
@@ -723,7 +724,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    }
    
    [[NSGraphicsContext currentContext] setCompositingOperation:operation];
-   
+
    [drawRep drawInRect:rect];
    
    CGContextRestoreGState(context);

@@ -349,18 +349,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 	state->itemsPtr=stackbuf;
 	
 	state->mutationsPtr=(unsigned long*)self;
-
-    if([self count]==0)
-     return 0;
-     
 	if(!state->state)
 		state->state=(unsigned long)[self objectEnumerator];
 
 	id en=(id)state->state;
 	
     for(i=0; i<length; i++)
-     if((state->itemsPtr[i]=[en nextObject])==nil)
-      break;
+	{
+		state->itemsPtr[i]=[en nextObject];
+		if(!state->itemsPtr[i])
+			return i;
+	}
 
 	return i;
 	

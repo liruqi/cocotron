@@ -13,17 +13,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 @class NSData,NSDate,NSError;
 
 FOUNDATION_EXPORT NSString * const NSFileType;
-FOUNDATION_EXPORT NSString    *NSFileTypeRegular;
-FOUNDATION_EXPORT NSString    *NSFileTypeDirectory;
-FOUNDATION_EXPORT NSString    *NSFileTypeSymbolicLink;
+FOUNDATION_EXPORT NSString * const NSFileTypeRegular;
+FOUNDATION_EXPORT NSString * const NSFileTypeDirectory;
+FOUNDATION_EXPORT NSString * const NSFileTypeSymbolicLink;
 
-FOUNDATION_EXPORT NSString    *NSFileTypeCharacterSpecial;
-FOUNDATION_EXPORT NSString    *NSFileTypeBlockSpecial;
-FOUNDATION_EXPORT NSString    *NSFileTypeFIFO;
+FOUNDATION_EXPORT NSString * const NSFileTypeCharacterSpecial;
+FOUNDATION_EXPORT NSString * const NSFileTypeBlockSpecial;
+FOUNDATION_EXPORT NSString * const NSFileTypeFIFO;
 
-FOUNDATION_EXPORT NSString    *NSFileTypeSocket;
+FOUNDATION_EXPORT NSString * const NSFileTypeSocket;
 
-FOUNDATION_EXPORT NSString    *NSFileTypeUnknown;
+FOUNDATION_EXPORT NSString * const NSFileTypeUnknown;
 
 FOUNDATION_EXPORT NSString * const NSFileSize;
 FOUNDATION_EXPORT NSString * const NSFileModificationDate;

@@ -182,6 +182,9 @@ APPKIT_EXPORT NSString * const NSWindowDidEndLiveResizeNotification;
    NSWindowController *_windowController;
    NSMutableArray *_drawers;
    NSToolbar *_toolbar;
+   NSWindowAnimationContext *_animationContext;
+	
+   NSRect _savedFrame;
 }
 
 +(NSWindowDepth)defaultDepthLimit;
@@ -511,3 +514,8 @@ APPKIT_EXPORT NSString * const NSWindowDidEndLiveResizeNotification;
 -(BOOL)windowShouldClose:sender;
 -(void)windowWillClose:(NSNotification *)note;
 @end
+
+//private
+APPKIT_EXPORT NSString * const NSWindowWillAnimateNotification;
+APPKIT_EXPORT NSString * const NSWindowAnimatingNotification;
+APPKIT_EXPORT NSString * const NSWindowDidAnimateNotification;

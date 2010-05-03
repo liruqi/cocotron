@@ -32,13 +32,13 @@ NSString * const NSNibTopLevelObjects=@"NSNibTopLevelObjects";
    
    if(!keyedobjects && !isDirectory)
       keyedobjects=path; // assume new-style compiled xib
-   
+      
    if((_data=[[NSData alloc] initWithContentsOfFile:keyedobjects])==nil){
     NSLog(@"%s: unable to init nib from file '%@'", __PRETTY_FUNCTION__, keyedobjects);
     [self release];
     return nil;
    }
-
+   
    _allObjects=[NSMutableArray new];
    
    return self;
@@ -109,7 +109,7 @@ NSString * const NSNibTopLevelObjects=@"NSNibTopLevelObjects";
     [unarchiver setClass:[NSNibHelpConnector class] forClassName:@"NSIBHelpConnector"];
     
     objectData=[unarchiver decodeObjectForKey:@"IB.objectdata"];
-        
+
     [objectData buildConnectionsWithNameTable:nameTable];
     if((menu=[objectData mainMenu])!=nil)
      [NSApp setMainMenu:menu];

@@ -28,6 +28,8 @@ FOUNDATION_EXPORT NSString * const NSPlatformResourceNameSuffix;
 -(Class)lockClass;
 -(Class)conditionLockClass;
 -(Class)persistantDomainClass;
+-(Class)timeZoneClass;
+-(Class)conditionClass;
 
 -(NSString *)userName;
 -(NSString *)fullUserName;
@@ -37,12 +39,11 @@ FOUNDATION_EXPORT NSString * const NSPlatformResourceNameSuffix;
 -(NSArray *)arguments;
 -(NSDictionary *)environment;
 
--(NSTimeZone *)systemTimeZone;
-
 -(NSString *)hostName;
 
 -(NSString *)DNSHostName;
 -(NSArray *)addressesForDNSHostName:(NSString *)name;
+-(NSString *)hostNameByAddress:(NSString *)address;
 
 -(void *)mapContentsOfFile:(NSString *)path length:(NSUInteger *)length;
 -(void)unmapAddress:(void *)ptr length:(NSUInteger)length;

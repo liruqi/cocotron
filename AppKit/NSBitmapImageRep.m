@@ -232,7 +232,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -initWithContentsOfFile:(NSString *)path {
    NSData *data=[NSData dataWithContentsOfFile:path];
-   
+
    if(data==nil){
     [self dealloc];
     return nil;

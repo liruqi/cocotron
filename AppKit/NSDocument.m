@@ -297,7 +297,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -(void)setWindow:(NSWindow *)window {
    [[_windowControllers objectAtIndex:0] setWindow:window];
-   [window release];
 }
 
 -(void)windowControllerDidLoadNib:(NSWindowController *)controller {
@@ -332,12 +331,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     [controller setDocument:self];
 }
 
--(void)removeWindowController:(NSWindowController *)controller 
-{
-  BOOL shouldCloseDocument = [controller shouldCloseDocument];
+-(void)removeWindowController:(NSWindowController *)controller  {
+   [controller setDocument:nil];
   [_windowControllers removeObjectIdenticalTo:controller];
-  if (shouldCloseDocument || [_windowControllers count] == 0)
-     [self close];
 }
 
 -(NSString *)displayName 
@@ -385,6 +381,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     case NSChangeCleared:
      _changeCount=0;
      [self _updateFileModificationDate]; // Since file was just saved or reverted
+     break;
+    
+    case NSChangeReadOtherContents:
+    case NSChangeAutosaved:
+     NSUnimplementedMethod();
      break;
    }
   
