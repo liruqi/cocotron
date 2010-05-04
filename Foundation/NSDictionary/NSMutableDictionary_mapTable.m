@@ -38,8 +38,6 @@ typedef struct {
 
 @end
 
-NSEnumerator *NSEnumerator_dictionaryKeysNew(NSMapTable *table);
-
 @implementation NSEnumerator_CFDictionaryKeys
 
 -initWithState:(CFDictionaryEnumerator)state {

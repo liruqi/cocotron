@@ -586,7 +586,7 @@ void O2ApplyCoverageToSpan_lRGBA8888_PRE(O2argb8u *dst,int coverage,O2argb8u *sr
    }
 }
 
-void O2BlendSpanNormal_8888_coverage(O2argb8u *src,O2argb8u *dst,int coverage,int length){
+void O2BlendSpanNormal_8888_coverage(O2argb8u *src,O2argb8u *dst,unsigned coverage,int length){
 // Passes Visual Test
    int i;
    
@@ -599,37 +599,42 @@ void O2BlendSpanNormal_8888_coverage(O2argb8u *src,O2argb8u *dst,int coverage,in
       r=*src;
      else {
       O2argb8u d=*dst;
-      unsigned char sa=255-s.a;
+      uint32_t sa=255-s.a;
 
+      r.a=RI_UINT32_MIN((uint32_t)s.a+alphaMultiply(d.a,sa),255);
       r.r=RI_UINT32_MIN((uint32_t)s.r+alphaMultiply(d.r,sa),255);
       r.g=RI_UINT32_MIN((uint32_t)s.g+alphaMultiply(d.g,sa),255);
       r.b=RI_UINT32_MIN((uint32_t)s.b+alphaMultiply(d.b,sa),255);
-      r.a=RI_UINT32_MIN((uint32_t)s.a+alphaMultiply(d.a,sa),255);
      }
      *dst=r;
     }
    }
    else {
-    int oneMinusCoverage=inverseCoverage(coverage);
+    uint32_t oneMinusCoverage=inverseCoverage(coverage);
 
     for(i=0;i<length;i++,src++,dst++){
      O2argb8u s=*src;
      O2argb8u d=*dst;
      O2argb8u r;
-     unsigned char sa=255-s.a;
-     int tmp;
+     uint32_t sa=255-s.a;
+     uint32_t tmp,dcomp;
      
-     tmp=multiplyByCoverage(RI_INT_MIN((int)s.r+alphaMultiply(d.r,sa),255),coverage);
-     r.r=RI_INT_MIN(tmp+((d.r*oneMinusCoverage)/256),255);
+     dcomp=s.a;
+     tmp=((uint32_t)s.a+alphaMultiply(dcomp,sa))*coverage;
+     r.a=RI_UINT32_MIN((tmp+dcomp*oneMinusCoverage)/COVERAGE_MULTIPLIER,255);
+
+     dcomp=d.r;
+     tmp=((uint32_t)s.r+alphaMultiply(dcomp,sa))*coverage;
+     r.r=RI_UINT32_MIN((tmp+dcomp*oneMinusCoverage)/COVERAGE_MULTIPLIER,255);
     
-     tmp=multiplyByCoverage(RI_INT_MIN((int)s.g+alphaMultiply(d.g,sa),255),coverage);
-     r.g=RI_INT_MIN(tmp+((d.g*oneMinusCoverage)/256),255);
+     dcomp=d.g;
+     tmp=((uint32_t)s.g+alphaMultiply(dcomp,sa))*coverage;
+     r.g=RI_UINT32_MIN((tmp+dcomp*oneMinusCoverage)/COVERAGE_MULTIPLIER,255);
+     
+     dcomp=d.b;
+     tmp=((uint32_t)s.b+alphaMultiply(dcomp,sa))*coverage;
+     r.b=RI_UINT32_MIN((tmp+dcomp*oneMinusCoverage)/COVERAGE_MULTIPLIER,255);
     
-     tmp=multiplyByCoverage(RI_INT_MIN((int)s.b+alphaMultiply(d.b,sa),255),coverage);
-     r.b=RI_INT_MIN(tmp+((d.b*oneMinusCoverage)/256),255);
-    
-     tmp=multiplyByCoverage(RI_INT_MIN((int)s.a+alphaMultiply(d.a,sa),255),coverage);
-     r.a=RI_INT_MIN(tmp+((d.a*oneMinusCoverage)/256),255);
     
      *dst=r;
     }

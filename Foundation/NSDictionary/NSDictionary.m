@@ -10,6 +10,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <Foundation/NSArray.h>
 #import <Foundation/NSData.h>
 #import <Foundation/NSMutableDictionary_mapTable.h>
+#import <Foundation/NSDictionary_mapTable.h>
 #import <Foundation/NSEnumerator_dictionaryObjects.h>
 #import <Foundation/NSPropertyListReader.h>
 #import <Foundation/NSPropertyListWriter_vintage.h>
@@ -30,7 +31,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 +allocWithZone:(NSZone *)zone {
    if(self==objc_lookUpClass("NSDictionary"))
-    return NSAllocateObject([NSDictionary_CF class],0,zone);
+    return NSAllocateObject([NSDictionary_mapTable class],0,zone);
 
    return NSAllocateObject(self,0,zone);
 }

@@ -254,8 +254,7 @@ NSMapEnumerator NSEnumerateMapTable(NSMapTable *table){
    return state;
 }
 
-BOOL NSNextMapEnumeratorPair(NSMapEnumerator *state,void **key,
-   void **value){
+BOOL NSNextMapEnumeratorPair(NSMapEnumerator *state,void **key,void **value){
 
    if(state->j==NULL)
     return NO;
