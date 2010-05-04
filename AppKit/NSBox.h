@@ -25,6 +25,7 @@ typedef enum {
    NSBoxSecondary,
    NSBoxSeparator,
    NSBoxOldStyle,
+   NSBoxCustom
 } NSBoxType;
 
 @interface NSBox : NSView {
@@ -33,6 +34,8 @@ typedef enum {
    NSTitlePosition _titlePosition;
    id              _titleCell;
    NSSize          _contentViewMargins;
+
+   id              _customData;
 }
 
 -(NSBoxType)boxType;
@@ -60,3 +63,22 @@ typedef enum {
 -(void)sizeToFit;
 
 @end
+
+@interface NSBox (NSCustomBoxTypeProperties)
+/* These properties only apply to boxes with boxType NSBoxCustom.
+ */
+
+- (CGFloat)borderWidth;
+- (void)setBorderWidth:(CGFloat)borderWidth;	// Only meaningful for boxes configured with NSBoxCustom
+
+- (CGFloat)cornerRadius;
+- (void)setCornerRadius:(CGFloat)cornerRadius;	// Only meaningful for boxes configured with NSBoxCustom
+
+- (NSColor *)borderColor;
+- (void)setBorderColor:(NSColor *)borderColor;	// Only meaningful for boxes configured with NSBoxCustom
+
+- (NSColor *)fillColor;
+- (void)setFillColor:(NSColor *)fillColor;	// Only meaningful for boxes configured with NSBoxCustom
+
+@end
+

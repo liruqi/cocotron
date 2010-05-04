@@ -26,6 +26,8 @@ FOUNDATION_EXPORT NSString * const NSRunLoopCommonModes;
 +(NSRunLoop *)mainRunLoop;
 
 -(NSString *)currentMode;
+- (CFRunLoopRef)getCFRunLoop;
+
 -(NSDate *)limitDateForMode:(NSString *)mode;
 -(void)acceptInputForMode:(NSString *)mode beforeDate:(NSDate *)date;
 
