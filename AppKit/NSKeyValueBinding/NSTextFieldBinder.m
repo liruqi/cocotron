@@ -25,6 +25,7 @@
 
 - (void)startObservingChanges
 {
+   if(!_isObserving){
   [super startObservingChanges];
   
   NSNotificationCenter * nc = [NSNotificationCenter defaultCenter];
@@ -44,13 +45,16 @@
                    name:NSControlTextDidChangeNotification 
                  object:_source];
     }
+   }
 }
 
 - (void)stopObservingChanges
 {
-  [super stopObservingChanges];
+   if(_isObserving){
+   [super stopObservingChanges];
   
-  [[NSNotificationCenter defaultCenter] removeObserver:self];
+   [[NSNotificationCenter defaultCenter] removeObserver:self name:nil object:_source];
+   }
 }
 
 - (void)textDidBeginEditing:(NSNotification *)note

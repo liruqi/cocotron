@@ -197,6 +197,7 @@ NSMapTableKeyCallBacks O2PDFOwnedCStringKeyCallBacks={
    id          value;
    
    [result appendString:@"<<\n"];
+
    while(NSNextMapEnumeratorPair(&state,(void **)&key,(void **)&value)){
     [result appendFormat:@"%s %@\n",key,value];
    }
@@ -211,6 +212,7 @@ NSMapTableKeyCallBacks O2PDFOwnedCStringKeyCallBacks={
    id               value;
    
    [encoder appendString:@"<<\n"];
+
    while(NSNextMapEnumeratorPair(&state,(void **)&key,(void **)&value)){
     [encoder appendFormat:@"/%s ",key];
     [encoder encodePDFObject:value];

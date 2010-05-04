@@ -280,11 +280,11 @@ static inline unsigned coverageFromZeroToOne(O2Float value){
    return value*COVERAGE_MULTIPLIER;
 }
 
-static inline unsigned inverseCoverage(unsigned coverage){
+static inline uint32_t inverseCoverage(uint32_t coverage){
    return COVERAGE_MULTIPLIER-coverage;
 }
 
-static inline unsigned multiplyByCoverage(unsigned value,unsigned coverage){
+static inline uint32_t multiplyByCoverage(uint32_t value,uint32_t coverage){
    return (value*coverage)/COVERAGE_MULTIPLIER;
 }
 
@@ -298,7 +298,7 @@ static inline unsigned divideBy255(unsigned t){
    return t;
 }
 
-static inline unsigned alphaMultiply(unsigned c,unsigned a){
+static inline uint32_t alphaMultiply(uint32_t c,uint32_t a){
    return divideBy255(c*a);
 }
 
