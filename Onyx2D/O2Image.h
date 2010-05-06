@@ -303,12 +303,11 @@ static inline uint32_t alphaMultiply(uint32_t c,uint32_t a){
 }
 
 static inline O2argb8u O2argb8uMultiplyByCoverage(O2argb8u result,unsigned value){
-   if(value!=COVERAGE_MULTIPLIER){
-    result.r=multiplyByCoverage(result.r,value);
-    result.g=multiplyByCoverage(result.g,value);
-    result.b=multiplyByCoverage(result.b,value);
-    result.a=multiplyByCoverage(result.a,value);
-   }
+   result.r=multiplyByCoverage(result.r,value);
+   result.g=multiplyByCoverage(result.g,value);
+   result.b=multiplyByCoverage(result.b,value);
+   result.a=multiplyByCoverage(result.a,value);
+
    return result;
 }
 

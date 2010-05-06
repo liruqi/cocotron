@@ -142,7 +142,46 @@ static inline void RGBToHSL(float r,float g,float b,float *huep,float *saturatio
     *luminancep=luminance;
 }
 
+
+static inline uint32_t Mul8x2(uint32_t pair,uint32_t alpha){
+    const uint32_t rbmask=0x00FF00FF;
+	pair &= rbmask;
+	uint32_t i = alpha * pair + 0x800080;
+	return (i + ((i >> 8) & rbmask)) >> 8 & rbmask;
+}
+
 static void O2BlendSpanNormal_8888(O2argb8u *src,O2argb8u *dst,int length){
+#if 1
+// Passes Visual Test
+   int i;
+   
+   for(i=0;i<length;i++,src++,dst++){
+    uint32_t srb=*(uint32_t *)src;
+    uint32_t sag=srb>>8;
+    uint32_t drb=*(uint32_t *)dst;
+    uint32_t dag=drb>>8;
+    O2argb8u r;
+
+    uint32_t sa=255-(sag>>16);
+    uint32_t trb,tag;
+    
+    srb&=0x00FF00FF;
+    drb&=0x00FF00FF;
+    srb+=Mul8x2(drb,sa);
+    
+    sag&=0x00FF00FF;
+    dag&=0x00FF00FF;
+    sag+=Mul8x2(dag,sa);
+
+
+    r.a=RI_INT_MIN(sag>>16,255);
+    r.r=RI_INT_MIN(srb>>16,255);
+    r.g=RI_INT_MIN(sag&0xFFFF,255);
+    r.b=RI_INT_MIN(srb&0xFFFF,255);
+        
+    *src=r;
+   }
+#else
 // Passes Visual Test
    int i;
    
@@ -159,6 +198,7 @@ static void O2BlendSpanNormal_8888(O2argb8u *src,O2argb8u *dst,int length){
     
     src[i]=r;
    }
+#endif
 }
 
 static void O2BlendSpanNormal_ffff(O2argb32f *src,O2argb32f *dst,int length){

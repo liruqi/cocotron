@@ -586,7 +586,75 @@ void O2ApplyCoverageToSpan_lRGBA8888_PRE(O2argb8u *dst,int coverage,O2argb8u *sr
    }
 }
 
+
 void O2BlendSpanNormal_8888_coverage(O2argb8u *src,O2argb8u *dst,unsigned coverage,int length){
+#if 1
+// Passes Visual Test
+   int i;
+   
+   if(coverage==256){
+    for(i=0;i<length;i++,src++,dst++){
+     uint32_t srb=*(uint32_t *)src;
+     
+     if((srb&0xFF000000)==0xFF000000)
+      *dst=*src;
+     else {
+      uint32_t sag=srb>>8;
+      uint32_t drb=*(uint32_t *)dst;
+      uint32_t dag=drb>>8;
+      O2argb8u r;
+
+      uint32_t sa=255-(sag>>16);
+      uint32_t trb,tag;
+    
+      srb&=0x00FF00FF;
+      drb&=0x00FF00FF;
+      srb+=Mul8x2(drb,sa);
+    
+      sag&=0x00FF00FF;
+      dag&=0x00FF00FF;
+      sag+=Mul8x2(dag,sa);
+
+      *(uint32_t *)dst=(sag<<8)|srb;
+     }
+    }
+   }
+   else {
+    uint32_t oneMinusCoverage=inverseCoverage(coverage);
+    
+    for(i=0;i<length;i++,src++,dst++){
+     uint32_t srb=*(uint32_t *)src;
+     uint32_t sag=srb>>8;
+     uint32_t drb=*(uint32_t *)dst;
+     uint32_t dag=drb>>8;
+     O2argb8u r;
+
+     uint32_t sa=255-(sag>>16);
+     uint32_t trb,tag;
+    
+     srb&=0x00FF00FF;
+     drb&=0x00FF00FF;
+     srb+=Mul8x2(drb,sa);
+
+     sag&=0x00FF00FF;
+     dag&=0x00FF00FF;
+     sag+=Mul8x2(dag,sa);
+        
+     sag=((sag*coverage)>>8)&0x00FF00FF;
+     srb=((srb*coverage)>>8)&0x00FF00FF;
+     dag=((dag*oneMinusCoverage)>>8)&0x00FF00FF;
+     drb=((drb*oneMinusCoverage)>>8)&0x00FF00FF;
+     
+     r.a=RI_INT_MIN(sag+dag,0x00FF0000)>>16;
+     r.g=RI_INT_MIN((sag+dag)&0xFFFF,255);
+     r.r=RI_INT_MIN(srb+drb,0x00FF0000)>>16;
+     r.b=RI_INT_MIN((srb+drb)&0xFFFF,255);
+
+     *dst=r;
+    }
+   }
+
+#else
 // Passes Visual Test
    int i;
    
@@ -639,6 +707,7 @@ void O2BlendSpanNormal_8888_coverage(O2argb8u *src,O2argb8u *dst,unsigned covera
      *dst=r;
     }
    }
+#endif
 }
 
 static void O2BlendSpanCopy_8888_coverage(O2argb8u *src,O2argb8u *dst,int coverage,int length){
