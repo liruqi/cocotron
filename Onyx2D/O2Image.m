@@ -1548,24 +1548,25 @@ void O2ImageBilinear_lRGBA8888_PRE(O2Image *self,int x, int y,O2argb8u *span,int
     O2Float uvx=du;
     O2Float uvy=dv;
 
-	int u = RI_FLOOR_TO_INT(uvx);
-	int v = RI_FLOOR_TO_INT(uvy);
-    unsigned fu = coverageFromZeroToOne(uvx - (O2Float)u);
-    unsigned oneMinusFu=inverseCoverage(fu);
-    unsigned fv = coverageFromZeroToOne(uvy - (O2Float)v);
-    unsigned oneMinusFv=inverseCoverage(fv);
+	int     u=RI_FLOORF_TO_INT(uvx);
+	int     v=RI_FLOORF_TO_INT(uvy);
 
-	O2argb8u pair[2];
-    O2ImageReadTileSpanExtendEdge_lRGBA8888_PRE(self,u,v,pair,2);
-    
-    O2argb8u c0 = O2argb8uAdd(O2argb8uMultiplyByCoverage(pair[0],oneMinusFu),O2argb8uMultiplyByCoverage(pair[1],fu));
+    uint32_t fu = coverageFromZeroToOne(uvx-u);
+    uint32_t oneMinusFu=inverseCoverage(fu);
 
-    O2ImageReadTileSpanExtendEdge_lRGBA8888_PRE(self,u,v+1,pair,2);
+	O2argb8u line0[2];
+	O2argb8u line1[2];
+    O2ImageReadTileSpanExtendEdge_lRGBA8888_PRE(self,u,v,line0,2);
+    O2ImageReadTileSpanExtendEdge_lRGBA8888_PRE(self,u,v+1,line1,2);
 
-    O2argb8u c1 = O2argb8uAdd(O2argb8uMultiplyByCoverage(pair[0],oneMinusFu),O2argb8uMultiplyByCoverage(pair[1],fu));
+    O2argb8u c0 = O2argb8uMultiplyByCoverageAdd(line0[0],oneMinusFu,line0[1],fu);
+    O2argb8u c1 = O2argb8uMultiplyByCoverageAdd(line1[0],oneMinusFu,line1[1],fu);
     
-    span[i]=O2argb8uAdd(O2argb8uMultiplyByCoverage(c0,oneMinusFv),O2argb8uMultiplyByCoverage(c1, fv));
-    
+    uint32_t fv = coverageFromZeroToOne(uvy-v);
+    uint32_t oneMinusFv=inverseCoverage(fv);
+
+    span[i]=O2argb8uMultiplyByCoverageAdd(c0,oneMinusFv,c1,fv);
+        
     du+=surfaceToImage.a;
     dv+=surfaceToImage.b;
    }
@@ -1657,10 +1658,10 @@ void O2ImageBilinearFloatTranslate_lRGBA8888_PRE(O2Image *self,int x, int y,O2ar
    O2ImageReadTileSpanExtendEdge_lRGBA8888_PRE(self,u,v+1,line1,length+1);
 
    for(i=0;i<length;i++){
-    O2argb8u c0 = O2argb8uAdd(O2argb8uMultiplyByCoverage(line0[i],oneMinusFu),O2argb8uMultiplyByCoverage(line0[i+1],fu));
-    O2argb8u c1 = O2argb8uAdd(O2argb8uMultiplyByCoverage(line1[i],oneMinusFu),O2argb8uMultiplyByCoverage(line1[i+1],fu));
+    O2argb8u c0 = O2argb8uMultiplyByCoverageAdd(line0[i],oneMinusFu,line0[i+1],fu);
+    O2argb8u c1 = O2argb8uMultiplyByCoverageAdd(line1[i],oneMinusFu,line1[i+1],fu);
     
-    span[i]=O2argb8uAdd(O2argb8uMultiplyByCoverage(c0,oneMinusFv),O2argb8uMultiplyByCoverage(c1, fv));
+    span[i]=O2argb8uMultiplyByCoverageAdd(c0,oneMinusFv,c1,fv);
    }
 }
 

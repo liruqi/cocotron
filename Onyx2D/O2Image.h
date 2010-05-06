@@ -271,13 +271,14 @@ static inline O2argb8u O2argb8uFromO2argb32f(O2argb32f rgba){
 }
 
 #define COVERAGE_MULTIPLIER 256
+#define COVERAGE_MULTIPLIER_FLOAT 256.0f
 
 static inline O2Float zeroToOneFromCoverage(unsigned coverage){
    return (O2Float)coverage/(O2Float)COVERAGE_MULTIPLIER;
 }
 
-static inline unsigned coverageFromZeroToOne(O2Float value){
-   return value*COVERAGE_MULTIPLIER;
+static inline uint32_t coverageFromZeroToOne(O2Float value){
+   return value*COVERAGE_MULTIPLIER_FLOAT;
 }
 
 static inline uint32_t inverseCoverage(uint32_t coverage){
@@ -302,13 +303,58 @@ static inline uint32_t alphaMultiply(uint32_t c,uint32_t a){
    return divideBy255(c*a);
 }
 
-static inline O2argb8u O2argb8uMultiplyByCoverage(O2argb8u result,unsigned value){
+static inline O2argb8u O2argb8uMultiplyByCoverageNoBypass(O2argb8u result,unsigned value){
    result.r=multiplyByCoverage(result.r,value);
    result.g=multiplyByCoverage(result.g,value);
    result.b=multiplyByCoverage(result.b,value);
    result.a=multiplyByCoverage(result.a,value);
 
    return result;
+}
+
+static inline O2argb8u O2argb8uMultiplyByCoverage(O2argb8u result,unsigned value){
+   if(value!=COVERAGE_MULTIPLIER)
+    result=O2argb8uMultiplyByCoverageNoBypass(result,value);
+
+   return result;
+}
+
+static inline O2argb8u O2argb8uMultiplyByCoverageAdd(O2argb8u left,uint32_t leftCoverage,O2argb8u right,uint32_t rightCoverage){
+// O2argb8uAdd(O2argb8uMultiplyByCoverage(left,leftCoverage),O2argb8uMultiplyByCoverage(right,rightCoverage));
+#if 0
+   if(rightCoverage==COVERAGE_MULTIPLIER)
+    return right;
+   if(leftCoverage==COVERAGE_MULTIPLIER)
+    return left;
+#endif
+
+   uint32_t srb=*(uint32_t *)&left;
+   uint32_t sag=srb>>8;
+   
+   sag&=0x00FF00FF;
+   srb&=0x00FF00FF;
+   sag=((sag*leftCoverage)>>8)&0x00FF00FF;
+   srb=((srb*leftCoverage)>>8)&0x00FF00FF;
+
+   uint32_t drb=*(uint32_t *)&right;
+   uint32_t dag=drb>>8;
+    
+   dag&=0x00FF00FF;
+   drb&=0x00FF00FF;
+        
+   dag=((dag*rightCoverage)>>8)&0x00FF00FF;
+   drb=((drb*rightCoverage)>>8)&0x00FF00FF;
+   
+   uint32_t r;
+   
+   sag+=dag;
+   r=RI_INT_MIN(sag,0x00FF0000)<<8;
+   r|=RI_INT_MIN(sag&0xFFFF,255)<<8;
+   srb+=drb;
+   r|=RI_INT_MIN(srb,0x00FF0000);
+   r|=RI_INT_MIN(srb&0xFFFF,255);
+
+   return *(O2argb8u *)&r;
 }
 
 static inline O2argb8u O2argb8uAdd(O2argb8u result,O2argb8u other){
