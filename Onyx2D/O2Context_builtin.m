@@ -581,7 +581,7 @@ void O2ApplyCoverageToSpan_lRGBA8888_PRE(O2argb8u *dst,int coverage,O2argb8u *sr
      O2argb8u r=*src;
      O2argb8u d=*dst;
     
-     *dst=O2argb8uAdd(O2argb8uMultiplyByCoverage(r , coverage) , O2argb8uMultiplyByCoverage(d , oneMinusCoverage));
+     *dst=O2argb8uAdd(O2argb8uMultiplyByCoverageNoBypass(r , coverage) , O2argb8uMultiplyByCoverageNoBypass(d , oneMinusCoverage));
     }
    }
 }
