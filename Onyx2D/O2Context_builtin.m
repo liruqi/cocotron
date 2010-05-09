@@ -185,7 +185,7 @@ void O2ContextDeviceClipReset_builtin(O2Context_builtin *self){
    O2ContextDeviceClipReset_builtin(self);
 }
 
-static void O2ContextClipViewportToPath(O2Context_builtin *self,O2Path *path) {
+ONYX2D_STATIC void O2ContextClipViewportToPath(O2Context_builtin *self,O2Path *path) {
    O2MutablePath *copy=O2PathCreateMutableCopy(path);
     
    O2PathApplyTransform(copy,O2AffineTransformInvert(currentState(self)->_userSpaceTransform));
@@ -224,7 +224,7 @@ void O2ContextDeviceClipToEvenOddPath_builtin(O2Context_builtin *self,O2Path *pa
 //   O2InvalidAbstractInvocation();
 }
 
-static O2Paint *paintFromColor(O2Context_builtin *self,O2ColorRef color,O2AffineTransform surfaceToPaintMatrix){
+ONYX2D_STATIC O2Paint *paintFromColor(O2Context_builtin *self,O2ColorRef color,O2AffineTransform surfaceToPaintMatrix){
    O2Paint      *result=nil;
    O2PatternRef pattern=O2ColorGetPattern(color);
    
@@ -473,7 +473,7 @@ void O2DContextAddEdge(O2Context_builtin *self,const O2Point v0, const O2Point v
 }
 
 // Returns a radical inverse of a given integer for Hammersley point set.
-static double radicalInverseBase2(unsigned int i)
+ONYX2D_STATIC double radicalInverseBase2(unsigned int i)
 {
 	if( i == 0 )
 		return 0.0;
@@ -528,7 +528,7 @@ void O2RasterizerSetShouldAntialias(O2Context_builtin *self,BOOL antialias,int q
     }
 }
 
-static void O2ApplyCoverageAndMaskToSpan_lRGBAffff_PRE(O2argb32f *dst,int icoverage,O2Float *mask,O2argb32f *src,int length){
+ONYX2D_STATIC void O2ApplyCoverageAndMaskToSpan_lRGBAffff_PRE(O2argb32f *dst,int icoverage,O2Float *mask,O2argb32f *src,int length){
    int i;
    
    for(i=0;i<length;i++){
@@ -541,7 +541,7 @@ static void O2ApplyCoverageAndMaskToSpan_lRGBAffff_PRE(O2argb32f *dst,int icover
    }
 }
 
-static void O2ApplyCoverageToSpan_lRGBAffff_PRE(O2argb32f *dst,int icoverage,O2argb32f *src,int length){
+ONYX2D_STATIC void O2ApplyCoverageToSpan_lRGBAffff_PRE(O2argb32f *dst,int icoverage,O2argb32f *src,int length){
    int i;
    O2Float coverage=zeroToOneFromCoverage(icoverage);
    
@@ -553,7 +553,7 @@ static void O2ApplyCoverageToSpan_lRGBAffff_PRE(O2argb32f *dst,int icoverage,O2a
    }
 }
          
-static void O2ApplyCoverageAndMaskToSpan_lRGBA8888_PRE(O2argb8u *dst,int icoverage,uint8_t *mask,O2argb8u *src,int length){
+ONYX2D_STATIC void O2ApplyCoverageAndMaskToSpan_lRGBA8888_PRE(O2argb8u *dst,int icoverage,uint8_t *mask,O2argb8u *src,int length){
    int i;
    
    for(i=0;i<length;i++){
@@ -710,7 +710,7 @@ void O2BlendSpanNormal_8888_coverage(O2argb8u *src,O2argb8u *dst,unsigned covera
 #endif
 }
 
-static void O2BlendSpanCopy_8888_coverage(O2argb8u *src,O2argb8u *dst,int coverage,int length){
+ONYX2D_STATIC void O2BlendSpanCopy_8888_coverage(O2argb8u *src,O2argb8u *dst,int coverage,int length){
 // Passes Visual Test
    int i;
 
@@ -748,7 +748,7 @@ static void O2BlendSpanCopy_8888_coverage(O2argb8u *src,O2argb8u *dst,int covera
 
 /* Paint functions can selectively paint or not paint at all, e.g. gradients with extend turned off, they do this by returning a negative chunk for a pixels which aren't generated and positive chunk for pixels that are. We need to make sure we cover the entire span so we loop until the span is complete.
  */
-static inline void O2RasterizeWriteCoverageSpan8888_Normal(O2Surface *surface,O2Surface *mask,O2Paint *paint,int x, int y,int coverage,int length,O2BlendSpan_RGBA8888 blendFunction) {
+ONYX2D_STATIC_INLINE void O2RasterizeWriteCoverageSpan8888_Normal(O2Surface *surface,O2Surface *mask,O2Paint *paint,int x, int y,int coverage,int length,O2BlendSpan_RGBA8888 blendFunction) {
     O2argb8u *dst=__builtin_alloca(length*sizeof(O2argb8u));
     O2argb8u *direct=surface->_read_lRGBA8888_PRE(surface,x,y,dst,length);
    
@@ -782,7 +782,7 @@ static inline void O2RasterizeWriteCoverageSpan8888_Normal(O2Surface *surface,O2
 }
 
 
-static inline void O2RasterizeWriteCoverageSpan8888_Copy(O2Surface *surface,O2Surface *mask,O2Paint *paint,int x, int y,int coverage,int length,O2BlendSpan_RGBA8888 blendFunction) {
+ONYX2D_STATIC_INLINE void O2RasterizeWriteCoverageSpan8888_Copy(O2Surface *surface,O2Surface *mask,O2Paint *paint,int x, int y,int coverage,int length,O2BlendSpan_RGBA8888 blendFunction) {
    O2argb8u *dst=__builtin_alloca(length*sizeof(O2argb8u));
    O2argb8u *direct=surface->_read_lRGBA8888_PRE(surface,x,y,dst,length);
    
@@ -816,7 +816,7 @@ static inline void O2RasterizeWriteCoverageSpan8888_Copy(O2Surface *surface,O2Su
    }
 }
 
-static inline void O2RasterizeWriteCoverageSpan8888(O2Surface *surface,O2Surface *mask,O2Paint *paint,int x, int y,int coverage,int length,O2BlendSpan_RGBA8888 blendFunction) {
+ONYX2D_STATIC_INLINE void O2RasterizeWriteCoverageSpan8888(O2Surface *surface,O2Surface *mask,O2Paint *paint,int x, int y,int coverage,int length,O2BlendSpan_RGBA8888 blendFunction) {
    O2argb8u *dst=__builtin_alloca(length*sizeof(O2argb8u));
    O2argb8u *direct=surface->_read_lRGBA8888_PRE(surface,x,y,dst,length);
    
@@ -859,7 +859,7 @@ static inline void O2RasterizeWriteCoverageSpan8888(O2Surface *surface,O2Surface
    }
 }
 
-static inline void O2RasterizeWriteCoverageSpanffff(O2Surface *surface,O2Surface *mask,O2Paint *paint,int x, int y,int coverage,int length,O2BlendSpan_RGBAffff blendFunction) {
+ONYX2D_STATIC_INLINE void O2RasterizeWriteCoverageSpanffff(O2Surface *surface,O2Surface *mask,O2Paint *paint,int x, int y,int coverage,int length,O2BlendSpan_RGBAffff blendFunction) {
    O2argb32f *dst=__builtin_alloca(length*sizeof(O2argb32f));
    O2argb32f *direct=O2ImageReadSpan_lRGBAffff_PRE(surface,x,y,dst,length);
 
@@ -902,7 +902,7 @@ static inline void O2RasterizeWriteCoverageSpanffff(O2Surface *surface,O2Surface
    }
 }
 
-static inline void sortEdgesByMinY(Edge **edges,int count,Edge **B){
+ONYX2D_STATIC_INLINE void sortEdgesByMinY(Edge **edges,int count,Edge **B){
   int h, i, j, k, l, m, n = count;
   Edge  *A;
 
@@ -935,7 +935,7 @@ static inline void sortEdgesByMinY(Edge **edges,int count,Edge **B){
   }
 }
 
-static inline void initEdgeForAET(O2Context_builtin *self,Edge *edge,int scany){
+ONYX2D_STATIC_INLINE void initEdgeForAET(O2Context_builtin *self,Edge *edge,int scany){
    //compute edge min and max x-coordinates for this scanline
    
    O2Point vd = Vector2Subtract(edge->v1,edge->v0);
@@ -991,7 +991,7 @@ static inline void initEdgeForAET(O2Context_builtin *self,Edge *edge,int scany){
    edge->maxSample=max;
 }
 
-static inline void incrementEdgeForAET(Edge *edge,int vpx){
+ONYX2D_STATIC_INLINE void incrementEdgeForAET(Edge *edge,int vpx){
    edge->sxPre+= edge->vdxwl;
    edge->exPre+= edge->vdxwl;
    
@@ -1002,7 +1002,7 @@ static inline void incrementEdgeForAET(Edge *edge,int vpx){
    edge->minx = MAX(vpx,minx);
 }
 
-static inline void removeEdgeFromAET(Edge *edge){
+ONYX2D_STATIC_INLINE void removeEdgeFromAET(Edge *edge){
    NSZoneFree(NULL,edge->samples);
 }
 

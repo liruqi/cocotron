@@ -30,7 +30,7 @@
 
 @implementation O2Paint_color
 
-static int color_lRGBA8888_PRE(O2Paint *selfX,int x,int y,O2argb8u *span,int length){
+ONYX2D_STATIC int color_lRGBA8888_PRE(O2Paint *selfX,int x,int y,O2argb8u *span,int length){
    O2Paint_color *self=(O2Paint_color *)selfX;
    O2argb8u  rgba=self->_RGBA8888_PRE;
    int i;
@@ -41,7 +41,7 @@ static int color_lRGBA8888_PRE(O2Paint *selfX,int x,int y,O2argb8u *span,int len
    return length;
 }
 
-static int color_lRGBAffff_PRE(O2Paint *selfX,int x,int y,O2argb32f *span,int length){
+ONYX2D_STATIC int color_lRGBAffff_PRE(O2Paint *selfX,int x,int y,O2argb32f *span,int length){
    O2Paint_color *self=(O2Paint_color *)selfX;
    O2argb32f  rgba=self->_RGBAffff_PRE;
    int i;
