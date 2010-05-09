@@ -115,7 +115,7 @@ VGPixelDecode O2ImageParametersToPixelLayout(O2ImageFormat format,size_t *bitsPe
 	return desc;
 }
 
-static BOOL initFunctionsForRGBColorSpace(O2Image *self,size_t bitsPerComponent,size_t bitsPerPixel,O2BitmapInfo bitmapInfo){   
+ONYX2D_STATIC BOOL initFunctionsForRGBColorSpace(O2Image *self,size_t bitsPerComponent,size_t bitsPerPixel,O2BitmapInfo bitmapInfo){   
 
    switch(bitsPerComponent){
    
@@ -287,7 +287,7 @@ static BOOL initFunctionsForRGBColorSpace(O2Image *self,size_t bitsPerComponent,
       
 }
 
-static BOOL initFunctionsForCMYKColorSpace(O2Image *self,size_t bitsPerComponent,size_t bitsPerPixel,O2BitmapInfo bitmapInfo){   
+ONYX2D_STATIC BOOL initFunctionsForCMYKColorSpace(O2Image *self,size_t bitsPerComponent,size_t bitsPerPixel,O2BitmapInfo bitmapInfo){   
    switch(bitsPerComponent){
         
     case  8:
@@ -307,7 +307,7 @@ static BOOL initFunctionsForCMYKColorSpace(O2Image *self,size_t bitsPerComponent
    return NO;
 }
 
-static BOOL initFunctionsForIndexedColorSpace(O2Image *self,size_t bitsPerComponent,size_t bitsPerPixel,O2ColorSpaceRef colorSpace,O2BitmapInfo bitmapInfo){
+ONYX2D_STATIC BOOL initFunctionsForIndexedColorSpace(O2Image *self,size_t bitsPerComponent,size_t bitsPerPixel,O2ColorSpaceRef colorSpace,O2BitmapInfo bitmapInfo){
 
    switch([[(O2ColorSpace_indexed *)colorSpace baseColorSpace] type]){
     case kO2ColorSpaceModelRGB:
@@ -319,7 +319,7 @@ static BOOL initFunctionsForIndexedColorSpace(O2Image *self,size_t bitsPerCompon
 }
 }
 
-static BOOL initFunctionsForParameters(O2Image *self,size_t bitsPerComponent,size_t bitsPerPixel,O2ColorSpaceRef colorSpace,O2BitmapInfo bitmapInfo){
+ONYX2D_STATIC BOOL initFunctionsForParameters(O2Image *self,size_t bitsPerComponent,size_t bitsPerPixel,O2ColorSpaceRef colorSpace,O2BitmapInfo bitmapInfo){
 
    self->_readA8=O2ImageRead_ANY_to_RGBA8888_to_A8;
    self->_readAf=O2ImageRead_ANY_to_A8_to_Af;
@@ -463,7 +463,7 @@ static BOOL initFunctionsForParameters(O2Image *self,size_t bitsPerComponent,siz
    return nil;
 }
 
-static inline const void *directBytes(O2Image *self){
+ONYX2D_STATIC_INLINE const void *directBytes(O2Image *self){
    if(self->_directBytes==NULL){
     if([self->_provider isDirectAccess]){
      self->_directData=[[self->_provider data] retain];
@@ -479,7 +479,7 @@ static inline const void *directBytes(O2Image *self){
    return self->_directBytes;
 }
 
-static inline const void *scanlineAtY(O2Image *self,int y){
+ONYX2D_STATIC_INLINE const void *scanlineAtY(O2Image *self,int y){
    const void *bytes=directBytes(self);
    int         offset=self->_bytesPerRow*y;
    int         max=offset+self->_bytesPerRow;
@@ -1085,7 +1085,7 @@ O2argb8u *O2ImageRead_I8_to_RGBA8888(O2Image *self,int x,int y,O2argb8u *span,in
    
    Ideally the averaging algorithms would only use the available pixels on the edges */
    
-static inline void O2ImageReadTileSpanExtendEdge_lRGBA8888_PRE(O2Image *self,int u, int v, O2argb8u *span,int length){
+ONYX2D_STATIC_INLINE void O2ImageReadTileSpanExtendEdge_lRGBA8888_PRE(O2Image *self,int u, int v, O2argb8u *span,int length){
    int i;
    O2argb8u *direct;
    v = RI_INT_CLAMP(v,0,self->_height-1);
@@ -1259,7 +1259,7 @@ void O2ImageMakeMipMaps(O2Image *self) {
 }
 
 // accuracy doesn't seem to matter much, it appears
-static inline float fastExp(float value){
+ONYX2D_STATIC_INLINE float fastExp(float value){
    static float table[10];
    static BOOL initTable=YES;
    
@@ -1430,14 +1430,14 @@ void O2ImageEWAOnMipmaps_lRGBAffff_PRE(O2Image *self,int x, int y,O2argb32f *spa
 	}
 }
 
-static inline int cubic_8(int v0,int v1,int v2,int v3,int fraction){
+ONYX2D_STATIC_INLINE int cubic_8(int v0,int v1,int v2,int v3,int fraction){
   int p = (v3 - v2) - (v0 - v1);
   int q = (v0 - v1) - p;
 
   return RI_INT_CLAMP((p * (fraction*fraction*fraction))/(256*256*256) + (q * fraction*fraction)/(256*256) + ((v2 - v0) * fraction)/256 + v1,0,255);
 }
 
-static inline O2argb8u bicubic_lRGBA8888_PRE(O2argb8u a,O2argb8u b,O2argb8u c,O2argb8u d,int fraction) {
+ONYX2D_STATIC_INLINE O2argb8u bicubic_lRGBA8888_PRE(O2argb8u a,O2argb8u b,O2argb8u c,O2argb8u d,int fraction) {
   return O2argb8uInit(
    cubic_8(a.r, b.r, c.r, d.r, fraction),
    cubic_8(a.g, b.g, c.g, d.g, fraction),
@@ -1483,7 +1483,7 @@ void O2ImageBicubic_lRGBA8888_PRE(O2Image *self,int x, int y,O2argb8u *span,int 
    }
 }
 
-static inline float cubic_f(float v0,float v1,float v2,float v3,float fraction){
+ONYX2D_STATIC_INLINE float cubic_f(float v0,float v1,float v2,float v3,float fraction){
   float p = (v3 - v2) - (v0 - v1);
   float q = (v0 - v1) - p;
 
@@ -1674,7 +1674,7 @@ void O2ImageIntegerTranslate_lRGBA8888_PRE(O2Image *self,int x, int y,O2argb8u *
 }
 
 //clamp premultiplied color to alpha to enforce consistency
-static void clampSpan_lRGBAffff_PRE(O2argb32f *span,int length){
+ONYX2D_STATIC void clampSpan_lRGBAffff_PRE(O2argb32f *span,int length){
    int i;
    
    for(i=0;i<length;i++){
@@ -1684,7 +1684,7 @@ static void clampSpan_lRGBAffff_PRE(O2argb32f *span,int length){
    }
 }
 
-static inline void O2RGBPremultiplySpan(O2argb32f *span,int length){
+ONYX2D_STATIC_INLINE void O2RGBPremultiplySpan(O2argb32f *span,int length){
    int i;
       
    for(i=0;i<length;i++){

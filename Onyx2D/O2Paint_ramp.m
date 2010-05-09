@@ -32,21 +32,21 @@
 
 @implementation O2Paint_ramp
 
-static inline void GrayAToRGBA(float *input,float *output){
+ONYX2D_STATIC_INLINE void GrayAToRGBA(float *input,float *output){
    output[0]=input[0];
    output[1]=input[0];
    output[2]=input[0];
    output[3]=input[1];
 }
 
-static inline void RGBAToRGBA(float *input,float *output){
+ONYX2D_STATIC_INLINE void RGBAToRGBA(float *input,float *output){
    output[0]=input[0];
    output[1]=input[1];
    output[2]=input[2];
    output[3]=input[3];
 }
 
-static inline void CMYKAToRGBA(float *input,float *output){
+ONYX2D_STATIC_INLINE void CMYKAToRGBA(float *input,float *output){
    float white=1-input[3];
    
    output[0]=(input[0]>white)?0:white-input[0];
@@ -101,7 +101,8 @@ static inline void CMYKAToRGBA(float *input,float *output){
     O2FunctionEvaluate(function,_colorStops[i].offset,output);
     outputToRGBA(output,rgba);
     
-    _colorStops[i].color=O2argb32fPremultiply(O2argb32fInit(rgba[0],rgba[1],rgba[2],rgba[3]));
+    _colorStops[i].color32f=O2argb32fPremultiply(O2argb32fInit(rgba[0],rgba[1],rgba[2],rgba[3]));
+    _colorStops[i].color8u=O2argb8uFromO2argb32f(_colorStops[i].color32f);
    }
 
    return self;
@@ -121,8 +122,8 @@ static inline void CMYKAToRGBA(float *input,float *output){
 * \note		
 *//*-------------------------------------------------------------------*/
 
-static inline O2argb32f readStopColor(GradientStop *colorRampStops, int i) {
-	return  colorRampStops[i].color;
+ONYX2D_STATIC_INLINE O2argb32f readStopColor(GradientStop *colorRampStops, int i) {
+	return  colorRampStops[i].color32f;
 }
 
 O2argb32f O2PaintIntegrateColorRamp(O2Paint_ramp *self,O2Float gmin, O2Float gmax) { 
@@ -174,21 +175,6 @@ O2argb32f O2PaintIntegrateColorRamp(O2Paint_ramp *self,O2Float gmin, O2Float gma
 	return c;
 }
 
-#if 1
-// This could be a little more accurate
-O2argb32f O2PaintColorRamp(O2Paint_ramp *self,O2Float gradient, O2Float rho,int *skip)  {
-   if(gradient<=0.0)
-    return readStopColor(self->_colorStops, 0);
-   else if(gradient>=1.0)
-    return readStopColor(self->_colorStops, self->_numberOfColorStops-1);
-   else {
-    int i=RI_FLOOR_TO_INT(gradient*(self->_numberOfColorStops-1));
-    return self->_colorStops[i].color;
-   }
-   
-}
-
-#else
 // We already sample a lot, this is excessive
 O2argb32f O2PaintColorRamp(O2Paint_ramp *self,O2Float gradient, O2Float rho,int *skip)  {
 	RI_ASSERT(self);
@@ -237,6 +223,5 @@ O2argb32f O2PaintColorRamp(O2Paint_ramp *self,O2Float gradient, O2Float rho,int 
    
    return c;
 }
-#endif
 
 @end

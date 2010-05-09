@@ -143,14 +143,14 @@ static inline void RGBToHSL(float r,float g,float b,float *huep,float *saturatio
 }
 
 
-static inline uint32_t Mul8x2(uint32_t pair,uint32_t alpha){
+ONYX2D_STATIC_INLINE uint32_t Mul8x2(uint32_t pair,uint32_t alpha){
     const uint32_t rbmask=0x00FF00FF;
 	pair &= rbmask;
 	uint32_t i = alpha * pair + 0x800080;
 	return (i + ((i >> 8) & rbmask)) >> 8 & rbmask;
 }
 
-static void O2BlendSpanNormal_8888(O2argb8u *src,O2argb8u *dst,int length){
+ONYX2D_STATIC void O2BlendSpanNormal_8888(O2argb8u *src,O2argb8u *dst,int length){
 #if 1
 // Passes Visual Test
    int i;
@@ -201,7 +201,7 @@ static void O2BlendSpanNormal_8888(O2argb8u *src,O2argb8u *dst,int length){
 #endif
 }
 
-static void O2BlendSpanNormal_ffff(O2argb32f *src,O2argb32f *dst,int length){
+ONYX2D_STATIC void O2BlendSpanNormal_ffff(O2argb32f *src,O2argb32f *dst,int length){
 // Passes Visual Test
    int i;
    
@@ -219,7 +219,7 @@ static void O2BlendSpanNormal_ffff(O2argb32f *src,O2argb32f *dst,int length){
    }
 }
 
-static void O2BlendSpanMultiply_ffff(O2argb32f *src,O2argb32f *dst,int length){
+ONYX2D_STATIC void O2BlendSpanMultiply_ffff(O2argb32f *src,O2argb32f *dst,int length){
 // Passes Visual Test
    int i;
    
@@ -237,7 +237,7 @@ static void O2BlendSpanMultiply_ffff(O2argb32f *src,O2argb32f *dst,int length){
    }
 }
 
-static void O2BlendSpanScreen_ffff(O2argb32f *src,O2argb32f *dst,int length){
+ONYX2D_STATIC void O2BlendSpanScreen_ffff(O2argb32f *src,O2argb32f *dst,int length){
 // Passes Visual Test
    int i;
    
@@ -255,7 +255,7 @@ static void O2BlendSpanScreen_ffff(O2argb32f *src,O2argb32f *dst,int length){
    }
 }
 
-static void O2BlendSpanOverlay_ffff(O2argb32f *src,O2argb32f *dst,int length){
+ONYX2D_STATIC void O2BlendSpanOverlay_ffff(O2argb32f *src,O2argb32f *dst,int length){
 // broken
    int i;
    
@@ -287,7 +287,7 @@ static void O2BlendSpanOverlay_ffff(O2argb32f *src,O2argb32f *dst,int length){
     src[i]=r;
    }
 }
-static void O2BlendSpanDarken_ffff(O2argb32f *src,O2argb32f *dst,int length){
+ONYX2D_STATIC void O2BlendSpanDarken_ffff(O2argb32f *src,O2argb32f *dst,int length){
 // Passes Visual Test
    int i;
    
@@ -303,7 +303,7 @@ static void O2BlendSpanDarken_ffff(O2argb32f *src,O2argb32f *dst,int length){
     src[i]=r;
    }
 }
-static void O2BlendSpanLighten_ffff(O2argb32f *src,O2argb32f *dst,int length){
+ONYX2D_STATIC void O2BlendSpanLighten_ffff(O2argb32f *src,O2argb32f *dst,int length){
 // Passes Visual Test
    int i;
    
@@ -323,7 +323,7 @@ static void O2BlendSpanLighten_ffff(O2argb32f *src,O2argb32f *dst,int length){
     src[i]=r;
    }
 }
-static void O2BlendSpanColorDodge_ffff(O2argb32f *src,O2argb32f *dst,int length){
+ONYX2D_STATIC void O2BlendSpanColorDodge_ffff(O2argb32f *src,O2argb32f *dst,int length){
 // broken
    int i;
    
@@ -340,7 +340,7 @@ static void O2BlendSpanColorDodge_ffff(O2argb32f *src,O2argb32f *dst,int length)
     src[i]=r;
    }
 }
-static void O2BlendSpanColorBurn_ffff(O2argb32f *src,O2argb32f *dst,int length){
+ONYX2D_STATIC void O2BlendSpanColorBurn_ffff(O2argb32f *src,O2argb32f *dst,int length){
 // broken
    int i;
    
@@ -356,7 +356,7 @@ static void O2BlendSpanColorBurn_ffff(O2argb32f *src,O2argb32f *dst,int length){
     src[i]=r;
    }
 }
-static void O2BlendSpanHardLight_ffff(O2argb32f *src,O2argb32f *dst,int length){
+ONYX2D_STATIC void O2BlendSpanHardLight_ffff(O2argb32f *src,O2argb32f *dst,int length){
 // broken
    int i;
    
@@ -397,7 +397,7 @@ static void O2BlendSpanHardLight_ffff(O2argb32f *src,O2argb32f *dst,int length){
     src[i]=r;
    }
 }
-static void O2BlendSpanSoftLight_ffff(O2argb32f *src,O2argb32f *dst,int length){
+ONYX2D_STATIC void O2BlendSpanSoftLight_ffff(O2argb32f *src,O2argb32f *dst,int length){
 // broken
    int i;
    
@@ -409,7 +409,7 @@ static void O2BlendSpanSoftLight_ffff(O2argb32f *src,O2argb32f *dst,int length){
     src[i]=r;
    }
 }
-static void O2BlendSpanDifference_ffff(O2argb32f *src,O2argb32f *dst,int length){
+ONYX2D_STATIC void O2BlendSpanDifference_ffff(O2argb32f *src,O2argb32f *dst,int length){
 // Passes Visual Test
    int i;
    
@@ -425,7 +425,7 @@ static void O2BlendSpanDifference_ffff(O2argb32f *src,O2argb32f *dst,int length)
     src[i]=r;
    }
 }
-static void O2BlendSpanExclusion_ffff(O2argb32f *src,O2argb32f *dst,int length){
+ONYX2D_STATIC void O2BlendSpanExclusion_ffff(O2argb32f *src,O2argb32f *dst,int length){
 // Passes Visual Test
    int i;
    
@@ -441,7 +441,7 @@ static void O2BlendSpanExclusion_ffff(O2argb32f *src,O2argb32f *dst,int length){
     src[i]=r;
    }
 }
-static void O2BlendSpanHue_ffff(O2argb32f *src,O2argb32f *dst,int length){
+ONYX2D_STATIC void O2BlendSpanHue_ffff(O2argb32f *src,O2argb32f *dst,int length){
 // broken
    int i;
    
@@ -460,7 +460,7 @@ static void O2BlendSpanHue_ffff(O2argb32f *src,O2argb32f *dst,int length){
     src[i]=r;
    }
 }
-static void O2BlendSpanSaturation_ffff(O2argb32f *src,O2argb32f *dst,int length){
+ONYX2D_STATIC void O2BlendSpanSaturation_ffff(O2argb32f *src,O2argb32f *dst,int length){
 // broken
    int i;
    
@@ -479,7 +479,7 @@ static void O2BlendSpanSaturation_ffff(O2argb32f *src,O2argb32f *dst,int length)
     src[i]=r;
    }
 }
-static void O2BlendSpanColor_ffff(O2argb32f *src,O2argb32f *dst,int length){
+ONYX2D_STATIC void O2BlendSpanColor_ffff(O2argb32f *src,O2argb32f *dst,int length){
 // broken
    int i;
    
@@ -491,7 +491,7 @@ static void O2BlendSpanColor_ffff(O2argb32f *src,O2argb32f *dst,int length){
     src[i]=r;
    }
 }
-static void O2BlendSpanLuminosity_ffff(O2argb32f *src,O2argb32f *dst,int length){
+ONYX2D_STATIC void O2BlendSpanLuminosity_ffff(O2argb32f *src,O2argb32f *dst,int length){
 // broken
    int i;
    
@@ -504,7 +504,7 @@ static void O2BlendSpanLuminosity_ffff(O2argb32f *src,O2argb32f *dst,int length)
    }
 }
 
-static void O2BlendSpanClear_8888(O2argb8u *src,O2argb8u *dst,int length){
+ONYX2D_STATIC void O2BlendSpanClear_8888(O2argb8u *src,O2argb8u *dst,int length){
 // Passes Visual Test
    int i;
    
@@ -520,7 +520,7 @@ static void O2BlendSpanClear_8888(O2argb8u *src,O2argb8u *dst,int length){
    }
 }
 
-static void O2BlendSpanClear_ffff(O2argb32f *src,O2argb32f *dst,int length){
+ONYX2D_STATIC void O2BlendSpanClear_ffff(O2argb32f *src,O2argb32f *dst,int length){
 // Passes Visual Test
    int i;
    
@@ -536,17 +536,17 @@ static void O2BlendSpanClear_ffff(O2argb32f *src,O2argb32f *dst,int length){
    }
 }
 
-static void O2BlendSpanCopy_8888(O2argb8u *src,O2argb8u *dst,int length){
+ONYX2D_STATIC void O2BlendSpanCopy_8888(O2argb8u *src,O2argb8u *dst,int length){
 // Passes Visual Test
    // do nothing src already contains values
 }
 
-static void O2BlendSpanCopy_ffff(O2argb32f *src,O2argb32f *dst,int length){
+ONYX2D_STATIC void O2BlendSpanCopy_ffff(O2argb32f *src,O2argb32f *dst,int length){
 // Passes Visual Test
    // do nothing src already contains values
 }
 
-static void O2BlendSpanSourceIn_8888(O2argb8u *src,O2argb8u *dst,int length){
+ONYX2D_STATIC void O2BlendSpanSourceIn_8888(O2argb8u *src,O2argb8u *dst,int length){
 // Passes Visual Test
    int i;
    
@@ -564,7 +564,7 @@ static void O2BlendSpanSourceIn_8888(O2argb8u *src,O2argb8u *dst,int length){
    }
 }
 
-static void O2BlendSpanSourceIn_ffff(O2argb32f *src,O2argb32f *dst,int length){
+ONYX2D_STATIC void O2BlendSpanSourceIn_ffff(O2argb32f *src,O2argb32f *dst,int length){
 // Passes Visual Test
    int i;
    
@@ -580,7 +580,7 @@ static void O2BlendSpanSourceIn_ffff(O2argb32f *src,O2argb32f *dst,int length){
     src[i]=r;
    }
 }
-static void O2BlendSpanSourceOut_ffff(O2argb32f *src,O2argb32f *dst,int length){
+ONYX2D_STATIC void O2BlendSpanSourceOut_ffff(O2argb32f *src,O2argb32f *dst,int length){
 // Passes Visual Test
    int i;
    
@@ -596,7 +596,7 @@ static void O2BlendSpanSourceOut_ffff(O2argb32f *src,O2argb32f *dst,int length){
     src[i]=r;
    }
 }
-static void O2BlendSpanSourceAtop_ffff(O2argb32f *src,O2argb32f *dst,int length){
+ONYX2D_STATIC void O2BlendSpanSourceAtop_ffff(O2argb32f *src,O2argb32f *dst,int length){
 // Passes Visual Test
    int i;
    
@@ -612,7 +612,7 @@ static void O2BlendSpanSourceAtop_ffff(O2argb32f *src,O2argb32f *dst,int length)
     src[i]=r;
    }
 }
-static void O2BlendSpanDestinationOver_ffff(O2argb32f *src,O2argb32f *dst,int length){
+ONYX2D_STATIC void O2BlendSpanDestinationOver_ffff(O2argb32f *src,O2argb32f *dst,int length){
 // Passes Visual Test
    int i;
    
@@ -629,7 +629,7 @@ static void O2BlendSpanDestinationOver_ffff(O2argb32f *src,O2argb32f *dst,int le
     src[i]=r;
    }
 }
-static void O2BlendSpanDestinationIn_ffff(O2argb32f *src,O2argb32f *dst,int length){
+ONYX2D_STATIC void O2BlendSpanDestinationIn_ffff(O2argb32f *src,O2argb32f *dst,int length){
 // Passes Visual Test
    int i;
    
@@ -646,7 +646,7 @@ static void O2BlendSpanDestinationIn_ffff(O2argb32f *src,O2argb32f *dst,int leng
     src[i]=r;
    }
 }
-static void O2BlendSpanDestinationOut_ffff(O2argb32f *src,O2argb32f *dst,int length){
+ONYX2D_STATIC void O2BlendSpanDestinationOut_ffff(O2argb32f *src,O2argb32f *dst,int length){
 // Passes Visual Test
    int i;
    
@@ -664,7 +664,7 @@ static void O2BlendSpanDestinationOut_ffff(O2argb32f *src,O2argb32f *dst,int len
    }
 }
 
-static void O2BlendSpanDestinationAtop_ffff(O2argb32f *src,O2argb32f *dst,int length){
+ONYX2D_STATIC void O2BlendSpanDestinationAtop_ffff(O2argb32f *src,O2argb32f *dst,int length){
 // Passes Visual Test
    int i;
    
@@ -682,7 +682,7 @@ static void O2BlendSpanDestinationAtop_ffff(O2argb32f *src,O2argb32f *dst,int le
    }
 }
 
-static void O2BlendSpanXOR_8888(O2argb8u *src,O2argb8u *dst,int length){
+ONYX2D_STATIC void O2BlendSpanXOR_8888(O2argb8u *src,O2argb8u *dst,int length){
 // Passes Visual Test
    int i;
    
@@ -700,7 +700,7 @@ static void O2BlendSpanXOR_8888(O2argb8u *src,O2argb8u *dst,int length){
    }
 }
 
-static void O2BlendSpanXOR_ffff(O2argb32f *src,O2argb32f *dst,int length){
+ONYX2D_STATIC void O2BlendSpanXOR_ffff(O2argb32f *src,O2argb32f *dst,int length){
 // Passes Visual Test
    int i;
    
@@ -718,7 +718,7 @@ static void O2BlendSpanXOR_ffff(O2argb32f *src,O2argb32f *dst,int length){
    }
 }
 
-static void O2BlendSpanPlusDarker_ffff(O2argb32f *src,O2argb32f *dst,int length){
+ONYX2D_STATIC void O2BlendSpanPlusDarker_ffff(O2argb32f *src,O2argb32f *dst,int length){
 // broken
    int i;
    
@@ -738,7 +738,7 @@ static void O2BlendSpanPlusDarker_ffff(O2argb32f *src,O2argb32f *dst,int length)
    }
 }
 
-static void O2BlendSpanPlusLighter_8888(O2argb8u *src,O2argb8u *dst,int length){
+ONYX2D_STATIC void O2BlendSpanPlusLighter_8888(O2argb8u *src,O2argb8u *dst,int length){
 // Passes Visual Test
 // Doc.s say: R = MIN(1, S + D). That works
    int i;
@@ -757,7 +757,7 @@ static void O2BlendSpanPlusLighter_8888(O2argb8u *src,O2argb8u *dst,int length){
    }
 }
 
-static void O2BlendSpanPlusLighter_ffff(O2argb32f *src,O2argb32f *dst,int length){
+ONYX2D_STATIC void O2BlendSpanPlusLighter_ffff(O2argb32f *src,O2argb32f *dst,int length){
 // Passes Visual Test
 // Doc.s say: R = MIN(1, S + D). That works
    int i;
