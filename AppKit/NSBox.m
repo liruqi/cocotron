@@ -330,18 +330,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 	}
 }
 
-@end
-
-@implementation NSBox (NSCustomBoxTypeProperties)
-
 - (CGFloat)borderWidth
 {
 	return [[_customData objectForKey:@"NSBorderWidth2"] doubleValue];
-}
-
-- (void)setBorderWidth:(CGFloat)borderWidth
-{
-	[_customData setObject:[NSNumber numberWithDouble:borderWidth] forKey:@"NSBorderWidth2"];
 }
 
 - (CGFloat)cornerRadius;
@@ -349,19 +340,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 	return [[_customData objectForKey:@"NSCornerRadius2"] doubleValue];
 }
 
-- (void)setCornerRadius:(CGFloat)cornerRadius
-{
-	[_customData setObject:[NSNumber numberWithDouble:cornerRadius] forKey:@"NSCornerRadius2"];
-}
-
 - (NSColor *)borderColor;
 {
    return [_customData objectForKey:@"NSBorderColor2"];
-}
-
-- (void)setBorderColor:(NSColor *)borderColor
-{
-   [_customData setObject:borderColor forKey:@"NSBorderColor2"];
 }
 
 - (NSColor *)fillColor;
@@ -369,9 +350,25 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    return [_customData objectForKey:@"NSFillColor2"];
 }
 
-- (void)setFillColor:(NSColor *)fillColor
+
+- (void)setBorderWidth:(CGFloat)value
 {
-   [_customData setObject:fillColor forKey:@"NSFillColor2"];
+	[_customData setObject:[NSNumber numberWithDouble:value] forKey:@"NSBorderWidth2"];
+}
+
+- (void)setCornerRadius:(CGFloat)value
+{
+	[_customData setObject:[NSNumber numberWithDouble:value] forKey:@"NSCornerRadius2"];
+}
+
+- (void)setBorderColor:(NSColor *)value
+{
+   [_customData setObject:value forKey:@"NSBorderColor2"];
+}
+
+- (void)setFillColor:(NSColor *)value
+{
+   [_customData setObject:value forKey:@"NSFillColor2"];
 }
 
 @end

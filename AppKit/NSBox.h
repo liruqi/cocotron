@@ -62,23 +62,15 @@ typedef enum {
 -(void)setFrameFromContentFrame:(NSRect)content;
 -(void)sizeToFit;
 
-@end
+-(CGFloat)borderWidth;
+-(CGFloat)cornerRadius;
+-(NSColor *)borderColor;
+-(NSColor *)fillColor;
 
-@interface NSBox (NSCustomBoxTypeProperties)
-/* These properties only apply to boxes with boxType NSBoxCustom.
- */
-
-- (CGFloat)borderWidth;
-- (void)setBorderWidth:(CGFloat)borderWidth;	// Only meaningful for boxes configured with NSBoxCustom
-
-- (CGFloat)cornerRadius;
-- (void)setCornerRadius:(CGFloat)cornerRadius;	// Only meaningful for boxes configured with NSBoxCustom
-
-- (NSColor *)borderColor;
-- (void)setBorderColor:(NSColor *)borderColor;	// Only meaningful for boxes configured with NSBoxCustom
-
-- (NSColor *)fillColor;
-- (void)setFillColor:(NSColor *)fillColor;	// Only meaningful for boxes configured with NSBoxCustom
+-(void)setBorderWidth:(CGFloat)value;
+-(void)setCornerRadius:(CGFloat)value;
+-(void)setBorderColor:(NSColor *)value;
+-(void)setFillColor:(NSColor *)value;
 
 @end
 
