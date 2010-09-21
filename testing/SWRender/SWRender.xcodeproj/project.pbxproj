@@ -1,0 +1,428 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 42;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		8D11072A0486CEB800E47090 /* MainMenu.nib in Resources */ = {isa = PBXBuildFile; fileRef = 29B97318FDCFA39411CA2CEA /* MainMenu.nib */; };
+		8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
+		8D11072D0486CEB800E47090 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; settings = {ATTRIBUTES = (); }; };
+		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		FE0997430D87095000033630 /* overlay.png in Resources */ = {isa = PBXBuildFile; fileRef = FE0997420D87095000033630 /* overlay.png */; };
+		FE14CD00106934D700B0FFAF /* pattern.jpg in Resources */ = {isa = PBXBuildFile; fileRef = FE14CCFF106934D700B0FFAF /* pattern.jpg */; };
+		FE14EC4B0DBD9BF00070928C /* DemoCGContext.m in Sources */ = {isa = PBXBuildFile; fileRef = FE14EC490DBD9BF00070928C /* DemoCGContext.m */; };
+		FE14EC4C0DBD9BF00070928C /* DemoKGContext.m in Sources */ = {isa = PBXBuildFile; fileRef = FE14EC4A0DBD9BF00070928C /* DemoKGContext.m */; };
+		FE14EC960DBDA5420070928C /* DemoContext.m in Sources */ = {isa = PBXBuildFile; fileRef = FE14EC950DBDA5420070928C /* DemoContext.m */; };
+		FE1F93630D7EF19900969491 /* KGImageView.m in Sources */ = {isa = PBXBuildFile; fileRef = FE1F93620D7EF19900969491 /* KGImageView.m */; };
+		FE1F937A0D7EF1F800969491 /* KGRenderController.m in Sources */ = {isa = PBXBuildFile; fileRef = FE1F93790D7EF1F800969491 /* KGRenderController.m */; };
+		FE45EE650DC254C700F49290 /* overlay.jpg in Resources */ = {isa = PBXBuildFile; fileRef = FE45EE640DC254C700F49290 /* overlay.jpg */; };
+		FE5C0E56116387FA00065D1C /* Onyx2D.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FE5C0E55116387FA00065D1C /* Onyx2D.framework */; };
+		FE619A32107A56A100807E7E /* O2Font_CG.m in Sources */ = {isa = PBXBuildFile; fileRef = FE619A31107A56A100807E7E /* O2Font_CG.m */; };
+		FEA47EC2101E44CD005820F3 /* redLZWSquare.tif in Resources */ = {isa = PBXBuildFile; fileRef = FEA47EC1101E44CD005820F3 /* redLZWSquare.tif */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXBuildRule section */
+		FEC64D790D92F14E0020233A /* PBXBuildRule */ = {
+			isa = PBXBuildRule;
+			compilerSpec = com.apple.compilers.gcc.4_2;
+			fileType = sourcecode.c;
+			isEditable = 1;
+			outputFiles = (
+			);
+		};
+/* End PBXBuildRule section */
+
+/* Begin PBXContainerItemProxy section */
+		FE5C0E351162E81000065D1C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FE5C0E2E1162E81000065D1C /* Onyx2D.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 8DC2EF5B0486A6940098B216;
+			remoteInfo = "Onyx2D-Windows-i386";
+		};
+		FE5C0E371162E81000065D1C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FE5C0E2E1162E81000065D1C /* Onyx2D.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = FE5C0CA61162A99A00065D1C;
+			remoteInfo = "Onyx2D-Linux-i386";
+		};
+		FE5C0E391162E81000065D1C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FE5C0E2E1162E81000065D1C /* Onyx2D.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = FE5C0D461162A9AB00065D1C;
+			remoteInfo = "Onyx2D-FreeBSD-i386";
+		};
+		FE5C0E3B1162E81000065D1C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FE5C0E2E1162E81000065D1C /* Onyx2D.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = FE5C0D571162A9D600065D1C;
+			remoteInfo = "Onyx2D-MacOS";
+		};
+		FE5C0E3D1162E81800065D1C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FE5C0E2E1162E81000065D1C /* Onyx2D.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = FE5C0D561162A9D600065D1C;
+			remoteInfo = "Onyx2D-MacOS";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		089C165DFE840E0CC02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
+		29B97316FDCFA39411CA2CEA /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		29B97319FDCFA39411CA2CEA /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = English.lproj/MainMenu.nib; sourceTree = "<group>"; };
+		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
+		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
+		32CA4F630368D1EE00C91783 /* SWRender_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SWRender_Prefix.pch; sourceTree = "<group>"; };
+		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		8D1107320486CEB800E47090 /* SWRender.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SWRender.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FE0997420D87095000033630 /* overlay.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = overlay.png; sourceTree = "<group>"; };
+		FE14CCFF106934D700B0FFAF /* pattern.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = pattern.jpg; sourceTree = "<group>"; };
+		FE14EC480DBD9BF00070928C /* DemoContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DemoContext.h; sourceTree = "<group>"; };
+		FE14EC490DBD9BF00070928C /* DemoCGContext.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DemoCGContext.m; sourceTree = "<group>"; };
+		FE14EC4A0DBD9BF00070928C /* DemoKGContext.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DemoKGContext.m; sourceTree = "<group>"; };
+		FE14EC950DBDA5420070928C /* DemoContext.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DemoContext.m; sourceTree = "<group>"; };
+		FE1F93610D7EF19900969491 /* KGImageView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KGImageView.h; sourceTree = "<group>"; };
+		FE1F93620D7EF19900969491 /* KGImageView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KGImageView.m; sourceTree = "<group>"; };
+		FE1F93780D7EF1F800969491 /* KGRenderController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KGRenderController.h; sourceTree = "<group>"; };
+		FE1F93790D7EF1F800969491 /* KGRenderController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KGRenderController.m; sourceTree = "<group>"; };
+		FE3396000DBA8CF7009AB3E0 /* CoreGraphics_KG.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CoreGraphics_KG.h; sourceTree = "<group>"; };
+		FE33964B0DBAE733009AB3E0 /* DemosTemplate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DemosTemplate.m; sourceTree = "<group>"; };
+		FE45EE640DC254C700F49290 /* overlay.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = overlay.jpg; sourceTree = "<group>"; };
+		FE5C0E2E1162E81000065D1C /* Onyx2D.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Onyx2D.xcodeproj; path = ../../Onyx2D/Onyx2D.xcodeproj; sourceTree = SOURCE_ROOT; };
+		FE5C0E55116387FA00065D1C /* Onyx2D.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Onyx2D.framework; path = Cocotron/MacOS/Frameworks/Onyx2D.framework; sourceTree = SYSTEM_DEVELOPER_DIR; };
+		FE619A30107A56A100807E7E /* O2Font_CG.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = O2Font_CG.h; sourceTree = "<group>"; };
+		FE619A31107A56A100807E7E /* O2Font_CG.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = O2Font_CG.m; sourceTree = "<group>"; };
+		FEA47EC1101E44CD005820F3 /* redLZWSquare.tif */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = redLZWSquare.tif; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		8D11072E0486CEB800E47090 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */,
+				FE5C0E56116387FA00065D1C /* Onyx2D.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */,
+			);
+			name = "Linked Frameworks";
+			sourceTree = "<group>";
+		};
+		1058C7A2FEA54F0111CA2CBB /* Other Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				29B97324FDCFA39411CA2CEA /* AppKit.framework */,
+				29B97325FDCFA39411CA2CEA /* Foundation.framework */,
+			);
+			name = "Other Frameworks";
+			sourceTree = "<group>";
+		};
+		19C28FACFE9D520D11CA2CBB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				8D1107320486CEB800E47090 /* SWRender.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		29B97314FDCFA39411CA2CEA /* SWRender */ = {
+			isa = PBXGroup;
+			children = (
+				FE5C0E2E1162E81000065D1C /* Onyx2D.xcodeproj */,
+				FE14EC950DBDA5420070928C /* DemoContext.m */,
+				FE619A30107A56A100807E7E /* O2Font_CG.h */,
+				FE619A31107A56A100807E7E /* O2Font_CG.m */,
+				FE14EC480DBD9BF00070928C /* DemoContext.h */,
+				FE14EC490DBD9BF00070928C /* DemoCGContext.m */,
+				FE14EC4A0DBD9BF00070928C /* DemoKGContext.m */,
+				FE33964B0DBAE733009AB3E0 /* DemosTemplate.m */,
+				FE3396000DBA8CF7009AB3E0 /* CoreGraphics_KG.h */,
+				FE1F93780D7EF1F800969491 /* KGRenderController.h */,
+				FE1F93790D7EF1F800969491 /* KGRenderController.m */,
+				FE1F93610D7EF19900969491 /* KGImageView.h */,
+				FE1F93620D7EF19900969491 /* KGImageView.m */,
+				19C28FACFE9D520D11CA2CBB /* Products */,
+				29B97317FDCFA39411CA2CEA /* Resources */,
+				29B97315FDCFA39411CA2CEA /* Other Sources */,
+				29B97323FDCFA39411CA2CEA /* Frameworks */,
+			);
+			name = SWRender;
+			sourceTree = "<group>";
+		};
+		29B97315FDCFA39411CA2CEA /* Other Sources */ = {
+			isa = PBXGroup;
+			children = (
+				32CA4F630368D1EE00C91783 /* SWRender_Prefix.pch */,
+				29B97316FDCFA39411CA2CEA /* main.m */,
+			);
+			name = "Other Sources";
+			sourceTree = "<group>";
+		};
+		29B97317FDCFA39411CA2CEA /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				FE14CCFF106934D700B0FFAF /* pattern.jpg */,
+				FEA47EC1101E44CD005820F3 /* redLZWSquare.tif */,
+				FE45EE640DC254C700F49290 /* overlay.jpg */,
+				FE0997420D87095000033630 /* overlay.png */,
+				8D1107310486CEB800E47090 /* Info.plist */,
+				089C165CFE840E0CC02AAC07 /* InfoPlist.strings */,
+				29B97318FDCFA39411CA2CEA /* MainMenu.nib */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */,
+				1058C7A2FEA54F0111CA2CBB /* Other Frameworks */,
+				FE5C0E55116387FA00065D1C /* Onyx2D.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		FE5C0E2F1162E81000065D1C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				FE5C0E361162E81000065D1C /* Onyx2D.framework */,
+				FE5C0E381162E81000065D1C /* Onyx2D.framework */,
+				FE5C0E3A1162E81000065D1C /* Onyx2D.framework */,
+				FE5C0E3C1162E81000065D1C /* Onyx2D.framework */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		8D1107260486CEB800E47090 /* SWRender */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C01FCF4A08A954540054247B /* Build configuration list for PBXNativeTarget "SWRender" */;
+			buildPhases = (
+				8D1107290486CEB800E47090 /* Resources */,
+				8D11072C0486CEB800E47090 /* Sources */,
+				8D11072E0486CEB800E47090 /* Frameworks */,
+			);
+			buildRules = (
+				FEC64D790D92F14E0020233A /* PBXBuildRule */,
+			);
+			dependencies = (
+				FE5C0E3E1162E81800065D1C /* PBXTargetDependency */,
+			);
+			name = SWRender;
+			productInstallPath = "$(HOME)/Applications";
+			productName = SWRender;
+			productReference = 8D1107320486CEB800E47090 /* SWRender.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		29B97313FDCFA39411CA2CEA /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "SWRender" */;
+			compatibilityVersion = "Xcode 2.4";
+			hasScannedForEncodings = 1;
+			mainGroup = 29B97314FDCFA39411CA2CEA /* SWRender */;
+			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = FE5C0E2F1162E81000065D1C /* Products */;
+					ProjectRef = FE5C0E2E1162E81000065D1C /* Onyx2D.xcodeproj */;
+				},
+			);
+			projectRoot = "";
+			targets = (
+				8D1107260486CEB800E47090 /* SWRender */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		FE5C0E361162E81000065D1C /* Onyx2D.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = Onyx2D.framework;
+			remoteRef = FE5C0E351162E81000065D1C /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		FE5C0E381162E81000065D1C /* Onyx2D.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = Onyx2D.framework;
+			remoteRef = FE5C0E371162E81000065D1C /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		FE5C0E3A1162E81000065D1C /* Onyx2D.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = Onyx2D.framework;
+			remoteRef = FE5C0E391162E81000065D1C /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		FE5C0E3C1162E81000065D1C /* Onyx2D.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = Onyx2D.framework;
+			remoteRef = FE5C0E3B1162E81000065D1C /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
+
+/* Begin PBXResourcesBuildPhase section */
+		8D1107290486CEB800E47090 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D11072A0486CEB800E47090 /* MainMenu.nib in Resources */,
+				8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */,
+				FE0997430D87095000033630 /* overlay.png in Resources */,
+				FE45EE650DC254C700F49290 /* overlay.jpg in Resources */,
+				FEA47EC2101E44CD005820F3 /* redLZWSquare.tif in Resources */,
+				FE14CD00106934D700B0FFAF /* pattern.jpg in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		8D11072C0486CEB800E47090 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D11072D0486CEB800E47090 /* main.m in Sources */,
+				FE1F93630D7EF19900969491 /* KGImageView.m in Sources */,
+				FE1F937A0D7EF1F800969491 /* KGRenderController.m in Sources */,
+				FE14EC4B0DBD9BF00070928C /* DemoCGContext.m in Sources */,
+				FE14EC4C0DBD9BF00070928C /* DemoKGContext.m in Sources */,
+				FE14EC960DBDA5420070928C /* DemoContext.m in Sources */,
+				FE619A32107A56A100807E7E /* O2Font_CG.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		FE5C0E3E1162E81800065D1C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "Onyx2D-MacOS";
+			targetProxy = FE5C0E3D1162E81800065D1C /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		089C165CFE840E0CC02AAC07 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				089C165DFE840E0CC02AAC07 /* English */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		29B97318FDCFA39411CA2CEA /* MainMenu.nib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				29B97319FDCFA39411CA2CEA /* English */,
+			);
+			name = MainMenu.nib;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		C01FCF4C08A954540054247B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(NATIVE_ARCH)";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				FRAMEWORK_SEARCH_PATHS = (
+					/System/Library/Frameworks/ApplicationServices.framework/Frameworks,
+					"$(FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1)",
+				);
+				FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "/Developer/Cocotron/MacOS/Frameworks\"";
+				GCC_AUTO_VECTORIZATION = YES;
+				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_ENABLE_CPP_EXCEPTIONS = NO;
+				GCC_ENABLE_CPP_RTTI = NO;
+				GCC_ENABLE_SSE3_EXTENSIONS = NO;
+				GCC_ENABLE_SSE41_EXTENSIONS = NO;
+				GCC_ENABLE_SSE42_EXTENSIONS = NO;
+				GCC_ENABLE_SUPPLEMENTAL_SSE3_INSTRUCTIONS = NO;
+				GCC_FAST_MATH = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INSTRUMENT_PROGRAM_FLOW_ARCS = NO;
+				GCC_MODEL_PPC64 = NO;
+				GCC_MODEL_TUNING = "";
+				GCC_OPTIMIZATION_LEVEL = s;
+				GCC_STRICT_ALIASING = YES;
+				GCC_UNROLL_LOOPS = NO;
+				GCC_VERSION = 4.2;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = NO;
+				GCC_WARN_SHADOW = NO;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_PARAMETER = NO;
+				GCC_WARN_UNUSED_VALUE = YES;
+				GENERATE_PROFILING_CODE = NO;
+				INFOPLIST_FILE = Info.plist;
+				INSTALL_PATH = "$(HOME)/Applications";
+				OTHER_CFLAGS = "-DSWRENDER=1";
+				OTHER_LDFLAGS = "-lgcov";
+				PRODUCT_NAME = SWRender;
+				SDKROOT = "";
+				VALID_ARCHS = "i386 ppc ppc64 ppc7400 ppc970 x86_64";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Release;
+		};
+		C01FCF5008A954540054247B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				PREBINDING = NO;
+				SDKROOT = /Developer/SDKs/MacOSX10.5.sdk;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		C01FCF4A08A954540054247B /* Build configuration list for PBXNativeTarget "SWRender" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C01FCF4C08A954540054247B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C01FCF4E08A954540054247B /* Build configuration list for PBXProject "SWRender" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C01FCF5008A954540054247B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 29B97313FDCFA39411CA2CEA /* Project object */;
+}
