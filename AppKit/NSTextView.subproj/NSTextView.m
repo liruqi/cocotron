@@ -38,6 +38,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <AppKit/NSGraphicsContext.h>
 #import "NSTextViewSharedData.h"
 #import <AppKit/NSRaise.h>
+#import <AppKit/NSController.h>
 
 NSString * const NSTextViewDidChangeSelectionNotification=@"NSTextViewDidChangeSelectionNotification";
 NSString * const NSOldSelectedCharacterRange=@"NSOldSelectedCharacterRange";
@@ -108,7 +109,7 @@ NSString * const NSOldSelectedCharacterRange=@"NSOldSelectedCharacterRange";
     _isSelectable=[sharedData isSelectable];
     _isRichText=[sharedData isRichText];
     _backgroundColor=[[sharedData backgroundColor] retain];
-    _drawsBackground=YES;
+    _drawsBackground=[sharedData drawsBackground];
     _font=[[NSFont userFontOfSize:0] retain];
     _textColor=[[NSColor textColor] copy];
     
@@ -709,10 +710,25 @@ NSString * const NSOldSelectedCharacterRange=@"NSOldSelectedCharacterRange";
    [self setSelectedRange:NSMakeRange(0,[[self string] length])];
 }
 
+-(void)_textDidEndWithMovement:(NSInteger)movement {
+   [_insertionPointTimer invalidate];
+   [_insertionPointTimer release];
+   _insertionPointTimer=nil;
+
+   NSDictionary *userInfo=[NSDictionary dictionaryWithObject:[NSNumber numberWithInt:movement] forKey:@"NSTextMovement"];
+
+   NSNotification *note=[NSNotification notificationWithName:NSTextDidEndEditingNotification object:self userInfo:userInfo];
+
+   _didSendTextDidEndNotification=YES;
+
+   [[NSNotificationCenter defaultCenter] postNotification:note];
+   
+   _didSendTextDidEndNotification=NO;
+}
+
 - (void)insertTab:sender {
     if(_isFieldEditor){
-        _textMovement=NSTabTextMovement;
-        [[self window] makeFirstResponder:[self window]];
+        [self _textDidEndWithMovement:NSTabTextMovement];
         return;
     }
 
@@ -737,8 +753,7 @@ NSString * const NSOldSelectedCharacterRange=@"NSOldSelectedCharacterRange";
 
 - (void)insertBacktab:sender {
     if (_isFieldEditor) {
-        _textMovement = NSBacktabTextMovement;
-        [[self window] makeFirstResponder:[self window]];
+        [self _textDidEndWithMovement:NSBacktabTextMovement];
     }
 }
 
@@ -749,9 +764,7 @@ NSString * const NSOldSelectedCharacterRange=@"NSOldSelectedCharacterRange";
 
 -(void)insertNewline:sender {
     if(_isFieldEditor){
-//NSLog(@"string=%@",string);
-        _textMovement=NSReturnTextMovement;
-        [[self window] makeFirstResponder:[self window]];
+        [self _textDidEndWithMovement:NSReturnTextMovement];
         return;
     }
 
@@ -1958,9 +1971,11 @@ NSString * const NSOldSelectedCharacterRange=@"NSOldSelectedCharacterRange";
 }
 
 -(BOOL)readRTFDFromFile:(NSString *)path {
-   [_textStorage setAttributedString:[NSRichTextReader attributedStringWithContentsOfFile:path]];
+	NSAttributedString *contents = [NSRichTextReader attributedStringWithContentsOfFile:path];
+	
+   [_textStorage setAttributedString:contents];
 
-   return NO;
+   return contents != nil;
 }
 
 -(void)replaceCharactersInRange:(NSRange)range withRTF:(NSData *)rtf {
@@ -2211,28 +2226,27 @@ NSString * const NSOldSelectedCharacterRange=@"NSOldSelectedCharacterRange";
 }
 
 -(BOOL)resignFirstResponder {
+    
    if (_isEditable)
      if ([_delegate respondsToSelector:@selector(textShouldEndEditing:)])
        if ([_delegate textShouldEndEditing:self] == NO)
          return NO;
 
-   NSNotification *note;
-   NSDictionary   *userInfo=nil;
-
    if([self shouldDrawInsertionPoint]){
     [self _displayInsertionPointWithState:NO];
     [_insertionPointTimer invalidate];
+    [_insertionPointTimer release];
+    _insertionPointTimer=nil;
    }
 
-   if(_textMovement!=NSIllegalTextMovement){
-    userInfo=[NSDictionary dictionaryWithObject:[NSNumber numberWithInt:_textMovement] forKey:@"NSTextMovement"];
-    _textMovement=NSIllegalTextMovement;
-   }
-
-   note=[NSNotification notificationWithName:NSTextDidEndEditingNotification object:self userInfo:userInfo];
+   if(!_didSendTextDidEndNotification){
+    NSNotification *note=[NSNotification notificationWithName:NSTextDidEndEditingNotification object:self userInfo:nil];
 
    [[NSNotificationCenter defaultCenter] postNotification:note];
+   }
 
+   _didSendTextDidEndNotification=NO;
+   
    return YES;
 }
 
@@ -2247,6 +2261,8 @@ NSString * const NSOldSelectedCharacterRange=@"NSOldSelectedCharacterRange";
    if([self shouldDrawInsertionPoint]){
     [self _displayInsertionPointWithState:NO];
     [_insertionPointTimer invalidate];
+    [_insertionPointTimer release];
+    _insertionPointTimer=nil;
    }
 }
 
@@ -2544,5 +2560,23 @@ NSString * const NSOldSelectedCharacterRange=@"NSOldSelectedCharacterRange";
 
     return result;
 }
+
+- (void)setAttributedString:(NSAttributedString *)attrString
+{
+	if (!NSIsControllerMarker(attrString))
+	{
+		[_textStorage setAttributedString:attrString];
+	}
+	else
+	{
+		[_textStorage setAttributedString:[[[NSAttributedString alloc] initWithString:NSLocalizedString(@"",@"") attributes:nil] autorelease]];
+	}
+}
+
+- (NSAttributedString *)attributedString
+{
+	return [[_textStorage copy] autorelease];
+}
+
 
 @end

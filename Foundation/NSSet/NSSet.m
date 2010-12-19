@@ -171,12 +171,20 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 	return result;
 }
 
+-(NSSet *)setByAddingObjectsFromArray:(NSArray *)array {
+	id result=[[self mutableCopy] autorelease];
+    
+	[result unionSet:[NSSet setWithArray:array]];
+
+	return result;
+}
+
 -(Class)classForCoder {
    return objc_lookUpClass("NSSet");
 }
 
 -initWithCoder:(NSCoder *)coder {
-   if([coder isKindOfClass:[NSKeyedUnarchiver class]]){
+   if([coder allowsKeyedCoding]){
     NSKeyedUnarchiver *keyed=(NSKeyedUnarchiver *)coder;
     NSArray           *array=[keyed decodeObjectForKey:@"NS.objects"];
     
