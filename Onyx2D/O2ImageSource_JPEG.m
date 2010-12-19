@@ -1055,6 +1055,21 @@ static unsigned char *stbi_jpeg_load_from_memory(jpeg *j,stbi_uc const *buffer, 
    return load_jpeg_image(j, x,y,comp,req_comp);
 }
 
+NSData *O2DCTDecode(NSData *data) {
+   jpeg decoder;
+   int  width,height;
+   int  comp;
+   void *bytes=stbi_jpeg_load_from_memory(&decoder,[data bytes],[data length],&width,&height,&comp,STBI_default);
+   int  bytesPerRow=comp*width;
+   
+   if(bytes==NULL)
+    return nil;
+   
+   NSData *result=[[NSData alloc] initWithBytesNoCopy:bytes length:bytesPerRow*height];
+      
+   return result;
+}
+
 +(BOOL)isPresentInDataProvider:(O2DataProvider *)provider {
    enum { signatureLength=2 };
    unsigned char signature[signatureLength] = {0xFF,0xD8};
@@ -1094,6 +1109,9 @@ static unsigned char *stbi_jpeg_load_from_memory(jpeg *j,stbi_uc const *buffer, 
    int            bitsPerPixel=32;
    int            bytesPerRow=(bitsPerPixel/(sizeof(char)*8))*width;
    NSData        *bitmap;
+
+   if(_bitmap==NULL)
+    return nil;
 
    bitmap=[[NSData alloc] initWithBytesNoCopy:_bitmap length:bytesPerRow*height];
 

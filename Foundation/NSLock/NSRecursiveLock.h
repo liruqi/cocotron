@@ -12,10 +12,10 @@
 #import <Foundation/NSString.h>
 
 @interface NSRecursiveLock : NSObject <NSLocking> {
-	NSLock *_lock;
-	NSThread *_lockingThread;
-	int _numberOfLocks;
-	NSString *_name;
+    NSLock *_lock;
+    volatile NSThread *_lockingThread;
+    volatile int _numberOfLocks;
+    NSString *_name;
 }
 -(NSString *)name;
 -(void)setName:(NSString *)value;
