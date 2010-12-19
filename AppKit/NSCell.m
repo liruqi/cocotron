@@ -203,6 +203,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    return _textAlignment;
 }
 
+-(NSLineBreakMode)lineBreakMode {
+   return _lineBreakMode;
+}
+
 -(NSWritingDirection)baseWritingDirection {
    return _writingDirection;
 }
@@ -241,6 +245,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -(BOOL)isContinuous {
    return _isContinuous;
+}
+
+-(BOOL)showsFirstResponder {
+   return _showsFirstResponder;
 }
 
 -(BOOL)refusesFirstResponder {
@@ -355,6 +363,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     return _focusRingType;
 }
 
+-(NSBackgroundStyle)backgroundStyle {
+   return _backgroundStyle;
+}
+
 -(void)setControlView:(NSView *)view {
 // Do nothing or raise?
 }
@@ -439,7 +451,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(void)setImage:(NSImage *)image {
+   if(image!=nil)
    [self setType:NSImageCellType];
+    
    image=[image retain];
    [_image release];
    _image=image;
@@ -448,6 +462,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -(void)setAlignment:(NSTextAlignment)alignment {
    _textAlignment=alignment;
+}
+
+-(void)setLineBreakMode:(NSLineBreakMode)value {
+   _lineBreakMode=value;
 }
 
 -(void)setBaseWritingDirection:(NSWritingDirection)value {
@@ -501,6 +519,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -(void)setContinuous:(BOOL)flag {
    _isContinuous=flag;
+}
+
+-(void)setShowsFirstResponder:(BOOL)value {
+   _showsFirstResponder=value;
 }
 
 -(void)setRefusesFirstResponder:(BOOL)flag {
@@ -593,6 +615,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    _focusRingType = focusRingType;
 }
 
+-(void)setBackgroundStyle:(NSBackgroundStyle)value {
+   _backgroundStyle=value;
+}
+
 -(void)takeObjectValueFrom:sender {
    [self setObjectValue:[sender objectValue]];
 }
@@ -610,8 +636,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(NSSize)cellSize {
-   NSUnimplementedMethod();
-   return NSMakeSize(0,0);
+   return NSMakeSize(10000,10000);
+}
+
+-(NSSize)cellSizeForBounds:(NSRect)rect {
+   NSSize result=[self cellSize];
+   
+   return NSMakeSize(MIN(rect.size.width,result.width),MIN(rect.size.height,result.height));
 }
 
 -(NSRect)imageRectForBounds:(NSRect)rect {
@@ -701,8 +732,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
     [[view window] flushWindow];
 
-    event=[[view window] nextEventMatchingMask:NSLeftMouseUpMask|
-                          NSLeftMouseDraggedMask];
+    event=[[view window] nextEventMatchingMask:NSLeftMouseUpMask|NSLeftMouseDraggedMask];
 
    }while(YES);
 
@@ -732,11 +762,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     NSClipView *clipView;
 
     if([[editor superview] isKindOfClass:[NSClipView class]]){
-     clipView=[editor superview];
-     [clipView setFrame:[self titleRectForBounds:frame]];
+     clipView=(NSClipView *)[editor superview];
+     [clipView setFrame:frame];
     }
     else {
-     clipView=[[[NSClipView alloc] initWithFrame:[self titleRectForBounds:frame]] autorelease];
+     clipView=[[[NSClipView alloc] initWithFrame:frame] autorelease];
      [clipView setDocumentView:editor];
      [view addSubview:clipView];
     }
@@ -749,7 +779,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     [editor setNeedsDisplay:YES];
    }
    else {
-    [editor setFrame:[self titleRectForBounds:frame]];
+    [editor setFrame:frame];
     [view addSubview:editor];
    }
    [[view window] makeFirstResponder:editor];
@@ -765,6 +795,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(void)editWithFrame:(NSRect)frame inView:(NSView *)view editor:(NSText *)editor delegate:(id)delegate event:(NSEvent *)event {
+
    if(![self isEditable] && ![self isSelectable])
     return;
 
@@ -812,3 +843,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 @end
+
+void NSDrawThreePartImage(NSRect frame,NSImage *startCap,NSImage *centerFill,NSImage *endCap,BOOL vertical,NSCompositingOperation operation,CGFloat alpha,BOOL flipped) {
+   NSUnimplementedFunction();
+}

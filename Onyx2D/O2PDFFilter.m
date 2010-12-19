@@ -15,7 +15,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <Foundation/NSException.h>
 #import <Foundation/NSString.h>
 #import <Onyx2D/O2zlib.h>
+#import <Onyx2D/O2LZW.h>
 #import <string.h>
+#import <Onyx2D/O2ImageSource_JPEG.h>
 
 NSData *O2PDFFilterWithName(const char *name,NSData *data,O2PDFDictionary *parameters) {
    return [O2PDFFilter decodeWithName:name data:data parameters:parameters];
@@ -35,18 +37,25 @@ NSData *O2PDFFilterWithName(const char *name,NSData *data,O2PDFDictionary *param
 }
 
 +(NSData *)LZWDecode_data:(NSData *)data parameters:(O2PDFDictionary *)parameters {
-   return nil;
+   return LZWDecodeWithExpectedResultLength(data,[data length]*10);
 }
 
 +(NSData *)decodeWithName:(const char *)name data:(NSData *)data parameters:(O2PDFDictionary *)parameters {
-   if((strcmp(name,"FlateDecode")==0) || (strcmp(name,"LZWDecode")==0)){
-    O2PDFInteger predictor;
-    
-    if(strcmp(name,"FlateDecode")==0)
+   if((strcmp(name,"FlateDecode")==0) || (strcmp(name,"FL")==0))
      data=[self FlateDecode_data:data parameters:parameters];
-    else
-     data=[self LZWDecode_data:data parameters:parameters];
+   else if((strcmp(name,"DCTDecode")==0) || (strcmp(name,"DCT")==0)){
+    return O2DCTDecode(data);
+   }
+   else if((strcmp(name,"LZWDecode")==0) || (strcmp(name,"LZW")==0)){
+    data=LZWDecodeWithExpectedResultLength(data,[data length]*10);
+   }
+   else {
+    O2PDFError(__FILE__,__LINE__,@"Unknown O2PDFFilter name = %s, parameters=%@",name,parameters);
+    return nil;
+   }
     
+   O2PDFInteger predictor=0;
+   
     if([parameters getIntegerForKey:"Predictor" value:&predictor]){
      if(predictor>1){
       NSMutableData *mutable=[NSMutableData data];
@@ -115,11 +124,7 @@ NSData *O2PDFFilterWithName(const char *name,NSData *data,O2PDFDictionary *param
      }
     }
    
-   
     return data;
    }
-   NSLog(@"Unknown O2PDFFilter name = %s, parameters=%@",name,parameters);
-   return nil;
-}
 
 @end

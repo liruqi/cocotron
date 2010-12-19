@@ -51,6 +51,11 @@ THE SOFTWARE IS PROVIDED "AS IS",WITHOUT WARRANTY OF ANY KIND,EXPRESS OR IMPLIED
    this is a hassle on platforms where you just want to use Foundation, so we put them in CoreFoundation and see what happens
 */
  
+enum
+{
+	kCFNotFound = LONG_MAX
+};
+
 #ifdef __LP64__
 typedef double CGFloat;
 #define CGFLOAT_MIN DBL_MIN
@@ -206,5 +211,7 @@ COREFOUNDATION_EXPORT size_t strlcpy(char *dst, const char *src, size_t size);
 COREFOUNDATION_EXPORT void bzero(void *ptr,size_t size);
 COREFOUNDATION_EXPORT void bcopy(const void *s1, void *s2, size_t n);
 COREFOUNDATION_EXPORT int bcmp(const void *s1, void *s2, size_t n);
+COREFOUNDATION_EXPORT int mkstemps(char *tmplt,int suffixlen);
 #endif
+
 
