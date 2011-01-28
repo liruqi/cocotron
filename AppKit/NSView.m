@@ -1685,7 +1685,7 @@ static void clearNeedsDisplay(NSView *self){
 }
 
 -(void)viewWillDraw {
-   [[self subviews] makeObjectsPerformSelector:_cmd];
+    [_subviews makeObjectsPerformSelector:_cmd];
 }
 
 -(void)setCanDrawConcurrently:(BOOL)canDraw {
