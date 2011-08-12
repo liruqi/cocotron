@@ -29,7 +29,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -init {
-   _eventMask=0;
    _eventQueue=[NSMutableArray new];
    return self;
 }
@@ -93,24 +92,29 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(NSEvent *)nextEventMatchingMask:(unsigned)mask untilDate:(NSDate *)untilDate inMode:(NSString *)mode dequeue:(BOOL)dequeue {
-   NSEvent *result;
-
-   _eventMask=mask;
+   NSEvent *result=nil;
 
    if([_eventQueue count])
       untilDate=[NSDate date];
    
    [[NSRunLoop currentRunLoop] runMode:mode beforeDate:untilDate];
 
-   if([_eventQueue count]==0)
-    result=[[[NSEvent alloc] initWithType:NSAppKitSystem location:NSMakePoint(0,0) modifierFlags:0 window:nil] autorelease];
+   while(result==nil && [_eventQueue count]>0){
+    NSEvent *check=[_eventQueue objectAtIndex:0];
+    
+    if(!(NSEventMaskFromType([check type])&mask))
+     [_eventQueue removeObjectAtIndex:0];
    else {
-    result=[[[_eventQueue objectAtIndex:0] retain] autorelease];
+     result=[[check retain] autorelease];
 
     if(dequeue)
      [_eventQueue removeObjectAtIndex:0];
    }
+   }
 
+   if(result==nil)
+    result=[[[NSEvent alloc] initWithType:NSAppKitSystem location:NSMakePoint(0,0) modifierFlags:0 window:nil] autorelease];
+   
    return result;
 }
 

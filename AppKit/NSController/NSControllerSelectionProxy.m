@@ -7,6 +7,7 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
 #import "NSControllerSelectionProxy.h"
+#import "_NSControllerArray.h"
 #import <AppKit/NSArrayController.h>
 #import <Foundation/NSArray.h>
 #import <Foundation/NSString.h>
@@ -30,7 +31,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -(id)observableSelection {
    if(!_observableSelection)
-      _observableSelection = [[_NSObservableArray alloc] initWithArray:[_controller selectedObjects]];
+      _observableSelection = [[_NSControllerArray alloc] initWithArray:[_controller selectedObjects]];
    return _observableSelection;
 }
 
@@ -53,42 +54,68 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -(id)valueForKey:(NSString*)key
 {
-	id val=[_cachedValues objectForKey:key];
-	if(val)
-		return val;
-	id allValues=[[_controller selectedObjects] valueForKeyPath:key];
-	
-	switch([allValues count])
-	{
-		case 0:
-			val=NSNoSelectionMarker;
-			break;
-		case 1:
-			val=[allValues lastObject];
-			break;
-		default:
-		{
-			if([_controller alwaysUsesMultipleValuesMarker])
-			{
-				val=NSMultipleValuesMarker;
-			}
-			else
-			{
-				val=[allValues objectAtIndex:0];
-				id en=[allValues objectEnumerator];
-				id obj;
-				while((obj=[en nextObject]) && val!=NSMultipleValuesMarker)
-				{
-					if(![val isEqual:obj])
-						val=NSMultipleValuesMarker;
-				}
-			}
-			break;
-		}
+	// Don't use [NSNull null] as the nil marker because we want to be able to tell the diff between a real nil and a real [NSNull null] value
+	static id nilMarker = nil;
+	if (nilMarker == nil) {
+		nilMarker = [[NSObject alloc] init];
 	}
 	
+	id val=[_cachedValues objectForKey:key];
+	if(val) {
+		if (val == nilMarker) 
+			val = nil;
+		return val;
+	}
+	NSArray *selectedObjects = [_controller selectedObjects];
+	NSMutableArray *allValues = nil;
+	
+	if ([key hasPrefix:@"@"]) { // operator
+		val = [selectedObjects valueForKey:key];
+	} else {
+		// Get all selected objects property values, swizzling nil values with the nilMarker
+		NSMutableArray *allValues = [NSMutableArray arrayWithCapacity:[selectedObjects count]];
+		id en=[selectedObjects objectEnumerator];
+		id obj;
+		while((obj=[en nextObject]))
+		{
+			id val=[obj valueForKey:key];
+			if(val==nil)
+				val=nilMarker;
+			[allValues addObject:val];
+		}
+		switch([allValues count])
+		{
+			case 0:
+				val=NSNoSelectionMarker;
+				break;
+			case 1:
+				val=[allValues lastObject];
+				break;
+			default:
+			{
+				if([_controller alwaysUsesMultipleValuesMarker])
+				{
+					val=NSMultipleValuesMarker;
+				}
+				else
+				{
+					val=[allValues objectAtIndex:0];
+					id en=[allValues objectEnumerator];
+					id obj;
+					while((obj=[en nextObject]) && val!=NSMultipleValuesMarker)
+					{
+						if(![val isEqual:obj])
+							val=NSMultipleValuesMarker;
+					}
+				}
+				break;
+			}
+		}
+	}
 	[_cachedValues setValue:val forKey:key];
-   
+	if (val == nilMarker) {
+		val = nil;
+	}
 	return val;
 }
 

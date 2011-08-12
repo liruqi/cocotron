@@ -70,6 +70,26 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     else if((flags&0x00380000)==0x00080000)
      _imagePosition=NSImageAbove;
 
+    //  bits 6 and 7 in flags2, but not in order
+    switch((flags2>>6)&0x3){
+
+     case 0:
+      _imageScaling=NSImageScaleNone;
+      break;
+
+     case 1:
+      _imageScaling=NSImageScaleProportionallyUpOrDown;
+      break;
+
+     case 2:
+      _imageScaling=NSImageScaleProportionallyDown;
+      break;
+
+     case 3:
+      _imageScaling=NSImageScaleAxesIndependently;
+      break;
+    }
+        
     _highlightsBy=0;
     _showsStateBy=0;
     
@@ -115,6 +135,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     else
      _alternateImage=nil;
 
+/* _normalImage is a private ivar in Apple's AppKit. Third party library BGHUDAppKit uses it to 
+   figure out what kind of standard button is being drawn. We emulate it for BGHUDAppKit. */
+    _normalImage=[_image retain];
+    
     _keyEquivalent=[[keyed decodeObjectForKey:@"NSKeyEquivalent"] retain];
     _keyEquivalentModifierMask=flags2>>8;
     [self setIntValue:_state];   // make the int value of NSButtonCell to be
@@ -128,6 +152,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -initTextCell:(NSString *)string {
    [super initTextCell:string];
+   _titleOrAttributedTitle=[string copy];
    _alternateTitle=@"";
    _imagePosition=NSNoImage;
    _highlightsBy=NSPushInCellMask;
@@ -142,13 +167,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    [self setBordered:YES];
    [self setBezeled:YES];
    [self setAlignment:NSCenterTextAlignment];
-
+   [self setObjectValue:[NSNumber numberWithBool:NO]];
+   
    return self;
 }
 
 -initImageCell:(NSImage *)image {
    [super initImageCell:image];
+   _titleOrAttributedTitle=@""; // empty string, not nil
    _imagePosition=NSImageOnly;
+   [self setObjectValue:[NSNumber numberWithBool:NO]];
+   
    return self;
 }
 
@@ -157,6 +186,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(void)dealloc {
+   [_titleOrAttributedTitle release];
+   [_normalImage release];
    [_alternateTitle release];
    [_alternateImage release];
    [_keyEquivalent release];
@@ -169,6 +200,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 -copyWithZone:(NSZone *)zone {
    NSButtonCell *result=[super copyWithZone:zone];
 
+   result->_titleOrAttributedTitle=[_titleOrAttributedTitle copy];
    result->_alternateTitle =[_alternateTitle copy];
    result->_alternateImage=[_alternateImage retain];
    result->_keyEquivalent=[_keyEquivalent copy];
@@ -292,10 +324,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(BOOL)isOpaque {
-   if(_bezelStyle==NSDisclosureBezelStyle
-      || _bezelStyle==NSTexturedSquareBezelStyle || _bezelStyle==NSTexturedRoundedBezelStyle
-      )
+   if(_bezelStyle==NSDisclosureBezelStyle)
     return NO;
+   if(_bezelStyle==NSTexturedSquareBezelStyle)
+    return NO;
+   if(_bezelStyle==NSTexturedRoundedBezelStyle)
+    return NO;
+   if(_bezelStyle==NSShadowlessSquareBezelStyle)
+    return NO;
+   if(_bezelStyle==NSRecessedBezelStyle)
+    return NO;
+    
    return ![self isTransparent] && [self isBordered];
 }
 
@@ -329,6 +368,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 -(void)setImagePosition:(NSCellImagePosition)position {
    _imagePosition=position;
 }
+
 
 -(void)setTitle:(NSString *)title {
    title=[title copy];
@@ -427,8 +467,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
          break;
 
       case NSOnOffButton:
-	      _highlightsBy = NSChangeBackgroundCellMask;
-	      _showsStateBy = NSChangeBackgroundCellMask;
+	      _highlightsBy = NSChangeBackgroundCellMask|NSChangeGrayCellMask;
+	      _showsStateBy = NSChangeBackgroundCellMask|NSChangeGrayCellMask;
          _imageDimsWhenDisabled = YES;
          break;
 
@@ -597,10 +637,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 				break;
 
 			case NSMiniControlSize:
-				frame.size.width  = 6;
-				frame.size.height = 4;
-				frame.origin.x    = 3;
-				frame.origin.y    = 4;
+				// Mini controls don't need adjusting they're small enough already.
 				break;
 		}
 	}
@@ -624,10 +661,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     BOOL pressed=[self state] && ([self showsStateBy] & NSChangeBackgroundCellMask);
     
     BOOL renderDarkenBg=NO, renderOutlineShadow=NO;
-    CGFloat topGray=0.98, bottomGray=0.67, strokeGray=0.4;
+    CGFloat topGray=0.76, bottomGray=0.98, strokeGray=0.4;
     if (pressed) {
-        topGray=0.30;
-        bottomGray=0.4;
+        topGray=0.4;
+        bottomGray=0.30;
     }
     renderDarkenBg=highlighted;
     renderOutlineShadow=highlighted || pressed;
@@ -710,6 +747,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     CGContextRestoreGState(ctx);
 }
 
+static void drawRoundedBezel(CGContextRef context,CGRect frame){
+   CGFloat radius=frame.size.height/2;
+   
+   CGContextBeginPath(context);
+   CGContextAddArc(context,CGRectGetMaxX(frame)-radius,CGRectGetMinY(frame)+radius,radius,M_PI_2,M_PI_2*3,YES);
+   CGContextAddArc(context,CGRectGetMinX(frame)+radius,CGRectGetMinY(frame)+radius,radius,M_PI_2*3,M_PI_2,YES);
+   CGContextClosePath(context);
+   CGContextFillPath(context);
+}
+
 -(void)drawBezelWithFrame:(NSRect)frame inView:(NSView *)controlView {
    BOOL defaulted=([[controlView window] defaultButtonCell] == self);
 
@@ -749,8 +796,32 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     
     case NSTexturedSquareBezelStyle:
     case NSTexturedRoundedBezelStyle:
+    case NSShadowlessSquareBezelStyle:
+
      if ([self isBordered]) {
       [self _drawTexturedBezelWithFrame:frame];
+     }
+     break;
+     
+    case NSRecessedBezelStyle:;
+     if([self isBordered] && [self isVisuallyHighlighted]){
+      CGContextRef context=[[NSGraphicsContext currentContext] graphicsPort];
+
+      frame.size.height--;
+      frame.origin.y+=[controlView isFlipped]?1:0;
+      [[NSColor lightGrayColor] setFill];
+      drawRoundedBezel(context,frame);
+
+      frame.origin.y+=[controlView isFlipped]?-1:1;
+      [[NSColor darkGrayColor] setFill];
+      drawRoundedBezel(context,frame);
+
+      frame.origin.y+=[controlView isFlipped]?0:-1;
+      frame.size.height++;
+     
+      frame=CGRectInset(frame,1,1.5);
+      [[NSColor grayColor] setFill];
+      drawRoundedBezel(context,frame);
      }
      break;
      
@@ -785,6 +856,67 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    CGContextRestoreGState(ctx);
 }
 
+-(NSRect)drawTitle:(NSAttributedString *)title withFrame:(NSRect)titleRect inView:(NSView *)controlView {
+    
+    [title _clipAndDrawInRect:titleRect];
+
+    BOOL drawDottedRect=NO;
+
+    if([[controlView window] firstResponder]==controlView){
+
+     if([controlView isKindOfClass:[NSMatrix class]]){
+      NSMatrix *matrix=(NSMatrix *)controlView;
+
+      drawDottedRect=([matrix keyCell]==self)?YES:NO;
+     }
+     else if([controlView isKindOfClass:[NSControl class]]){
+      NSControl *control=(NSControl *)controlView;
+
+      drawDottedRect=([control selectedCell]==self)?YES:NO;
+     }
+    }
+
+    if(drawDottedRect)
+     NSDottedFrameRect(NSInsetRect(titleRect,1,1));
+    
+    return titleRect; //FIXME: wrong value
+}
+
+// This function is duplicated in NSImageCell, consolidate
+static NSSize scaledImageSizeInFrameSize(NSSize imageSize,NSSize frameSize,NSImageScaling scaling){
+      
+   switch(scaling){
+    case NSImageScaleProportionallyDown:{
+     float xscale=frameSize.width/imageSize.width;
+     float yscale=frameSize.height/imageSize.height;
+     float scale=MIN(1.0,MIN(xscale,yscale));
+      
+     imageSize.width*=scale;
+     imageSize.height*=scale;
+      
+     return imageSize;
+     }
+     
+    case NSImageScaleAxesIndependently:
+     return frameSize;
+     
+    case NSImageScaleProportionallyUpOrDown:{
+     float xscale=frameSize.width/imageSize.width;
+     float yscale=frameSize.height/imageSize.height;
+     float scale=MIN(xscale,yscale);
+      
+     imageSize.width*=scale;
+     imageSize.height*=scale;
+      
+     return imageSize;
+     }
+     
+    default:
+    case NSImageScaleNone:
+     return imageSize;
+   }
+}
+
 -(void)drawInteriorWithFrame:(NSRect)frame inView:(NSView *)controlView {
 /* This method gets the original button frame. We have to compensate for borders.
    There is some duplication of rect calculation which can be split out
@@ -816,17 +948,24 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    NSSize              titleSize=[title size];
    NSRect              titleRect=frame;
    BOOL                drawImage=YES,drawTitle=YES;
+   NSCellImagePosition imagePosition=[self imagePosition];
 
    if([self isTransparent])
     return;
 
+// it doesnt actually change the image pos in the button but it draws like this
+   if([self bezelStyle]==NSDisclosureBezelStyle)
+    imagePosition=NSImageOnly;
+    
+   imageSize=scaledImageSizeInFrameSize(imageSize,frame.size,[self imageScaling]);
+   
    imageOrigin.x+=floor((frame.size.width-imageSize.width)/2);
    imageOrigin.y+=floor((frame.size.height-imageSize.height)/2);
 
    titleRect.origin.y+=floor((titleRect.size.height-titleSize.height)/2);
    titleRect.size.height=titleSize.height;
-
-   switch([self imagePosition]){
+	titleRect.origin.x += 3; // the title is way to tight to the left edge otherwise
+   switch(imagePosition){
 
     case NSNoImage:
      drawImage=NO;
@@ -887,9 +1026,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    }
 
    if(drawTitle){
-    BOOL drawDottedRect=NO;
-    
     if (isTextured && [title length]) {
+// FIXME: use shadow in attributed string and implement shadow text drawing
         const BOOL pressed=[self state] && ([self showsStateBy] & NSChangeBackgroundCellMask);
         const CGFloat fgGray = (pressed) ? 0.98 : 0.0;
         const CGFloat shadowGray = (pressed) ? 0.07 : 0.93;
@@ -902,74 +1040,86 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
                         forKey:NSForegroundColorAttributeName];
         
             NSAttributedString *shadowTitle = [[[NSAttributedString alloc] initWithString:baseTitle attributes:shadowAttrs] autorelease];
-            NSRect shadowRect = NSOffsetRect(titleRect, 0, -1);
+            NSRect shadowRect = NSOffsetRect(titleRect, 0, 1);
         
             [shadowTitle _clipAndDrawInRect:shadowRect];
         }
         
         NSMutableDictionary *fgAttrs = [[shadowAttrs mutableCopy] autorelease];
-        [fgAttrs setObject:[NSColor colorWithDeviceRed:fgGray green:fgGray blue:fgGray alpha:1.0]
-                    forKey:NSForegroundColorAttributeName];
+        [fgAttrs setObject:[NSColor colorWithDeviceRed:fgGray green:fgGray blue:fgGray alpha:1.0] forKey:NSForegroundColorAttributeName];
         title = [[[NSAttributedString alloc] initWithString:baseTitle attributes:fgAttrs] autorelease];
     }
     
-    [title _clipAndDrawInRect:titleRect];
-
-    if([[controlView window] firstResponder]==controlView){
-
-     if([controlView isKindOfClass:[NSMatrix class]]){
-      NSMatrix *matrix=(NSMatrix *)controlView;
-
-      drawDottedRect=([matrix keyCell]==self)?YES:NO;
+    [self drawTitle:title withFrame:titleRect inView:controlView];
      }
-     else if([controlView isKindOfClass:[NSControl class]]){
-      NSControl *control=(NSControl *)controlView;
-
-      drawDottedRect=([control selectedCell]==self)?YES:NO;
      }
-    }
 
-    if(drawDottedRect)
-     NSDottedFrameRect(NSInsetRect(titleRect,1,1));
-   }
-}
-
--(NSSize)cellSize 
-{
+-(NSSize)cellSize  {
+   NSSize              result=NSMakeSize(0,0);
+   NSAttributedString *title=[self attributedTitle];
 	NSImage            *image=[self image];
 	BOOL                enabled=[self isEnabled]?YES:![self imageDimsWhenDisabled];
 	BOOL                mixed=([self state]==NSMixedState)?YES:NO;
-	NSSize              imageSize;
+   NSSize              imageSize,titleSize;
 	
-	if (_controlView)
-		imageSize =(image==nil)?NSMakeSize(0,0):[[_controlView graphicsStyle] 
-sizeOfButtonImage:image enabled:enabled mixed:mixed];
+   if(image==nil)
+    imageSize=NSMakeSize(0,0);
+   else if(_controlView)
+    imageSize=[[_controlView graphicsStyle] sizeOfButtonImage:image enabled:enabled mixed:mixed];
 	else
-		imageSize = (image==nil)?NSMakeSize(0,0):[image size];
+    imageSize=[image size];
 	
-	NSCellImagePosition imagePos = [self imagePosition];
-	if( imagePos != NSNoImage )
-	{
-		NSSize titleSize = [[self attributedTitle] size];
+   if(title==nil)
+    titleSize=NSMakeSize(0,0);
+   else
+    titleSize=[title size];
 		
-		imageSize.width += titleSize.width;
-		imageSize.height += titleSize.height;
-	}
+   switch([self imagePosition]){
 
-	if( imagePos == NSImageLeft || imagePos == NSImageRight )
-		imageSize.width += 4;
+    case NSNoImage:
+     result=titleSize;
+     break;
 	
-	if( [self isBordered] || [self isBezeled] )
-	{
-		imageSize.width += 4;
-		imageSize.height += 4;
+    case NSImageOnly:
+     result=imageSize;
+     break;
+      
+    case NSImageLeft:
+     result.width=imageSize.width+4+titleSize.width;
+     result.height=MAX(imageSize.height,titleSize.height);
+     break;
+      
+    case NSImageRight:
+     result.width=imageSize.width+4+titleSize.width;
+     result.height=MAX(imageSize.height,titleSize.height);
+     break;
+      
+    case NSImageBelow:
+     result.width=MAX(imageSize.width,titleSize.width);
+     result.height=imageSize.height+4+titleSize.height;
+     break;
+      
+    case NSImageAbove:
+     result.width=MAX(imageSize.width,titleSize.width);
+     result.height=imageSize.height+4+titleSize.height;
+     break;
+      
+    case NSImageOverlaps:
+     result.width=MAX(imageSize.width,titleSize.width);
+     result.height=MAX(imageSize.height,titleSize.height);
+     break;
+	}
+	
+   if( [self isBordered] || [self isBezeled] ){
+		result.width += 4;
+		result.height += 4;
 	}
 	
 	NSRect adjustment = [self getControlSizeAdjustment:NO];
-	imageSize.width += adjustment.size.width;
-	imageSize.height += adjustment.size.height;
+	result.width += adjustment.size.width;
+	result.height += adjustment.size.height;
 	
-	return imageSize;
+	return result;
 }
 
 -(void)drawWithFrame:(NSRect)frame inView:(NSView *)control {

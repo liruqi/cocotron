@@ -11,7 +11,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <AppKit/NSToolbarCustomizationPalette.h>
 #import <AppKit/NSView.h>
 #import <AppKit/NSWindow-Private.h>
-#import <AppKit/NSWindowBackgroundView.h>
+#import <AppKit/NSThemeFrame.h>
 #import <AppKit/NSApplication.h>
 #import <AppKit/NSParagraphStyle.h>
 #import <AppKit/NSAttributedString.h>
@@ -88,8 +88,9 @@ NSString * const NSToolbarChangeAppearanceNotification = @"__NSToolbarChangeAppe
    _loadDefaultItems=YES;
    
    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(toolbarChangedAppearance:) name:NSToolbarChangeAppearanceNotification object:nil];
-   [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(toolbarWillAddItem:) name:NSToolbarWillAddItemNotification object:nil];
-   [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(toolbarDidRemoveItem:) name:NSToolbarDidRemoveItemNotification object:nil];
+   // these cause notification loops
+//   [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(toolbarWillAddItem:) name:NSToolbarWillAddItemNotification object:nil];
+//   [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(toolbarDidRemoveItem:) name:NSToolbarDidRemoveItemNotification object:nil];
    
    return self;
 }
@@ -231,7 +232,7 @@ static BOOL isStandardItemIdentifier(NSString *identifier){
     BOOL standardItem=isStandardItemIdentifier(identifier);
     
     if(_delegate==nil || standardItem)
-     item=[[[NSToolbarItem alloc] initWithItemIdentifier:identifier] autorelease];
+     item=[[[[self toolbarItemClass] alloc] initWithItemIdentifier:identifier] autorelease];
     else {
      item=[_delegate toolbar:self itemForItemIdentifier:identifier willBeInsertedIntoToolbar:intoToolbar];
     }
@@ -281,8 +282,12 @@ static BOOL isStandardItemIdentifier(NSString *identifier){
     return;
    if(![[toolbar identifier] isEqualToString:_identifier])
     return;
-    
+
    NSToolbarItem *item=[[note userInfo] objectForKey:@"item"];
+
+   if([_items containsObject:item])
+    return;
+    
    NSInteger      index=[[[note userInfo] objectForKey:@"index"] integerValue];
    
    [self _insertItem:item atIndex:index];
@@ -540,6 +545,15 @@ static BOOL isStandardItemIdentifier(NSString *identifier){
 -(void)postAwakeFromNib {
 // this causes animation, display, frame changes, do post in initWithCoder:
    [[NSNotificationCenter defaultCenter] postNotificationName:NSToolbarChangeAppearanceNotification object:self];
+}
+
+@end
+
+@implementation NSToolbar (NSToolbarCustomization)
+
+- (Class)toolbarItemClass
+{
+	return [NSToolbarItem class];
 }
 
 @end

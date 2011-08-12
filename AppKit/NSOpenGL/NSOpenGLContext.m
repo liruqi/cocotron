@@ -14,6 +14,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <OpenGL/OpenGL.h>
 #import <Foundation/NSThread-Private.h>
 
+@interface NSView(private)
+-(void)_setOverlay:(CGLPixelSurface *)overlay;
+@end
+
 @interface NSOpenGLContext(private)
 -(void)_clearCurrentContext;
 @end
@@ -43,10 +47,20 @@ static inline void _clearCurrentContext(){
 
 -initWithFormat:(NSOpenGLPixelFormat *)pixelFormat shareContext:(NSOpenGLContext *)shareContext {
    CGLError error;
-   
+
+    if(_pixelFormat!=nil){
+        // Cocoa's NSOpenGLContext can withstand a double init and I know of at least one app that does it
+        // Maybe Cocoa just leaks, we don't
+        [_pixelFormat release];
+        _pixelFormat==nil;
+        CGLReleaseContext(_glContext);
+        _glContext=NULL;
+    }
+    
    _pixelFormat=[pixelFormat retain];
    if((error=CGLCreateContext([_pixelFormat CGLPixelFormatObj],[shareContext CGLContextObj],(CGLContextObj *)&_glContext))!=kCGLNoError)
     NSLog(@"CGLCreateContext failed with %d in %s %d",error,__FILE__,__LINE__);
+        
    return self;
 }
 
@@ -56,7 +70,7 @@ static inline void _clearCurrentContext(){
       _clearCurrentContext();
    [_pixelFormat release];
    _view=nil;
-   CGLDestroyContext(_glContext);
+   CGLReleaseContext(_glContext);
    [super dealloc];
 }
 
@@ -83,16 +97,48 @@ static inline void _clearCurrentContext(){
    return _glContext;
 }
 
--(void)getValues:(long *)vals forParameter:(NSOpenGLContextParameter)parameter {   
-   CGLGetParameter(_glContext,parameter,(GLint *)vals);
+-(void)getValues:(GLint *)vals forParameter:(NSOpenGLContextParameter)parameter {   
+   CGLLockContext(_glContext);
+   CGLGetParameter(_glContext,parameter,vals);
+   CGLUnlockContext(_glContext);
 }
 
--(void)setValues:(const long *)vals forParameter:(NSOpenGLContextParameter)parameter {   
-   CGLSetParameter(_glContext,parameter,(const GLint *)vals);
+-(void)setValues:(const GLint *)vals forParameter:(NSOpenGLContextParameter)parameter {   
+   CGLLockContext(_glContext);
+   CGLSetParameter(_glContext,parameter,vals);
+   CGLUnlockContext(_glContext);
+}
+
+-(void)updateViewParameters {
+    NSRect rect=[_view bounds];
+    
+    if([_view window]!=nil)
+        rect=[_view convertRect:rect toView:nil];
+   
+   GLint size[2]={
+    rect.size.width,
+    rect.size.height };
+        
+   CGLLockContext(_glContext);
+   CGLSetParameter(_glContext,kCGLCPSurfaceBackingSize,size);
+   CGLUnlockContext(_glContext);
 }
 
 -(void)setView:(NSView *)view {
+   if(_view!=view)
+    _hasPrepared=NO;
+    
+   [_view _setOverlay:nil];
    _view=view;
+   
+   CGLPixelSurface *overlay=nil;
+   
+   CGLLockContext(_glContext);
+   CGLGetParameter(_glContext,kCGLCPOverlayPointer,(GLint *)&overlay);
+   CGLUnlockContext(_glContext);
+   
+   [_view _setOverlay:overlay];
+   
    [self update];
 }
 
@@ -103,6 +149,26 @@ static inline void _clearCurrentContext(){
     NSLog(@"CGLSetCurrentContext failed with %d in %s %d",error,__FILE__,__LINE__);
     
    _setCurrentContext(self);
+
+#if 0
+/*
+   We need to reload the view values when becoming current because it may
+   have moved windows since the last make current
+ */
+ // Possible this shouldnt be done here, especially on a non-main thread
+ 
+ // Don't do this here due to threading reason. Figure out where to do this when moving windows, view _setWindow ?
+   [self updateViewParameters];
+#endif
+
+   if(!_hasPrepared){
+    _hasPrepared=YES;
+
+// NSOpenGLContext will call prepareOpenGL on any view, not just NSOpenGLView    
+    if([_view respondsToSelector:@selector(prepareOpenGL)])
+     [_view performSelector:@selector(prepareOpenGL)];
+   }
+   
 }
 
 -(void)_clearCurrentContext {
@@ -141,22 +207,12 @@ static inline void _clearCurrentContext(){
 }
 
 -(void)update {
-   if(_view!=nil){
-    NSRect rect=[_view convertRect:[_view bounds] toView:nil];
-    GLint frame[4]={
-     rect.origin.x,
-     rect.origin.y,
-     rect.size.width,
-     rect.size.height };
-    GLint number[1]={[[_view window] windowNumber]};
-   
-    CGLSetParameter(_glContext,kCGLCPSurfaceFrame,frame);
-    CGLSetParameter(_glContext,kCGLCPWindowNumber,number);
+   [self updateViewParameters];
    }
-}
 
 -(void)clearDrawable {
    _view=nil;
+   [self updateViewParameters];
 }
 
 -(void)copyAttributesFromContext:(NSOpenGLContext *)context withMask:(unsigned long)mask {

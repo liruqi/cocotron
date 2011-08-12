@@ -5,7 +5,15 @@
 @end
 
 CGImageSourceRef CGImageSourceCreateWithData(CFDataRef data,CFDictionaryRef options) {
-   return (CGImageSourceRef)[O2ImageSource newImageSourceWithData:data options:options];
+	return (CGImageSourceRef)[O2ImageSource newImageSourceWithData:data options:options];
+}
+
+CGImageSourceRef CGImageSourceCreateWithURL(CFURLRef url,CFDictionaryRef options) {
+	return (CGImageSourceRef)[O2ImageSource newImageSourceWithURL:url options:options];
+}
+
+size_t CGImageSourceGetCount(CGImageSourceRef self) {
+   return [self count];
 }
 
 CGImageRef CGImageSourceCreateImageAtIndex(CGImageSourceRef self,size_t index,CFDictionaryRef options) {

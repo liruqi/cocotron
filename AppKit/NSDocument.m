@@ -21,6 +21,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 @implementation NSDocument
 
+static int untitled_document_number = 0;
+
 +(NSArray *)readableTypes {
    int             i;
    NSArray        *knownDocTypes = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleDocumentTypes"];
@@ -98,7 +100,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       _fileURL=nil;
       _fileType=nil;
       _changeCount=0;
-      _untitledNumber=0;
+      _untitledNumber=untitled_document_number++;
       _hasUndoManager=YES;
       _activeEditors=[NSMutableArray new];
     }
@@ -126,12 +128,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    }
    else {
     [self init];
+	   [self setFileURL:url];
+	   [self setFileType:type];
     if(![self readFromURL:url ofType:type error:error]){
      [self dealloc];
      return nil;
     }
-    [self setFileURL:url];
-    [self setFileType:type];
    }
    [self _updateFileModificationDate];
    return self;
@@ -139,14 +141,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -initForURL:(NSURL *)url withContentsOfURL:(NSURL *)contentsURL ofType:(NSString *)type error:(NSError **)error {
    [self init];
+	[self setFileURL:url];
+	[self setFileType:type];
    if(contentsURL!=nil){
     if(![self readFromURL:contentsURL ofType:type error:error]){
      [self dealloc];
      return nil;
     }
    }
-   [self setFileURL:url];
-   [self setFileType:type];
    [self _updateFileModificationDate];
    return self;
 }
@@ -340,7 +342,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 {
   if(_fileURL==nil) 
     {
-      if(_untitledNumber > 1)
+      if(_untitledNumber != 0)
         return [NSString stringWithFormat:@"Untitled %d", _untitledNumber];
       else
         return @"Untitled";
@@ -934,14 +936,15 @@ forSaveOperation:(NSSaveOperationType)operation
    
    [self init];
 
-   error=nil;
+	[self setFileName:path];
+	[self setFileType:type];
+
+	error=nil;
    if(![self readFromURL:url ofType:type error:&error]){
     NSRunAlertPanel(nil,@"Can't open file '%@'. Error = %@",@"Ok",nil,nil,path,error);
     [self dealloc];
     return nil;
    }
-   [self setFileName:path];
-   [self setFileType:type];
    [self _updateFileModificationDate];
 
    return self;
@@ -954,13 +957,13 @@ forSaveOperation:(NSSaveOperationType)operation
    [self init];
 
    error=nil;
+	[self setFileURL:url];
+	[self setFileType:type];
    if(![self readFromURL:url ofType:type error:&error]){
     NSRunAlertPanel(nil,@"Can't open URL '%@'. Error = %@",@"Ok",nil,nil,url,error);
     [self dealloc];
     return nil;
    }
-   [self setFileURL:url];
-   [self setFileType:type];
    [self _updateFileModificationDate];
 
    return self;

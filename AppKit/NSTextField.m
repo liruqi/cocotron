@@ -15,6 +15,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import "NSKeyValueBinding/NSTextFieldBinder.h"
 #import "NSKeyValueBinding/NSObject+BindingSupport.h"
 
+
+@interface NSTextFieldCell (Private)
+
+- (CGFloat) _fontSize;
+- (void) _setFontSize:(CGFloat)fontSize;
+- (NSString*) _fontFamilyName;
+- (void) _setFontFamilyName:(NSString*)familyName;
+
+@end
+
+
+
 @implementation NSTextField
 
 +(Class)cellClass {
@@ -37,6 +49,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -initWithFrame:(NSRect)frame {
    [super initWithFrame:frame];
+// Default for a NSTextFieldCell is NOT the same as NSTextField
+   [_cell setEditable:YES];
+   [_cell setSelectable:YES];
+   [_cell setBezeled:YES];
    [self registerForDraggedTypes:[NSArray arrayWithObject:NSStringPboardType]];
    return self;
 }
@@ -110,6 +126,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    return YES;
 }
 
+-(BOOL)needsPanelToBecomeKey {
+    return YES;
+}
+
 -(BOOL)becomeFirstResponder {
    [self selectText:nil];
    return YES;
@@ -177,6 +197,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    if(![cell isEnabled])
     return;
 
+   NSPoint point=[self convertPoint:[event locationInWindow] fromView:nil];
+   NSRect  editingFrame=[cell titleRectForBounds:[self bounds]];
+   
+   if(!NSMouseInRect(point,editingFrame,[self isFlipped]))
+    [super mouseDown:event];
+   else {
    if([cell isEditable] || [cell isSelectable]){
     if(_currentEditor==nil){
      _currentEditor=[[self window] fieldEditor:YES forObject:self];
@@ -186,6 +212,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
     [cell editWithFrame:[self bounds] inView:self editor:_currentEditor delegate:self event:event];
    }
+}
 }
 
 -(BOOL)textShouldBeginEditing:(NSText *)text {
@@ -245,5 +272,25 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     [super doCommandBySelector:selector];
 }
 
+-(void)setTitleWithMnemonic:(NSString *)value {
+   [self setStringValue:value];
+}
+
+@end
+
+@implementation NSTextField (Bindings)
+
+- (CGFloat) _fontSize {
+    return [(NSTextFieldCell*)_cell _fontSize];
+}
+- (void) _setFontSize:(CGFloat)fontSize {
+    [(NSTextFieldCell*)_cell _setFontSize:fontSize];
+}
+- (NSString*) _fontFamilyName {
+    return [(NSTextFieldCell*)_cell _fontFamilyName];
+}
+- (void) _setFontFamilyName:(NSString*)familyName {
+    [(NSTextFieldCell*)_cell _setFontFamilyName:familyName];
+}
 
 @end

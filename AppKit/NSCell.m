@@ -90,8 +90,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    _focusRingType=[isa defaultFocusRingType];
    _state=NSOffState;
    _font=[[NSFont userFontOfSize:0] retain];
-   _objectValue=[[NSNumber alloc] initWithBool:NO];
-   _titleOrAttributedTitle=[string copy];
+   _objectValue=[string copy];
    _image=nil;
    _cellType=NSTextCellType;
    _isEnabled=YES;
@@ -109,7 +108,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    _focusRingType=[isa defaultFocusRingType];
    _state=NSOffState;
    _font=nil;
-   _objectValue=[[NSNumber alloc] initWithBool:NO];
+   _objectValue=nil;
    _image=[image retain];
    _cellType=NSImageCellType;
    _isEnabled=YES;
@@ -124,7 +123,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -init {
-   return [self initTextCell:@"Cell"];
+   return [self initImageCell:nil];
 }
 
 -(void)dealloc {
@@ -132,7 +131,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    [_objectValue release];
    [_image release];
    [_formatter release];
-   [_titleOrAttributedTitle release];
    [_representedObject release];
    [super dealloc];
 }
@@ -144,7 +142,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    copy->_objectValue=[_objectValue copy];
    copy->_image=[_image retain];
    copy->_formatter=[_formatter retain];
-   copy->_titleOrAttributedTitle=[_titleOrAttributedTitle copy];
    copy->_representedObject=[_representedObject retain];
 
    return copy;
@@ -203,6 +200,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    return _textAlignment;
 }
 
+-(NSLineBreakMode)lineBreakMode {
+   return _lineBreakMode;
+}
+
 -(NSWritingDirection)baseWritingDirection {
    return _writingDirection;
 }
@@ -212,7 +213,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(NSString *)title {
-    return _titleOrAttributedTitle;
+    return [self stringValue];
 }
 
 -(BOOL)isEnabled {
@@ -243,6 +244,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    return _isContinuous;
 }
 
+-(BOOL)showsFirstResponder {
+   return _showsFirstResponder;
+}
+
 -(BOOL)refusesFirstResponder {
    return _refusesFirstResponder;
 }
@@ -267,7 +272,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     else if([_objectValue isKindOfClass:[NSString class]])
      return _objectValue;
 
-    return [_objectValue descriptionWithLocale:[NSLocale currentLocale]];
+    if([_objectValue respondsToSelector:@selector(descriptionWithLocale:)])
+        return [_objectValue descriptionWithLocale:[NSLocale currentLocale]];
+    else if([_objectValue respondsToSelector:@selector(description)])
+        return [_objectValue description];
+    else
+        return @"";
 }
 
 -(int)intValue {
@@ -348,6 +358,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -(NSFocusRingType)focusRingType {
     return _focusRingType;
+}
+
+-(NSBackgroundStyle)backgroundStyle {
+   return _backgroundStyle;
 }
 
 -(void)setControlView:(NSView *)view {
@@ -434,7 +448,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(void)setImage:(NSImage *)image {
+   if(image!=nil)
    [self setType:NSImageCellType];
+    
    image=[image retain];
    [_image release];
    _image=image;
@@ -443,6 +459,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -(void)setAlignment:(NSTextAlignment)alignment {
    _textAlignment=alignment;
+}
+
+-(void)setLineBreakMode:(NSLineBreakMode)value {
+   _lineBreakMode=value;
 }
 
 -(void)setBaseWritingDirection:(NSWritingDirection)value {
@@ -454,9 +474,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(void)setTitle:(NSString *)title {
-    title = [title retain];
-    [_titleOrAttributedTitle release];
-    _titleOrAttributedTitle = title;
+    [self setStringValue:title];
 }
 
 -(void)setEnabled:(BOOL)flag {
@@ -496,6 +514,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -(void)setContinuous:(BOOL)flag {
    _isContinuous=flag;
+}
+
+-(void)setShowsFirstResponder:(BOOL)value {
+   _showsFirstResponder=value;
 }
 
 -(void)setRefusesFirstResponder:(BOOL)flag {
@@ -588,6 +610,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    _focusRingType = focusRingType;
 }
 
+-(void)setBackgroundStyle:(NSBackgroundStyle)value {
+   _backgroundStyle=value;
+}
+
 -(void)takeObjectValueFrom:sender {
    [self setObjectValue:[sender objectValue]];
 }
@@ -605,8 +631,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(NSSize)cellSize {
-   NSUnimplementedMethod();
-   return NSMakeSize(0,0);
+   return NSMakeSize(10000,10000);
+}
+
+-(NSSize)cellSizeForBounds:(NSRect)rect {
+   NSSize result=[self cellSize];
+   
+   return NSMakeSize(MIN(rect.size.width,result.width),MIN(rect.size.height,result.height));
 }
 
 -(NSRect)imageRectForBounds:(NSRect)rect {
@@ -696,8 +727,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
     [[view window] flushWindow];
 
-    event=[[view window] nextEventMatchingMask:NSLeftMouseUpMask|
-                          NSLeftMouseDraggedMask];
+    event=[[view window] nextEventMatchingMask:NSLeftMouseUpMask|NSLeftMouseDraggedMask];
 
    }while(YES);
 
@@ -727,11 +757,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     NSClipView *clipView;
 
     if([[editor superview] isKindOfClass:[NSClipView class]]){
-     clipView=[editor superview];
-     [clipView setFrame:[self titleRectForBounds:frame]];
+     clipView=(NSClipView *)[editor superview];
+     [clipView setFrame:frame];
     }
     else {
-     clipView=[[[NSClipView alloc] initWithFrame:[self titleRectForBounds:frame]] autorelease];
+     clipView=[[[NSClipView alloc] initWithFrame:frame] autorelease];
      [clipView setDocumentView:editor];
      [view addSubview:clipView];
     }
@@ -744,7 +774,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     [editor setNeedsDisplay:YES];
    }
    else {
-    [editor setFrame:[self titleRectForBounds:frame]];
+    [editor setFrame:frame];
     [view addSubview:editor];
    }
    [[view window] makeFirstResponder:editor];
@@ -760,6 +790,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(void)editWithFrame:(NSRect)frame inView:(NSView *)view editor:(NSText *)editor delegate:(id)delegate event:(NSEvent *)event {
+
    if(![self isEditable] && ![self isSelectable])
     return;
 
@@ -807,3 +838,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 @end
+
+void NSDrawThreePartImage(NSRect frame,NSImage *startCap,NSImage *centerFill,NSImage *endCap,BOOL vertical,NSCompositingOperation operation,CGFloat alpha,BOOL flipped) {
+   NSUnimplementedFunction();
+}
