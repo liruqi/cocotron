@@ -44,10 +44,24 @@ NSString *NSPlatformClassName=@"NSPlatform_win32";
 
 @class NSConditionLock_win32;
 
+static NSString *convertBackslashToSlash(NSString *string){
+   NSUInteger i,length=[string length];
+   unichar    buffer[length];
+   
+   [string getCharacters:buffer];
+   
+   for(i=0;i<length;i++){
+    if(buffer[i]=='\\')
+     buffer[i]='/';
+   }
+   
+   return [NSString stringWithCharacters:buffer length:length];
+}
+
 @implementation NSPlatform_win32
 
 static NSString *processName(){
-   return [[[NSString stringWithCString:OBJCModulePathForProcess()] lastPathComponent] stringByDeletingPathExtension];
+   return [[convertBackslashToSlash([NSString stringWithUTF8String:objc_mainImageName()]) lastPathComponent] stringByDeletingPathExtension];
 }
 
 -init {
@@ -123,8 +137,7 @@ static NSString *processName(){
    NSString *result=[[[NSProcessInfo processInfo] environment] objectForKey:@"USERNAME"];
 
    if(result==nil)
-    [NSException raise:NSInvalidArgumentException
-                format:@"NSProcessInfo environment USERNAME failed"];
+    [NSException raise:NSInvalidArgumentException format:@"NSProcessInfo environment USERNAME failed"];
 
    return result;
 }
@@ -133,8 +146,7 @@ static NSString *processName(){
    NSString *result=[[[NSProcessInfo processInfo] environment] objectForKey:@"USERNAME"];
 
    if(result==nil)
-    [NSException raise:NSInvalidArgumentException
-                format:@"NSProcessInfo environment USERNAME failed"];
+    [NSException raise:NSInvalidArgumentException format:@"NSProcessInfo environment USERNAME failed"];
 
    return result;
 }
@@ -149,7 +161,7 @@ static NSString *processName(){
    if(path==nil)
     return nil;
 
-   return [drive stringByAppendingPathComponent:path];
+   return convertBackslashToSlash([drive stringByAppendingPathComponent:path]);
 }
 
 -(NSString *)temporaryDirectory {
@@ -158,11 +170,15 @@ static NSString *processName(){
    if(result==nil)
     result=[[[NSProcessInfo processInfo] environment] objectForKey:@"TMP"];
 
+   if(result==nil){
+    result=[[[NSProcessInfo processInfo] environment] objectForKey:@"windir"];
+    result=[result stringByAppendingPathComponent:@"Temp"];
+   }
+   
    if(result==nil)
-    [NSException raise:NSInvalidArgumentException
-                format:@"NSProcessInfo environment TEMP and TMP failed"];
+    result=[[self homeDirectory] stringByAppendingPathComponent:@"Temp"];
 
-   return result;
+   return convertBackslashToSlash(result);
 }
 
 NSString * const NSPlatformExecutableDirectory=@"Windows";
@@ -422,28 +438,35 @@ void *NSPlatformContentsOfFile(NSString *path,NSUInteger *lengthp) {
 -(BOOL)writeContentsOfFile:(NSString *)path bytes:(const void *)bytes length:(NSUInteger)length atomically:(BOOL)atomically {
    HANDLE   file;
    DWORD    wrote;
+   const uint16_t *pathW=[path fileSystemRepresentationW];
 
+   atomically=NO;
+   
    if(atomically){
     NSString *backup=[path stringByAppendingString:@"##"];
+    const uint16_t *backupW=[backup fileSystemRepresentationW];
 
-    file=CreateFileW([backup fileSystemRepresentationW],GENERIC_WRITE,0,NULL,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);
-    if(!WriteFile(file,bytes,length,&wrote,NULL))
+    file=CreateFileW(backupW,GENERIC_WRITE,0,NULL,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);
+    if(!WriteFile(file,bytes,length,&wrote,NULL)){
      CloseHandle(file);
+    }
     else {
      CloseHandle(file);
 
-     if(wrote!=length)
-      DeleteFileW([backup fileSystemRepresentationW]);
+     if(wrote!=length){
+      DeleteFileW(backupW);
+     }
      else {
-      if(MoveFileExW([backup fileSystemRepresentationW],[path fileSystemRepresentationW],MOVEFILE_REPLACE_EXISTING))
+      
+      if(MoveFileExW(backupW,pathW,MOVEFILE_REPLACE_EXISTING)){
        return YES;
      }
+    }
     }
     // atomic failure drops through to non-atomic
    }
 
-   file=CreateFileW([path fileSystemRepresentationW],GENERIC_WRITE,0,NULL,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);
-
+   file=CreateFileW(pathW,GENERIC_WRITE,0,NULL,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);   
    if(!WriteFile(file,bytes,length,&wrote,NULL)){
     CloseHandle(file);
     return NO;
@@ -487,4 +510,23 @@ void Win32ThreadSleepForTimeInterval(NSTimeInterval interval) {
     interval-=chunk;
    }
 }
+
+BOOL NSPlatformGreaterThanOrEqualToWindowsXP(void) {
+   OSVERSIONINFOEX osVersion;
+    
+   osVersion.dwOSVersionInfoSize=sizeof(osVersion);
+   GetVersionEx((OSVERSIONINFO *)&osVersion);
+
+   return ((osVersion.dwMajorVersion==5 && osVersion.dwMinorVersion>=1) || osVersion.dwMajorVersion>5)?YES:NO;
+}
+
+BOOL NSPlatformGreaterThanOrEqualToWindows2000(void) {
+   OSVERSIONINFOEX osVersion;
+    
+   osVersion.dwOSVersionInfoSize=sizeof(osVersion);
+   GetVersionEx((OSVERSIONINFO *)&osVersion);
+
+   return (osVersion.dwMajorVersion>=5)?YES:NO;
+}
+
 

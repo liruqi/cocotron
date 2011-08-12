@@ -7,6 +7,8 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. */
 #import <AppKit/NSPopUpButton.h>
 #import <AppKit/NSPopUpButtonCell.h>
+#import <AppKit/NSMenu.h>
+#import <AppKit/NSApplication.h>
 #import <AppKit/NSObject+BindingSupport.h>
 
 NSString * const NSPopUpButtonWillPopUpNotification=@"NSPopUpButtonWillPopUpNotification";
@@ -188,10 +190,35 @@ static NSString * const NSPopUpButtonBindingObservationContext=@"NSPopUpButtonBi
    [self setNeedsDisplay:YES];
 }
 
+-(void)performClick:sender {
+
+   if([_cell trackMouse:[NSApp currentEvent] inRect:[self bounds] ofView:self untilMouseUp:NO]){
+    NSMenuItem *item=[self selectedItem];
+    SEL         action=[item action];
+    id          target=[item target];
+
+    [_cell setState:![_cell state]];
+    [self setNeedsDisplay:YES];
+
+    if(action==NULL){
+     action=[self action];
+     target=[self target];
+    }
+    else if(target==nil){
+     target=[self target];
+    }
+
+    [self sendAction:action to:target];
+   }
+}
+
 -(void)mouseDown:(NSEvent *)event {
    if(![self isEnabled])
     return;
 
+#if 1
+   [self performClick:self];
+#else
    if([_cell trackMouse:event inRect:[self bounds] ofView:self untilMouseUp:NO]){
     NSMenuItem *item=[self selectedItem];
     SEL         action=[item action];
@@ -210,6 +237,7 @@ static NSString * const NSPopUpButtonBindingObservationContext=@"NSPopUpButtonBi
 
     [self sendAction:action to:target];
    }
+#endif
 }
 
 - (void)keyDown:(NSEvent *)event {
@@ -235,23 +263,20 @@ static NSString * const NSPopUpButtonBindingObservationContext=@"NSPopUpButtonBi
 
 
 @implementation NSPopUpButton (BindingSupport)
--(void)_setItemValues:(NSArray*)values forKey:(NSString*)key;
-{
-	int i;
 
-	if([values count]!=[self numberOfItems])
-	{
-		[self removeAllItems];
-		for(i=0; i<[values count]; i++)
-			[self addItemWithTitle:@""];
-	}
-	if(!key)
-		return;
-	
-	for(i=0; i<[values count]; i++)
-	{
-		[[self itemAtIndex:i] setValue:[values objectAtIndex:i] forKey:key];
-	}
+-(void)_setItemValues:(NSArray *)values forKey:(NSString *)key {
+// We access items through the menu becuase NSPopUpButtonCell item editing has undesireable behavior 
+   NSMenu   *menu=[self menu];
+   NSInteger i,count=[values count],numberOfItems=[menu numberOfItems];
+
+   for(i=0;i<count;i++){
+    if(i>=numberOfItems){
+     [menu addItemWithTitle:@"" action:NULL keyEquivalent:nil];
+     numberOfItems++;
+    }
+    
+    [[menu itemAtIndex:i] setValue:[values objectAtIndex:i] forKey:key];
+   }
 }
 
 -(id)_contentValues
@@ -259,9 +284,18 @@ static NSString * const NSPopUpButtonBindingObservationContext=@"NSPopUpButtonBi
 	return [self valueForKeyPath:@"itemArray.title"];
 }
 
+// FIXME: is it contentValues or contentObjects, or both?
 -(void)_setContentValues:(NSArray*)values
 {
 	[self _setItemValues:values forKey:@"title"];
+}
+
+-(id)_contentObjects {
+	return [self valueForKeyPath:@"itemArray.title"];
+}
+
+-(void)_setContentObjects:(NSArray *)objects {
+	[self _setItemValues:objects forKey:@"title"];
 }
 
 -(id)_content
@@ -274,7 +308,7 @@ static NSString * const NSPopUpButtonBindingObservationContext=@"NSPopUpButtonBi
 	[self _setItemValues:values forKey:@"representedObject"];
 	if(![self _binderForBinding:@"contentValues"])
 	{
-		[self _setItemValues:[values valueForKey:@"description"] forKey:@"title"];
+		[self _setItemValues:[[values valueForKey:@"value"] valueForKey:@"description"] forKey:@"title"];
 	}
 }
 

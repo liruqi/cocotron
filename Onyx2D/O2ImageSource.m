@@ -26,6 +26,7 @@ NSString *kO2ImagePropertyDPIHeight=@"kCGImagePropertyDPIHeight";
     @"O2ImageSource_JPEG",
     @"O2ImageSource_BMP",
     @"O2ImageSource_GIF",
+    @"O2ImageSource_ICNS",
     nil
    };
    int i;
@@ -49,7 +50,7 @@ NSString *kO2ImagePropertyDPIHeight=@"kCGImagePropertyDPIHeight";
    return result;
 }
 
-+(O2ImageSourceRef)newImageSourceWitURL:(NSURL *)url options:(CFDictionaryRef)options {
++(O2ImageSourceRef)newImageSourceWithURL:(NSURL *)url options:(CFDictionaryRef)options {
    O2DataProviderRef provider=[[O2DataProvider alloc] initWithURL:url];
    O2ImageSourceRef result=[self newImageSourceWithDataProvider:provider options:options];
    O2DataProviderRelease(provider);

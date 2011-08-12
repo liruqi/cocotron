@@ -37,6 +37,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 #endif
 
+#define NS_INLINE static inline
+
 @class NSString;
 
 #define NSINTEGER_DEFINED 1
@@ -55,11 +57,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     #define NSUIntegerMax UINT_MAX
 #endif
 
-typedef enum {
+enum {
    NSOrderedAscending=-1,
    NSOrderedSame=0,
    NSOrderedDescending=1
-} NSComparisonResult;
+};
+
+typedef NSInteger NSComparisonResult;
 
 #define NSNotFound NSIntegerMax
 

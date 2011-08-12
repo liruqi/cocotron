@@ -47,8 +47,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 // NSOutlineView needs to programmatically instantiated as IB/WOF4 doesn't have an editor for it..
 // also theoretically -dealloc could've crashed as the cell prototypes weren't initialized at all...
--(id)initWithIdentifier:(id)identifier {
-        [self setIdentifier:identifier];
+-initWithIdentifier:identifier {
+   _identifier=[identifier retain];
+   _width=100.0;
+   _minWidth=10.0;
+   _maxWidth=FLT_MAX; // Doc.s say MAXFLOAT, mingw doesnt have MAXFLOAT yet
 
         _headerCell = [[NSTableHeaderCell alloc] initTextCell:@""];
         _dataCell = [[NSTextFieldCell alloc] initTextCell:@""];
@@ -79,11 +82,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     return _tableView;
 }
 
--(NSCell *)headerCell {
+-(id)headerCell {
     return _headerCell;
 }
 
--(NSCell *)dataCell {
+-(id)dataCell {
     return _dataCell;
 }
 
@@ -111,9 +114,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     return _isEditable;
 }
 
+-(NSUInteger)resizingMask {
+   return _resizingMask;
+}
+
 -(void)setIdentifier:(id)identifier {
+   identifier=[identifier retain];
     [_identifier release];
-    _identifier = [identifier retain];
+   _identifier=identifier;
 }
 
 -(void)setTableView:(NSTableView *)tableView {
@@ -164,6 +172,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     [_dataCell setEditable:flag];
 }
 
+-(void)setResizingMask:(NSUInteger)value {
+   _resizingMask=value;
+}
+
 -(NSCell *)dataCellForRow:(int)row {
     return [self dataCell];
 }
@@ -192,16 +204,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 -(void)_establishBindingsWithDestinationIfUnbound:(id)dest
 {
 	[[self tableView] _establishBindingsWithDestinationIfUnbound:dest];
-}
-
-+(Class)_binderClassForBinding:(id)binding
-{
-	if([binding isEqual:@"headerTitle"] ||
-	   [binding isEqual:@"maxWidth"] ||
-	   [binding isEqual:@"minWidth"] ||
-	   [binding isEqual:@"width"])
-		return [_NSKVOBinder class];
-	return [_NSMultipleValueBinder class];
 }
 
 - (NSSortDescriptor *)sortDescriptorPrototype {
@@ -244,6 +246,27 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 	[allDescs insertObject:newDescriptor atIndex:0];
 	[_tableView setSortDescriptors:allDescs];
 
+}
+
+@end
+
+@implementation NSTableColumn (Bindings) 
+
++(Class)_binderClassForBinding:(id)binding
+{
+	if([binding isEqual:@"headerTitle"] ||
+	   [binding isEqual:@"maxWidth"] ||
+	   [binding isEqual:@"minWidth"] ||
+	   [binding isEqual:@"width"])
+		return [_NSKVOBinder class];
+	return [_NSMultipleValueBinder class];
+}
+
+- (NSString*)_headerTitle {
+    return [_headerCell title];
+}
+- (void)_setHeaderTitle:(NSString*)title {
+    return [_headerCell setTitle:title];
 }
 
 @end

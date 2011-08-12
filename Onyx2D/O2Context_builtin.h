@@ -31,6 +31,10 @@
 #import <Onyx2D/O2Surface.h>
 #import <Onyx2D/O2Paint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 @class O2Paint;
 
 typedef enum {
@@ -111,6 +115,10 @@ void O2ContextDeviceClipReset_builtin(O2Context_builtin *self);
 void O2ContextDeviceClipToNonZeroPath_builtin(O2Context_builtin *self,O2Path *path);
 void O2ContextDeviceClipToEvenOddPath_builtin(O2Context_builtin *self,O2Path *path);
 
-void O2BlendSpanNormal_8888_coverage(O2argb8u *src,O2argb8u *dst,unsigned coverage,int length);
+void O2argb8u_sover_by_coverage(O2argb8u *src,O2argb8u *dst,unsigned coverage,int length);
 
 @end
+
+#ifdef __cplusplus
+}
+#endif

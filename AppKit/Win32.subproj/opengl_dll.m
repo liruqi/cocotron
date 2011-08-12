@@ -1,218 +1,356 @@
 #import "opengl_dll.h"
 #import <Foundation/NSString.h>
+#import <Foundation/NSDebug.h>
 #import <OpenGL/glext.h>
 
-/* This indirection is so that applications which don't use the NSOpenGL* classes don't have to link or load opengl32.dll just because the AppKit might use it. This should probably get reworked into a CGL interface
- */
 HGLRC opengl_wglCreateContext(HDC dc) {
-   typedef WINGDIAPI HGLRC WINAPI (*ftype)(HDC);
-   static ftype                     function=NULL;
-   
-   if(function==NULL){
-    HANDLE library=LoadLibrary("OPENGL32");
-    
-    function=(ftype)GetProcAddress(library,"wglCreateContext");
+   return wglCreateContext(dc);
    }
-   if(function==NULL)
-    return NULL;
     
-   return function(dc);
-}
-
 BOOL  opengl_wglDeleteContext(HGLRC hglrc) {
-   typedef WINGDIAPI BOOL WINAPI (*ftype)(HGLRC);
-   static ftype                    function=NULL;
-   
-   if(function==NULL){
-    HANDLE library=LoadLibrary("OPENGL32");
-    
-    function=(ftype)GetProcAddress(library,"wglDeleteContext");
+   return wglDeleteContext(hglrc);
    }
-   if(function==NULL)
-    return NO;
     
-   return function(hglrc);
-}
-
 HGLRC opengl_wglGetCurrentContext(void) {
-   typedef WINGDIAPI HGLRC WINAPI (*ftype)(void);
-   static ftype                     function=NULL;
-   
-   if(function==NULL){
-    HANDLE library=LoadLibrary("OPENGL32");
-    
-    function=(ftype)GetProcAddress(library,"wglGetCurrentContext");
+   return wglGetCurrentContext();
    }
-   if(function==NULL)
-    return NULL;
     
-   return function();
-}
-
 BOOL  opengl_wglMakeCurrent(HDC dc,HGLRC hglrc) {
-   typedef WINGDIAPI BOOL WINAPI (*ftype)(HDC,HGLRC);
-   static ftype                    function=NULL;
-
-   if(function==NULL){
-    HANDLE library=LoadLibrary("OPENGL32");
-    
-    function=(ftype)GetProcAddress(library,"wglMakeCurrent");
+   return wglMakeCurrent(dc,hglrc);
    }
-   if(function==NULL)
-    return NO;
-
-   return function(dc,hglrc);
-}
 
 PROC  opengl_wglGetProcAddress(LPCSTR name){
-   typedef WINGDIAPI PROC WINAPI (*ftype)(LPCSTR name);
-   static ftype                    function=NULL;
-
-   if(function==NULL){
-    HANDLE library=LoadLibrary("OPENGL32");
-    
-    function=(ftype)GetProcAddress(library,"wglGetProcAddress");
+   return wglGetProcAddress(name);
    }
-   if(function==NULL)
-    return NULL;
-
-   return function(name);
-}
 
 BOOL opengl_wglShareLists(HGLRC hglrc1,HGLRC hglrc2) {
    return wglShareLists(hglrc1,hglrc2);
 }
 
 void  opengl_glReadBuffer(GLenum mode) {
-   typedef WINGDIAPI PROC WINAPI (*ftype)(GLenum mode);
-   static ftype                    function=NULL;
-
-   if(function==NULL){
-    HANDLE library=LoadLibrary("OPENGL32");
-    
-    function=(ftype)GetProcAddress(library,"glReadBuffer");
-   }
-   if(function==NULL)
-    return;
-
-   function(mode);
+   glReadBuffer(mode);
 }
 
 void opengl_glGetIntegerv(GLenum pname,GLint *params) {
-   typedef WINGDIAPI PROC WINAPI (*ftype)(GLenum pname,GLint *params);
-   static ftype                    function=NULL;
-
-   if(function==NULL){
-    HANDLE library=LoadLibrary("OPENGL32");
-    
-    function=(ftype)GetProcAddress(library,"glGetIntegerv");
-   }
-   if(function==NULL)
-    return;
-
-   function(pname,params);
+   glGetIntegerv(pname,params);
 }
 
-
 void  opengl_glDrawBuffer(GLenum mode) {
-   typedef WINGDIAPI PROC WINAPI (*ftype)(GLenum mode);
-   static ftype                    function=NULL;
-
-   if(function==NULL){
-    HANDLE library=LoadLibrary("OPENGL32");
-    
-    function=(ftype)GetProcAddress(library,"glDrawBuffer");
-   }
-   if(function==NULL)
-    return;
-
-   function(mode);
+   glDrawBuffer(mode);
 }
 
 void opengl_glReadPixels(GLint x,GLint y,GLsizei width,GLsizei height,GLenum format,GLenum type,GLvoid *pixels) {
-   static typeof(glReadPixels) *function=NULL;
-
-   if(function==NULL){
-    HANDLE library=LoadLibrary("OPENGL32");
-    
-    function=(typeof(function))GetProcAddress(library,"glReadPixels");
-   }
-   if(function==NULL)
-    return;
-
-   function(x,y,width,height,format,type,pixels);
+   glReadPixels(x,y,width,height,format,type,pixels);
 }
 
-static PFNGLGENBUFFERSARBPROC glGenBuffersARB;
-static PFNGLBINDBUFFERARBPROC glBindBufferARB;
-static PFNGLBUFFERDATAARBPROC glBufferDataARB;
-static PFNGLBUFFERSUBDATAARBPROC glBufferSubDataARB;
-static PFNGLDELETEBUFFERSARBPROC glDeleteBuffersARB;
-static PFNGLGETBUFFERPARAMETERIVARBPROC glGetBufferParameterivARB;
-static PFNGLMAPBUFFERARBPROC glMapBufferARB;
-static PFNGLUNMAPBUFFERARBPROC glUnmapBufferARB;
-
 bool opengl_hasPixelBufferObject(){
-   glGenBuffersARB=(PFNGLGENBUFFERSARBPROC)wglGetProcAddress("glGenBuffersARB");
-   glBindBufferARB=(PFNGLBINDBUFFERARBPROC)wglGetProcAddress("glBindBufferARB");
-   glBufferDataARB=(PFNGLBUFFERDATAARBPROC)wglGetProcAddress("glBufferDataARB");
-   glBufferSubDataARB=(PFNGLBUFFERSUBDATAARBPROC)wglGetProcAddress("glBufferSubDataARB");
-   glDeleteBuffersARB=(PFNGLDELETEBUFFERSARBPROC)wglGetProcAddress("glDeleteBuffersARB");
-   glGetBufferParameterivARB=(PFNGLGETBUFFERPARAMETERIVARBPROC)wglGetProcAddress("glGetBufferParameterivARB");
-   glMapBufferARB=(PFNGLMAPBUFFERARBPROC)wglGetProcAddress("glMapBufferARB");
-   glUnmapBufferARB=(PFNGLUNMAPBUFFERARBPROC)wglGetProcAddress("glUnmapBufferARB");
    
-   if(glGenBuffersARB==NULL)
+   if(wglGetProcAddress("glGenBuffersARB")==NULL)
     return FALSE;
-   if(glBindBufferARB==NULL)
+    
+   if(wglGetProcAddress("glBindBufferARB")==NULL)
     return FALSE;
-   if(glBufferDataARB==NULL)
+    
+   if(wglGetProcAddress("glBufferDataARB")==NULL)
     return FALSE;
-   if(glBufferSubDataARB==NULL)
+    
+   if(wglGetProcAddress("glBufferSubDataARB")==NULL)
     return FALSE;
-   if(glDeleteBuffersARB==NULL)
+    
+   if(wglGetProcAddress("glDeleteBuffersARB")==NULL)
     return FALSE;
-   if(glGetBufferParameterivARB==NULL)
+    
+   if(wglGetProcAddress("glGetBufferParameterivARB")==NULL)
     return FALSE;
-   if(glMapBufferARB==NULL)
+    
+   if(wglGetProcAddress("glMapBufferARB")==NULL)
     return FALSE;
-   if(glUnmapBufferARB==NULL)
+    
+   if(wglGetProcAddress("glUnmapBufferARB")==NULL)
     return FALSE;
     
    return TRUE;
 }
 
 void opengl_glGenBuffers(GLsizei n,GLuint *buffers) {
-   glGenBuffersARB(n,buffers);
+   PFNGLGENBUFFERSARBPROC function=(PFNGLGENBUFFERSARBPROC)wglGetProcAddress("glGenBuffersARB");
+   function(n,buffers);
 }
 
 void opengl_glBindBuffer(GLenum target,GLuint buffer) {
-   glBindBufferARB(target,buffer);
+   PFNGLBINDBUFFERARBPROC function=(PFNGLBINDBUFFERARBPROC)wglGetProcAddress("glBindBufferARB");
+   function(target,buffer);
 }
 
 void opengl_glBufferData(GLenum target,GLsizeiptr size,const GLvoid *bytes,GLenum usage) {
-   glBufferDataARB(target,size,bytes,usage);
+   PFNGLBUFFERDATAARBPROC function=(PFNGLBUFFERDATAARBPROC)wglGetProcAddress("glBufferDataARB");
+   function(target,size,bytes,usage);
 }
 
 void opengl_glBufferSubData(GLenum target,GLsizeiptr offset,GLsizeiptr size,const GLvoid *bytes) {
-   glBufferSubDataARB(target,offset,size,bytes);
+   PFNGLBUFFERSUBDATAARBPROC function=(PFNGLBUFFERSUBDATAARBPROC)wglGetProcAddress("glBufferSubDataARB");
+   function(target,offset,size,bytes);
 }
 
 void opengl_glDeleteBuffers(GLsizei n,const GLuint *buffers) {
-  glDeleteBuffersARB(n,buffers);
+   PFNGLDELETEBUFFERSARBPROC function=(PFNGLDELETEBUFFERSARBPROC)wglGetProcAddress("glDeleteBuffersARB");
+   function(n,buffers);
 }
 
 void opengl_glGetBufferParameteriv(GLenum target,GLenum value,GLint *data) {
-   glGetBufferParameterivARB(target,value,data);
+   PFNGLGETBUFFERPARAMETERIVARBPROC function=(PFNGLGETBUFFERPARAMETERIVARBPROC)wglGetProcAddress("glGetBufferParameterivARB");
+   function(target,value,data);
 }
 
 GLvoid *opengl_glMapBuffer(GLenum target,GLenum access) {
-   return glMapBufferARB(target,access);
+    PFNGLMAPBUFFERARBPROC function=(PFNGLMAPBUFFERARBPROC)wglGetProcAddress("glMapBufferARB");
+   return function(target,access);
 }
 
 GLboolean opengl_glUnmapBuffer(GLenum target) {
-   return glUnmapBufferARB(target);
+   PFNGLUNMAPBUFFERARBPROC function=(PFNGLUNMAPBUFFERARBPROC)wglGetProcAddress("glUnmapBufferARB");
+   return function(target);
 }
 
 
+const char *opengl_wglGetExtensionsStringARB(HDC hdc) {
+   APIENTRY typeof(opengl_wglGetExtensionsStringARB) *function=(typeof(function))wglGetProcAddress("wglGetExtensionsStringARB");
 
+   if(function==NULL){
+    if(NSDebugEnabled)
+     NSLog(@"wglGetProcAddress(wglGetExtensionsStringARB) failed");
+    return NULL;
+   }
+   
+   return function(hdc);
+}
+
+HPBUFFERARB opengl_wglCreatePbufferARB(HDC hDC,int iPixelFormat,int iWidth,int iHeight,const int *piAttribList) {
+   APIENTRY typeof(opengl_wglCreatePbufferARB) *function=(typeof(function))wglGetProcAddress("wglCreatePbufferARB");
+
+   if(function==NULL){
+    if(NSDebugEnabled)
+     NSLog(@"wglGetProcAddress(wglCreatePbufferARB) failed");
+    return NULL;
+   }
+   
+   return function(hDC,iPixelFormat,iWidth,iHeight,piAttribList);
+}
+
+HDC  opengl_wglGetPbufferDCARB(HPBUFFERARB hPbuffer) {
+   APIENTRY typeof(opengl_wglGetPbufferDCARB) *function=(typeof(function))wglGetProcAddress("wglGetPbufferDCARB");
+
+   if(function==NULL){
+    if(NSDebugEnabled)
+     NSLog(@"wglGetProcAddress(wglGetPbufferDCARB) failed");
+    return NULL;
+   }
+   
+   return function(hPbuffer);
+}
+
+int  opengl_wglReleasePbufferDCARB(HPBUFFERARB hPbuffer,HDC hDC) {
+   APIENTRY typeof(opengl_wglReleasePbufferDCARB) *function=(typeof(function))wglGetProcAddress("wglReleasePbufferDCARB");
+
+   if(function==NULL){
+    if(NSDebugEnabled)
+     NSLog(@"wglGetProcAddress(wglReleasePbufferDCARB) failed");
+    return 0;
+   }
+   
+   return function(hPbuffer,hDC);
+}
+
+BOOL opengl_wglDestroyPbufferARB(HPBUFFERARB hPbuffer) {
+   APIENTRY typeof(opengl_wglDestroyPbufferARB) *function=(typeof(function))wglGetProcAddress("wglDestroyPbufferARB");
+
+   if(function==NULL){
+    if(NSDebugEnabled)
+     NSLog(@"wglGetProcAddress(wglDestroyPbufferARB) failed");
+    return NO;
+   }
+   
+   return function(hPbuffer);
+}
+
+BOOL opengl_wglQueryPbufferARB(HPBUFFERARB hPbuffer,int iAttribute,int *piValue) {
+   APIENTRY typeof(opengl_wglQueryPbufferARB) *function=(typeof(function))wglGetProcAddress("wglQueryPbufferARB");
+
+   if(function==NULL){
+    if(NSDebugEnabled)
+     NSLog(@"wglGetProcAddress(wglQueryPbufferARB) failed");
+    return NO;
+   }
+   
+   return function(hPbuffer,iAttribute,piValue);
+}
+
+BOOL opengl_wglGetPixelFormatAttribivARB(HDC hdc,int iPixelFormat,int iLayerPlane,UINT nAttributes,const int *piAttributes,int *piValues) {
+   APIENTRY typeof(opengl_wglGetPixelFormatAttribivARB) *function=(typeof(function))wglGetProcAddress("wglGetPixelFormatAttribivARB");
+
+   if(function==NULL){
+    if(NSDebugEnabled)
+     NSLog(@"wglGetProcAddress(wglGetPixelFormatAttribivARB) failed");
+    return NO;
+   }
+   
+   return function(hdc,iPixelFormat,iLayerPlane,nAttributes,piAttributes,piValues);
+}
+
+BOOL opengl_wglGetPixelFormatAttribfvARB(HDC hdc,int iPixelFormat,int iLayerPlane,UINT nAttributes,const int *piAttributes,FLOAT *pfValues) {
+   APIENTRY typeof(opengl_wglGetPixelFormatAttribfvARB) *function=(typeof(function))wglGetProcAddress("wglGetPixelFormatAttribfvARB");
+
+   if(function==NULL){
+    if(NSDebugEnabled)
+     NSLog(@"wglGetProcAddress(wglGetPixelFormatAttribfvARB) failed");
+    return NO;
+   }
+   
+   return function(hdc,iPixelFormat,iLayerPlane,nAttributes,piAttributes,pfValues);
+}
+
+BOOL opengl_wglChoosePixelFormatARB(HDC hdc,const int *piAttribIList,const FLOAT *pfAttribFList,UINT nMaxFormats,int *piFormats,UINT *nNumFormats) {
+   APIENTRY typeof(opengl_wglChoosePixelFormatARB) *function=(typeof(function))wglGetProcAddress("wglChoosePixelFormatARB");
+
+   if(function==NULL){
+    if(NSDebugEnabled)
+     NSLog(@"wglGetProcAddress(wglChoosePixelFormatARB) failed");
+    return NO;
+   }
+   
+   return function(hdc,piAttribIList,pfAttribFList,nMaxFormats,piFormats,nNumFormats);
+}
+
+void opengl_glGenFramebuffersEXT(GLsizei count,GLuint *results) {
+   APIENTRY typeof(opengl_glGenFramebuffersEXT) *function=(typeof(function))wglGetProcAddress("glGenFramebuffersEXT");
+
+   if(function==NULL){
+    if(NSDebugEnabled)
+     NSLog(@"wglGetProcAddress(glGenFramebuffersEXT) failed");
+    return;
+   }
+   
+   return function(count,results);
+}
+
+void opengl_glDeleteFramebuffersEXT (GLsizei count, const GLuint *idents) {
+   APIENTRY typeof(opengl_glDeleteFramebuffersEXT) *function=(typeof(function))wglGetProcAddress("glDeleteFramebuffersEXT");
+
+   if(function==NULL){
+    if(NSDebugEnabled)
+     NSLog(@"wglGetProcAddress(glDeleteFramebuffersEXT) failed");
+    return;
+   }
+   
+   return function(count,idents);
+}
+
+
+void opengl_glBindFramebufferEXT (GLenum target, GLuint ident) {
+   APIENTRY typeof(opengl_glBindFramebufferEXT) *function=(typeof(function))wglGetProcAddress("glBindFramebufferEXT");
+
+   if(function==NULL){
+    if(NSDebugEnabled)
+     NSLog(@"wglGetProcAddress(glBindFramebufferEXT) failed");
+    return;
+   }
+   
+   return function(target,ident);
+}
+
+void opengl_glGenRenderbuffersEXT (GLsizei count, GLuint *results) {
+   APIENTRY typeof(opengl_glGenRenderbuffersEXT) *function=(typeof(function))wglGetProcAddress("glGenRenderbuffersEXT");
+
+   if(function==NULL){
+    if(NSDebugEnabled)
+     NSLog(@"wglGetProcAddress(glGenRenderbuffersEXT) failed");
+    return;
+   }
+   
+   return function(count,results);
+}
+
+void opengl_glDeleteRenderbuffersEXT (GLsizei count, const GLuint *idents) {
+   APIENTRY typeof(opengl_glDeleteRenderbuffersEXT) *function=(typeof(function))wglGetProcAddress("glDeleteRenderbuffersEXT");
+
+   if(function==NULL){
+    if(NSDebugEnabled)
+     NSLog(@"wglGetProcAddress(glDeleteRenderbuffersEXT) failed");
+    return;
+   }
+   
+   return function(count,idents);
+}
+
+void opengl_glRenderbufferStorageEXT (GLenum target, GLenum internalFormat, GLsizei width, GLsizei height) {
+   APIENTRY typeof(opengl_glRenderbufferStorageEXT) *function=(typeof(function))wglGetProcAddress("glRenderbufferStorageEXT");
+
+   if(function==NULL){
+    if(NSDebugEnabled)
+     NSLog(@"wglGetProcAddress(glRenderbufferStorageEXT) failed");
+    return;
+   }
+   
+   return function(target,internalFormat,width,height);
+}
+
+void opengl_glBindRenderbufferEXT (GLenum target, GLuint ident) {
+   APIENTRY typeof(opengl_glBindRenderbufferEXT) *function=(typeof(function))wglGetProcAddress("glBindRenderbufferEXT");
+
+   if(function==NULL){
+    if(NSDebugEnabled)
+     NSLog(@"wglGetProcAddress(glBindRenderbufferEXT) failed");
+    return;
+   }
+   
+   function(target,ident);
+}
+
+void opengl_glFramebufferRenderbufferEXT (GLenum target, GLenum attachmentPoint, GLenum renderbufferTarget, GLuint renderbufferId) {
+   APIENTRY typeof(opengl_glFramebufferRenderbufferEXT ) *function=(typeof(function))wglGetProcAddress("glFramebufferRenderbufferEXT");
+
+   if(function==NULL){
+    if(NSDebugEnabled)
+     NSLog(@"wglGetProcAddress(glFramebufferRenderbufferEXT ) failed");
+    return;
+   }
+   
+   function(target,attachmentPoint,renderbufferTarget,renderbufferId);
+}
+
+GLenum opengl_glCheckFramebufferStatusEXT(GLenum target) {
+   APIENTRY typeof(opengl_glCheckFramebufferStatusEXT ) *function=(typeof(function))wglGetProcAddress("glCheckFramebufferStatusEXT");
+
+   if(function==NULL){
+    if(NSDebugEnabled)
+     NSLog(@"wglGetProcAddress(glCheckFramebufferStatusEXT ) failed");
+    return GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+   }
+   
+   return function(target);
+}
+
+void opengl_glFramebufferTexture2DEXT(GLenum target, GLenum attachmentPoint,GLenum textureTarget,GLuint textureId,GLint level) {
+   APIENTRY typeof(opengl_glFramebufferTexture2DEXT ) *function=(typeof(function))wglGetProcAddress("glFramebufferTexture2DEXT");
+
+   if(function==NULL){
+    if(NSDebugEnabled)
+     NSLog(@"wglGetProcAddress(glFramebufferTexture2DEXT ) failed");
+    return ;
+   }
+   
+   function(target,attachmentPoint,textureTarget,textureId,level);
+}
+
+
+BOOL opengl_wglMakeContextCurrentARB(HDC hDrawDC,HDC hReadDC,HGLRC hglrc) {
+   APIENTRY typeof(opengl_wglMakeContextCurrentARB ) *function=(typeof(function))wglGetProcAddress("wglMakeContextCurrentARB");
+
+   if(function==NULL){
+    if(NSDebugEnabled)
+     NSLog(@"wglGetProcAddress(wglMakeContextCurrentARB ) failed");
+    return NO;
+   }
+   
+   return function(hDrawDC,hReadDC,hglrc);
+}

@@ -40,6 +40,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     _selectedIndex=[coder decodeIntForKey:@"NSSelectedIndex"];
     _arrowPosition = [coder decodeIntForKey: @"NSArrowPosition"];
     _preferredEdge = [coder decodeIntForKey: @"NSPreferredEdge"];
+    _usesItemFromMenu=[coder decodeBoolForKey:@"NSUsesItemFromMenu"];
+    
+    [self synchronizeTitleAndSelectedItem];
    }
    else {
     [NSException raise:NSInvalidArgumentException format:@"%@ can not initWithCoder:%@",isa,[coder class]];
@@ -68,6 +71,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 -(void)dealloc {
    [_menu release];
    [super dealloc];
+}
+
+-(BOOL)isOpaque {
+   return NO;
 }
 
 -(BOOL)pullsDown {
@@ -197,6 +204,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -(void)removeAllItems {
    [_menu removeAllItems];
+	_selectedIndex = -1;
 }
 
 -(void)removeItemAtIndex:(NSInteger)index {
@@ -286,27 +294,60 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     return [NSImage imageNamed:@"NSPopUpButtonCellPopUp"];
 }
 
--(void)drawInteriorWithFrame:(NSRect)frame inView:(NSView *)controlView {
-	NSRect fakeFrame = frame;
+-(void)drawBezelWithFrame:(NSRect)frame inView:(NSView *)controlView {
+
+	[super drawBezelWithFrame: frame inView: controlView];
+
 	NSImage * arrowImage = ( _arrowPosition != NSPopUpNoArrow ) ? [self arrowImage] : NULL;
 	
-	if( _arrowPosition == NSPopUpArrowAtBottom ) {
-		// For ONLY this arrow position, we adjust the frame to exclude the arrow we're going to draw afterwards
-		fakeFrame.size.width -= [arrowImage size].width + 4;		
-	}
-	
-	[super drawInteriorWithFrame: fakeFrame inView: controlView];
+	if (arrowImage == NULL) return;
 	
 	// Now draw the arrow
     if( _arrowPosition != NSPopUpNoArrow )
 	{
+		// Scale down the arrows so they look proportional to the control size
+		float sizeFactor = 0;
+		switch ([self controlSize]) {
+			case NSRegularControlSize:
+				sizeFactor = 0;
+				break;
+			case NSSmallControlSize:
+				sizeFactor = 1;
+				break;
+			case NSMiniControlSize:
+				sizeFactor = 2;
+				break;
+		}
 		NSRect otherFrame = frame;
 		NSSize arrowSize = [arrowImage size];
-		otherFrame.origin.x += otherFrame.size.width - ( arrowSize.width + 2 );
+		otherFrame.origin.x += otherFrame.size.width - ( arrowSize.width + (4 - sizeFactor) );
 		otherFrame.origin.y += ( otherFrame.size.height - arrowSize.height ) / 2;
 		otherFrame.size =  arrowSize;
+		
+		otherFrame = NSInsetRect(otherFrame, sizeFactor, sizeFactor);
 		[[controlView graphicsStyle] drawButtonImage:arrowImage inRect:otherFrame enabled:YES mixed:YES];
 	}
+}
+
+-(NSSize)cellSize  {
+   NSSize result=[super cellSize];
+   
+   switch([self controlSize]){
+   
+    case NSRegularControlSize:
+     result.height=22;
+     break;
+			
+    case NSSmallControlSize:
+     result.height=19;
+     break;
+			
+    case NSMiniControlSize:
+     result.height=15;
+     break;
+   }
+
+   return result;
 }
 
 -(void)setTitle:(NSString *)title {

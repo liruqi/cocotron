@@ -237,7 +237,7 @@ void *, const void *))
 {
 	NSInteger h, i, j, k, l, m, n = nel;
 	void* A; // points to an element
-	void* B = malloc((n/2 + 1) * width); // points to a temp array
+	void* B = NSZoneMalloc(NULL,(n/2 + 1) * width); // points to a temp array
 	
 
 	for (h = 1; h < n; h += h) {
@@ -398,7 +398,7 @@ static int selectorCompare(id object1,id object2,void *userData){
 -(void)sortUsingFunction:(NSInteger (*)(id, id, void *))compare context:(void *)context
 {
    NSInteger h, i, j, k, l, m, n = [self count];
-   id  A, *B = malloc((n/2 + 1) * sizeof(id));
+   id  A, *B = NSZoneMalloc(NULL,(n/2 + 1) * sizeof(id));
 
 // to prevent retain counts from temporarily hitting zero.  
    for(i=0;i<n;i++)
@@ -438,16 +438,16 @@ static int selectorCompare(id object1,id object2,void *userData){
    free(B);
 }
 
+static NSComparisonResult compareObjectsUsingDescriptors(id A, id B, void *descriptorsX) {
+   NSArray *descriptors=(id)descriptorsX;
+   NSComparisonResult result=NSOrderedSame;
 
-// sort using sort descriptors
-static NSComparisonResult compareObjectsUsingDescriptors(id A, id B, void *descriptors) { 
-   NSComparisonResult result;
+   NSInteger i,count=[descriptors count];
 
-   NSInteger n = [(NSArray *)descriptors count];
-   int i = 0;
-   do
-      result = [(NSSortDescriptor *)[(NSArray *)descriptors objectAtIndex:i++] compareObject:A toObject:B];
-   while (i < n && result == NSOrderedSame);
+   for(i=0;i<count;i++){
+    if((result=[[descriptors objectAtIndex:i++] compareObject:A toObject:B])!=NSOrderedSame)
+     break;
+   }
 
    return result;
 }
@@ -484,6 +484,11 @@ static NSComparisonResult compareObjectsUsingDescriptors(id A, id B, void *descr
 
 
 -(void)filterUsingPredicate:(NSPredicate *)predicate {
+   if(predicate==nil){
+    [NSException raise:NSInvalidArgumentException format:@"-[%@ %s] predicate is nil",isa,_cmd];
+    return;
+   }
+   
    NSInteger count=[self count];
    
    while(--count>=0){

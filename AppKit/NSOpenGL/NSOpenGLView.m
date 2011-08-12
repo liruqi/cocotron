@@ -65,7 +65,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 	if (_context == nil) {
 		_context = [[NSOpenGLContext alloc] initWithFormat:_pixelFormat shareContext:nil];
 		[_context setView:self];
-		_needsPrepare=YES;
+        _needsReshape=YES;
 	}
 
 	return _context;
@@ -83,6 +83,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 	[_context release];
 	_context = context;
 	[_context setView:self];
+   _needsReshape=YES;
 }
 
 - (void)update {
@@ -99,24 +100,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 - (BOOL)isOpaque {
-// Cocoa always return YES, until the compositing is improved for transparent surfaces we need to do this
-   long value=YES;
-   
-   [[self openGLContext] getValues:&value forParameter:NSOpenGLCPSurfaceOpacity];
-
-   return value;
+   return YES;
 }
 
 - (void)lockFocus {
 	[super lockFocus];
 
+    CGLLockContext([_context CGLContextObj]);
+    [_context setView:self];
 	[[self openGLContext] makeCurrentContext];
-
-	if (_needsPrepare){
-		[self prepareOpenGL];
-		_needsPrepare = NO;
-	}
-
+    
 	if (_needsReshape){
 		[self reshape];
 		_needsReshape = NO;
@@ -124,7 +117,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 - (void)unlockFocus {
-	[[self openGLContext] flushBuffer];
+// Cocoa _does not_ flushBuffer
+// Single buffered contexts need to be updated somehow else
+    CGLUnlockContext([_context CGLContextObj]);
+
 	[super unlockFocus];
 }
 

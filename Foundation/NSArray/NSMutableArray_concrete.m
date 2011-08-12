@@ -248,6 +248,16 @@ static void removeObjectAtIndex(NSMutableArray_concrete *self,NSUInteger index) 
     objects[i]=_objects[i];
 }
 
+-(NSUInteger)indexOfObjectIdenticalTo:object {
+   NSInteger i;
+
+   for(i=0;i<self->_count;i++)
+    if(self->_objects[i]==object)
+     return i;
+
+   return NSNotFound;
+}
+
 static inline NSUInteger indexOfObject(NSMutableArray_concrete *self,id object){
    NSUInteger i;
 
@@ -276,7 +286,7 @@ static inline NSUInteger indexOfObject(NSMutableArray_concrete *self,id object){
 // iterative mergesort based on http://www.inf.fh-flensburg.de/lang/algorithmen/sortieren/merge/mergiter.htm
 -(void)sortUsingFunction:(NSInteger (*)(id, id, void *))compare context:(void *)context {
   NSInteger h, i, j, k, l, m, n = _count;
-  id  A, *B = malloc((n/2 + 1) * sizeof(id));
+  id  A, *B = NSZoneMalloc(NULL,(n/2 + 1) * sizeof(id));
 
   for (h = 1; h < n; h += h)
   {

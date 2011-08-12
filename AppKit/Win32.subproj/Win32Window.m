@@ -12,14 +12,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <Foundation/NSString_win32.h>
 #import <Onyx2D/O2Context.h>
 #import <Onyx2D/O2Surface.h>
-#import <AppKit/O2Context_gdi.h>
+#import <Onyx2D/O2Context_gdi.h>
+#import <Foundation/NSPlatform_win32.h>
 
 #import <AppKit/NSWindow.h>
 #import <AppKit/NSPanel.h>
-#import <AppKit/NSApplication.h>
 #import <AppKit/NSDrawerWindow.h>
 #import <QuartzCore/CAWindowOpenGLContext.h>
-#import "O2Surface_DIBSection.h"
+#import <Onyx2D/O2Surface_DIBSection.h>
+#import <CoreGraphics/CGLPixelSurface.h>
 
 @implementation Win32Window
 
@@ -68,6 +69,10 @@ static DWORD Win32ExtendedStyleForStyleMask(unsigned styleMask,BOOL isPanel,BOOL
    if(isLayeredWindow)
     result|=/*CS_DROPSHADOW|*/WS_EX_LAYERED;
 
+	if (styleMask&NSUtilityWindowMask) {
+		result|=WS_EX_TOPMOST;// Make it floating as a utility window should be
+	}
+		
    return result/*|0x80000*/ ;
 }
 
@@ -175,17 +180,21 @@ static const char *Win32ClassNameForStyleMask(unsigned styleMask,bool hasShadow)
    if(_title!=nil)
     SetWindowTextW(_handle,(const unichar *)[_title cStringUsingEncoding:NSUnicodeStringEncoding]);
 
-   SetProp(_handle,"self",self);
+   SetProp(_handle,"Win32Window",self);
+
+ //  [self setupPixelFormat];
 }
 
 -(void)destroyWindowHandle {
-   SetProp(_handle,"self",nil);
+   SetProp(_handle,"Win32Window",nil);
    DestroyWindow(_handle);
    _handle=NULL;
 }
 
--initWithFrame:(CGRect)frame styleMask:(unsigned)styleMask isPanel:(BOOL)isPanel backingType:(CGSBackingStoreType)backingType {
+-initWithFrame:(CGRect)frame styleMask:(unsigned)styleMask isPanel:(BOOL)isPanel backingType:(CGSBackingStoreType)backingType {   
+   InitializeCriticalSection(&_lock);
    _frame=frame;
+   _level=kCGNormalWindowLevel;
    _isOpaque=YES;
    _hasShadow=YES;
    _alphaValue=1.0;
@@ -204,6 +213,8 @@ static const char *Win32ClassNameForStyleMask(unsigned styleMask,bool hasShadow)
 
    _backingContext=nil;
 
+   _overlays=[[NSMutableArray alloc] init];
+   
    _ignoreMinMaxMessage=NO;
    _sentBeginSizing=NO;
    _deviceDictionary=[NSMutableDictionary new];
@@ -218,6 +229,9 @@ static const char *Win32ClassNameForStyleMask(unsigned styleMask,bool hasShadow)
 -(void)dealloc {
    [self invalidate];
    [_deviceDictionary release];
+   [_overlays makeObjectsPerformSelector:@selector(setWindow:) withObject:nil];
+   [_overlays release];
+   [_overlayResult release];
    [super dealloc];
 }
 
@@ -228,6 +242,14 @@ static const char *Win32ClassNameForStyleMask(unsigned styleMask,bool hasShadow)
    _cgContext=nil;
    [_backingContext release];
    _backingContext=nil;
+}
+
+-(void)lock {
+   EnterCriticalSection(&_lock);
+}
+
+-(void)unlock {
+   LeaveCriticalSection(&_lock);
 }
 
 -(void)setDelegate:delegate {
@@ -276,12 +298,14 @@ static const char *Win32ClassNameForStyleMask(unsigned styleMask,bool hasShadow)
 
 -(void)invalidateContextsWithNewSize:(CGSize)size forceRebuild:(BOOL)forceRebuild {
    if(!NSEqualSizes(_frame.size,size) || forceRebuild){
+    [self lock];
     _frame.size=size;
     [_cgContext release];
     _cgContext=nil;
     [_backingContext release];
     _backingContext=nil;
     [_delegate platformWindowDidInvalidateCGContext:self];
+    [self unlock];
    }  
 }
 
@@ -295,6 +319,10 @@ static const char *Win32ClassNameForStyleMask(unsigned styleMask,bool hasShadow)
 
 -(unsigned)styleMask {
    return _styleMask;
+}
+
+-(void)setLevel:(int)value {
+   _level=value;
 }
 
 -(void)setStyleMask:(unsigned)mask {
@@ -312,14 +340,17 @@ static const char *Win32ClassNameForStyleMask(unsigned styleMask,bool hasShadow)
 }
 
 -(void)setFrame:(CGRect)frame {
+   [self invalidateContextsWithNewSize:frame.size];
+
+    // _frame must be set before the MoveWindow as MoveWindow generates WM_SIZE and WM_MOVE messages
+    // which need to check the size against the current to prevent erroneous resize/move notifications
+    _frame=frame;
+    
    CGRect moveTo=convertFrameToWin32ScreenCoordinates(frame);
 
    _ignoreMinMaxMessage=YES;
    MoveWindow(_handle, moveTo.origin.x, moveTo.origin.y,moveTo.size.width, moveTo.size.height,YES);
    _ignoreMinMaxMessage=NO;
-
-   [self invalidateContextsWithNewSize:frame.size];
-   _frame=frame;
 }
 
 -(void)setOpaque:(BOOL)value {
@@ -401,19 +432,14 @@ static const char *Win32ClassNameForStyleMask(unsigned styleMask,bool hasShadow)
 }
 
 -(void)bringToTop {
-   if(_styleMask==NSBorderlessWindowMask){
-    SetWindowPos(_handle,HWND_TOPMOST,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE|SWP_SHOWWINDOW);
+   SetWindowPos(_handle,(_level>kCGNormalWindowLevel)?HWND_TOPMOST:HWND_TOP,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE|SWP_SHOWWINDOW);
    }
-   else {
-    SetWindowPos(_handle,HWND_TOP,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE|SWP_SHOWWINDOW);
-   }
-}
 
 -(void)placeAboveWindow:(Win32Window *)other {
    HWND otherHandle=[other windowHandle];
 
    if(otherHandle==NULL)
-    otherHandle=(_styleMask==NSBorderlessWindowMask)?HWND_TOPMOST:HWND_TOP;
+    otherHandle=(_level>kCGNormalWindowLevel)?HWND_TOPMOST:HWND_TOP;
 
    SetWindowPos(_handle,otherHandle,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE|SWP_SHOWWINDOW);
 }
@@ -429,6 +455,9 @@ static const char *Win32ClassNameForStyleMask(unsigned styleMask,bool hasShadow)
 
 -(void)makeKey {
    SetActiveWindow(_handle);
+}
+
+-(void)makeMain {
 }
 
 -(void)captureEvents {
@@ -447,11 +476,8 @@ static const char *Win32ClassNameForStyleMask(unsigned styleMask,bool hasShadow)
     return IsIconic(_handle);
 }
 
-#if 0
--(CGLContextObj)createCGLContextObjIfNeeded {
-   if(_cglContext==NULL){
+-(void)setupPixelFormat {
     PIXELFORMATDESCRIPTOR pfd;
-    CGLError error;
     HDC       dc=GetDC(_handle);
        
     memset(&pfd,0,sizeof(pfd));
@@ -461,6 +487,9 @@ static const char *Win32ClassNameForStyleMask(unsigned styleMask,bool hasShadow)
     pfd.dwFlags=PFD_SUPPORT_OPENGL|PFD_DOUBLEBUFFER|PFD_GENERIC_ACCELERATED|PFD_DRAW_TO_WINDOW;
     pfd.iPixelType=PFD_TYPE_RGBA;
     pfd.cColorBits=24;
+   pfd.cRedBits=8;
+   pfd.cGreenBits=8;
+   pfd.cBlueBits=8;
     pfd.cAlphaBits=8;
     pfd.iLayerType=PFD_MAIN_PLANE;
 
@@ -469,17 +498,9 @@ static const char *Win32ClassNameForStyleMask(unsigned styleMask,bool hasShadow)
     if(!SetPixelFormat(dc,pfIndex,&pfd))
      NSLog(@"SetPixelFormat failed at %s %d",__FILE__,__LINE__);
 
-    CGL_EXPORT CGLError CGLCreateContext(CGLPixelFormatObj pixelFormat,HDC dc,CGLContextObj *resultp);
- 
-    if((error=CGLCreateContext(NULL,dc,&_cglContext))!=kCGLNoError)
-     NSLog(@"CGLCreateContext failed with %d in %s %d",error,__FILE__,__LINE__);
-    
     ReleaseDC(_handle,dc);
    }
-   
-   return _cglContext;
-}
-
+#if 0
 -(BOOL)openGLFlushBuffer {
    CGLError error;
    O2Surface *surface=[_backingContext surface];
@@ -506,20 +527,176 @@ static const char *Win32ClassNameForStyleMask(unsigned styleMask,bool hasShadow)
 }
 #endif
 
--(void)flushBuffer {   
-   O2Context           *other=_backingContext;
-   O2DeviceContext_gdi *deviceContext=nil;
+#define NO_INCREMENTAL_COMPOSITE 1
 
-   if([other isKindOfClass:[O2Context_gdi class]])
-    deviceContext=[(O2Context_gdi *)other deviceContext];
-   else {
-    O2Surface *surface=[other surface];
-       
-    if([surface isKindOfClass:[O2Surface_DIBSection class]])
-     deviceContext=[(O2Surface_DIBSection *)surface deviceContext];
+-(O2Surface_DIBSection *)resultSurface:(O2Point *)fromPoint {
+   O2Surface_DIBSection *result=[_backingContext surface];
+
+   *fromPoint=O2PointMake(0,0);
+   
+   if([_overlays count]==0)
+    return result;
+
+   BOOL allOpaque=YES;
+   
+   for(CGLPixelSurface *check in _overlays)
+    if(![check isOpaque]){
+     allOpaque=NO;
+     break;
+    }
+
+#ifdef NO_INCREMENTAL_COMPOSITE
+   allOpaque=NO;
+#endif
+
+   if(allOpaque){
+    [_overlayResult release];
+    _overlayResult=nil;
    }
+   else {
+    size_t resultWidth=O2ImageGetWidth(result);
+    size_t resultHeight=O2ImageGetHeight(result);
+       
+    if([_overlays count]==1){
+    // For the case where there is one overlay and it intersects the whole window
+    // we check if the window backing is 0 and we just return the overlay for the window's contents
+    // It would be better if the surface kept a flag if cleared.
+     CGLPixelSurface *check=[_overlays objectAtIndex:0];
+     O2Rect     checkFrame=[check frame];
+     O2Rect     intersect=O2RectIntersection(checkFrame,O2RectMake(0,0,resultWidth,resultHeight));
+     
+     if(intersect.origin.x==0 && intersect.origin.y==0 && intersect.size.width==resultWidth && intersect.size.height==resultHeight){
+      O2argb8u  *pixels=[result pixelBytes];
+      int        i,count=resultWidth*resultHeight;
+#if 1
+i=count;
+#else
+      for(i=0;i<count;i++)
+       if(pixels[i].a!=0x00)
+        break;
+#endif      
+      if(i==count){
+       fromPoint->x=-checkFrame.origin.x;
+       fromPoint->y=-checkFrame.origin.y;
+       return [check validSurface];
+   }
+     }
+    }
 
+    if(O2ImageGetWidth(_overlayResult)!=resultWidth || O2ImageGetHeight(_overlayResult)!=resultHeight){
+     [_overlayResult release];
+     _overlayResult=[[O2Surface_DIBSection alloc] initWithWidth:resultWidth height:resultHeight compatibleWithDeviceContext:nil];
+    }
+    
+     BLENDFUNCTION blend;
+    
+     blend.BlendOp=AC_SRC_OVER;
+     blend.BlendFlags=0;
+     blend.SourceConstantAlpha=255;
+     blend.AlphaFormat=0;
+     
+     O2SurfaceLock(result);
+     AlphaBlend([[_overlayResult deviceContext] dc],0,0,resultWidth,resultHeight,[[result deviceContext] dc],0,0,resultWidth,resultHeight,blend);
+     O2SurfaceUnlock(result);
+#if 0
+    uint32_t *src=[result pixelBytes];
+    uint32_t *dst=[_overlayResult pixelBytes];
+    // FIXME: if backing is not 32bpp this needs to accomodate that
+    int       i,count=O2ImageGetBytesPerRow(result)/4*resultHeight;
+    
+    for(i=0;i<count;i++)
+     dst[i]=src[i];
+#endif
+
+    result=_overlayResult;
+   }
+   
+   O2SurfaceLock(result);
+   for(CGLPixelSurface *overlay in _overlays){
+#ifndef NO_INCREMENTAL_COMPOSITE
+    if([overlay isOpaque])
+     continue;
+#endif
+
+    O2Rect                overFrame=[overlay frame];
+    O2Surface_DIBSection *overSurface=[overlay validSurface];
+    
+    if(overSurface!=nil){
+     BLENDFUNCTION blend;
+    
+     blend.BlendOp=AC_SRC_OVER;
+     blend.BlendFlags=0;
+     blend.SourceConstantAlpha=255;
+     blend.AlphaFormat=[overlay isOpaque]?0:AC_SRC_ALPHA;
+
+     int y=O2ImageGetHeight(result)-(overFrame.origin.y+overFrame.size.height);
+     
+     O2SurfaceLock(overSurface);
+     AlphaBlend([[result deviceContext] dc],overFrame.origin.x,y,overFrame.size.width,overFrame.size.height,[[overSurface deviceContext] dc],0,0,overFrame.size.width,overFrame.size.height,blend);
+     O2SurfaceUnlock(overSurface);
+    }
+    
+   }
+   O2SurfaceUnlock(result);
+   
+   return result;
+}
+
+-(void)flushOverlay:(CGLPixelSurface *)overlay {
+#ifndef NO_INCREMENTAL_COMPOSITE
+   [self lock];
+   
+   if([overlay isOpaque]){
+    O2Surface_DIBSection *backingSurface=[_backingContext surface];
+    O2Rect                overFrame=[overlay frame];
+    O2Surface_DIBSection *overSurface=[overlay validSurface];
+    
+    if(backingSurface!=nil){
+     BLENDFUNCTION blend;
+    
+     blend.BlendOp=AC_SRC_OVER;
+     blend.BlendFlags=0;
+     blend.SourceConstantAlpha=255;
+     blend.AlphaFormat=0;
+
+     int y=O2ImageGetHeight(backingSurface)-(overFrame.origin.y+overFrame.size.height);
+     
+     HDC overlayDC=[[overSurface deviceContext] dc];
+    
+     O2SurfaceLock(backingSurface);
+     AlphaBlend([[backingSurface deviceContext] dc],overFrame.origin.x,y,overFrame.size.width,overFrame.size.height,overlayDC,0,0,overFrame.size.width,overFrame.size.height,blend);
+     O2SurfaceUnlock(backingSurface);
+    }
+   }
+   
+   [self unlock];
+#endif
+
+   [self flushBuffer];
+}
+
+-(void)disableFlushWindow {
+   _disableFlushWindow++;
+}
+
+-(void)enableFlushWindow {
+   _disableFlushWindow--;
+}
+
+-(void)flushBuffer {
+   [self lock];
+   
+   if(_disableFlushWindow){
+    [self unlock];
+    return;
+    }
+
+   O2Point fromPoint;
    if([self isLayeredWindow]){
+    if(_backingContext!=nil){
+     O2Surface_DIBSection *surface=[self resultSurface:&fromPoint];
+     O2DeviceContext_gdi  *deviceContext=[surface deviceContext];
+     
     BLENDFUNCTION blend;
     BYTE          constantAlpha=MAX(0,MIN(_alphaValue*255,255));
     
@@ -529,11 +706,11 @@ static const char *Win32ClassNameForStyleMask(unsigned styleMask,bool hasShadow)
     blend.AlphaFormat=AC_SRC_ALPHA;
     
     SIZE sizeWnd = {_frame.size.width, _frame.size.height};
-    POINT ptSrc = {0, 0};
-//    DWORD flags=(_isOpaque && constantAlpha==255)?ULW_OPAQUE:ULW_ALPHA;
-    DWORD flags=ULW_OPAQUE;
+     POINT ptSrc = {fromPoint.x, fromPoint.y};
+     DWORD flags=(_isOpaque && constantAlpha==255)?ULW_OPAQUE:ULW_ALPHA;
     
     UpdateLayeredWindow(_handle, NULL, NULL, &sizeWnd, [deviceContext dc], &ptSrc, 0, &blend, flags);
+   }
    }
    else {
     switch(_backingType){
@@ -544,6 +721,8 @@ static const char *Win32ClassNameForStyleMask(unsigned styleMask,bool hasShadow)
  
      case CGSBackingStoreBuffered:
       if(_backingContext!=nil){
+       O2Surface_DIBSection *surface=[self resultSurface:&fromPoint];
+       O2DeviceContext_gdi  *deviceContext=[surface deviceContext];
        int                  dstX=0;
        int                  dstY=0;
        int                  width=_frame.size.width;
@@ -553,11 +732,15 @@ static const char *Win32ClassNameForStyleMask(unsigned styleMask,bool hasShadow)
        
        CGNativeBorderFrameWidthsForStyle([self styleMask],&top,&left,&bottom,&right);
        
-       if(deviceContext!=nil)
+       if(deviceContext!=nil){
+        O2SurfaceLock(surface);
         BitBlt([_cgContext dc],0,0,width,height,[deviceContext dc],left,top,SRCCOPY);
+        O2SurfaceUnlock(surface);
+       }
       }
     }
    }
+   [self unlock];
 }
 
 -(CGPoint)convertPOINTLToBase:(POINTL)point {
@@ -618,15 +801,21 @@ static const char *Win32ClassNameForStyleMask(unsigned styleMask,bool hasShadow)
 -(void)_GetWindowRectDidSize:(BOOL)didSize {
    CGRect frame=[self queryFrame];
    
-   if(frame.size.width>0 && frame.size.height>0)
+    if(frame.size.width>0 && frame.size.height>0){
     [_delegate platformWindow:self frameChanged:frame didSize:didSize];
+    }
 }
 
 -(int)WM_SIZE_wParam:(WPARAM)wParam lParam:(LPARAM)lParam {
    CGSize contentSize={LOWORD(lParam),HIWORD(lParam)};
 
    if(contentSize.width>0 && contentSize.height>0){
-    [self invalidateContextsWithNewSize:[self queryFrame].size];
+       NSSize checkSize=[self queryFrame].size;
+       
+       if(NSEqualSizes(checkSize,_frame.size))
+           return 0;
+       
+    [self invalidateContextsWithNewSize:checkSize];
 
     [self _GetWindowRectDidSize:YES];
 
@@ -646,9 +835,15 @@ static const char *Win32ClassNameForStyleMask(unsigned styleMask,bool hasShadow)
 }
 
 -(int)WM_MOVE_wParam:(WPARAM)wParam lParam:(LPARAM)lParam {
-   [_delegate platformWindowWillMove:self];
+   NSPoint checkOrigin=[self queryFrame].origin;
+    
+   if(NSEqualPoints(checkOrigin,_frame.origin))
+    return 0;
+
+    [_delegate platformWindowWillMove:self];
    [self _GetWindowRectDidSize:NO];
    [_delegate platformWindowDidMove:self];
+
    return 0;
 }
 
@@ -722,9 +917,10 @@ static const char *Win32ClassNameForStyleMask(unsigned styleMask,bool hasShadow)
    RECT   rect=*(RECT *)lParam;
    CGSize size=NSMakeSize(rect.right-rect.left,rect.bottom-rect.top);
 
-   if(!_sentBeginSizing)
+   if(!_sentBeginSizing){
     [_delegate platformWindowWillBeginSizing:self];
-
+   }
+   
    _sentBeginSizing=YES;
 
    size=[_delegate platformWindow:self frameSizeWillChange:size];
@@ -766,6 +962,9 @@ static const char *Win32ClassNameForStyleMask(unsigned styleMask,bool hasShadow)
    if(_ignoreMinMaxMessage)
     return 0;
 
+   info->ptMaxTrackSize.x=10000;
+   info->ptMaxTrackSize.y=10000;
+
    if([_delegate minSize].width>0)
     info->ptMinTrackSize.x=[_delegate minSize].width;
    if([_delegate minSize].height>0)
@@ -775,13 +974,16 @@ static const char *Win32ClassNameForStyleMask(unsigned styleMask,bool hasShadow)
 }
 
 -(int)WM_ENTERSIZEMOVE_wParam:(WPARAM)wParam lParam:(LPARAM)lParam {
+   
    return 0;
 }
 
 -(int)WM_EXITSIZEMOVE_wParam:(WPARAM)wParam lParam:(LPARAM)lParam {
-   if(_sentBeginSizing)
+   
+   if(_sentBeginSizing){
     [_delegate platformWindowDidEndSizing:self];
-
+   }
+   
    [_delegate platformWindowExitMove:self];
 
    _sentBeginSizing=NO;
@@ -842,7 +1044,7 @@ static const char *Win32ClassNameForStyleMask(unsigned styleMask,bool hasShadow)
 
 static LRESULT CALLBACK windowProcedure(HWND handle,UINT message,WPARAM wParam,LPARAM lParam){
    NSAutoreleasePool *pool=[NSAutoreleasePool new];
-   Win32Window       *self=GetProp(handle,"self");
+   Win32Window       *self=GetProp(handle,"Win32Window");
    LRESULT            result;
 
    if(self==nil)
@@ -872,15 +1074,11 @@ static void initializeWindowClass(WNDCLASS *class){
 
 +(void)initialize {
    if(self==[Win32Window class]){
-    NSString *name=[[NSProcessInfo processInfo] processName];
+	NSString *name=[[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleIconFile"];
     NSString *path=[[NSBundle mainBundle] pathForResource:name ofType:@"ico"];
-    HICON     icon=(path==nil)?NULL:LoadImage(NULL,[path fileSystemRepresentation],IMAGE_ICON,0,0,LR_DEFAULTCOLOR|LR_LOADFROMFILE);
+    HICON     icon=(path==nil)?NULL:LoadImage(NULL,[path fileSystemRepresentation],IMAGE_ICON,16,16,LR_DEFAULTCOLOR|LR_LOADFROMFILE);
 
     static WNDCLASS _standardWindowClass,_borderlessWindowClass,_borderlessWindowClassWithShadow;
-    OSVERSIONINFOEX osVersion;
-    
-    osVersion.dwOSVersionInfoSize=sizeof(osVersion);
-    GetVersionEx((OSVERSIONINFO *)&osVersion);
 
     if(icon==NULL)
      icon=LoadImage(NULL,IDI_APPLICATION,IMAGE_ICON,0,0,LR_DEFAULTCOLOR|LR_SHARED);
@@ -896,10 +1094,8 @@ static void initializeWindowClass(WNDCLASS *class){
     
     _borderlessWindowClassWithShadow.lpszClassName="Win32BorderlessWindowWithShadow";
     
-    // XP or higher
-    if((osVersion.dwMajorVersion==5 && osVersion.dwMinorVersion>=1) || osVersion.dwMajorVersion>5){
+    if(NSPlatformGreaterThanOrEqualToWindowsXP())
      _borderlessWindowClassWithShadow.style|=CS_DROPSHADOW;
-    }
         
     if(RegisterClass(&_standardWindowClass)==0)
      NSLog(@"RegisterClass failed");
@@ -910,6 +1106,19 @@ static void initializeWindowClass(WNDCLASS *class){
     if(RegisterClass(&_borderlessWindowClassWithShadow)==0)
      NSLog(@"RegisterClass failed");
    }
+}
+
+-(void)addOverlay:(CGLPixelSurface *)overlay {
+   [overlay setWindow:self];
+   
+   if(![_overlays containsObject:overlay])
+    [_overlays addObject:overlay];
+}
+
+-(void)removeOverlay:(CGLPixelSurface *)overlay {
+   [overlay setWindow:nil];
+   
+   [_overlays removeObjectIdenticalTo:overlay];
 }
 
 @end

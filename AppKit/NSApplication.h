@@ -9,6 +9,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <AppKit/NSResponder.h>
 #import <AppKit/AppKitExport.h>
 #import <AppKit/NSGraphics.h>
+#import <pthread.h>
 
 @class NSWindow,NSImage,NSMenu, NSPasteboard, NSDisplay,NSDockTile;
 
@@ -73,6 +74,8 @@ typedef enum {
    NSDisplay      *_display;
    id              _delegate;
    NSMutableArray *_windows;
+   NSWindow       *_keyWindow;
+   NSWindow       *_mainWindow;
    NSMenu         *_mainMenu;
    NSMenu         *_windowsMenu;
 
@@ -86,8 +89,8 @@ typedef enum {
    NSDockTile     *_dockTile;
 
    NSMutableArray *_modalStack;
-   NSMutableArray *_orderedDocuments;
-   NSMutableArray *_orderedWindows;
+   pthread_mutex_t _lock; 
+   NSMutableArray *_orderedWindows; // get rid of
    NSTimer *_attentionTimer;
 }
 
@@ -101,7 +104,7 @@ typedef enum {
 
 -delegate;
 -(NSArray *)windows;
--(NSWindow *)windowWithWindowNumber:(int)number;
+-(NSWindow *)windowWithWindowNumber:(NSInteger)number;
 
 -(NSMenu *)mainMenu;
 -(NSMenu *)windowsMenu;
@@ -208,8 +211,6 @@ typedef enum {
 -(void)_windowDidBecomeActive:(NSWindow *)window;
 -(void)_windowWillBecomeDeactive:(NSWindow *)window;
 -(void)_windowDidBecomeDeactive:(NSWindow *)window;
--(void)_windowOrderingChange:(NSWindowOrderingMode)place forWindow:(NSWindow *)window relativeTo:(NSWindow *)relativeWindow;
--(void)_updateOrderedDocuments;
 
 @end
 

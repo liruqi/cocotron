@@ -11,10 +11,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 #import <AppKit/NSResponder.h>
 #import <AppKit/NSGraphics.h>
+#import <AppKit/NSAnimation.h>
 #import <AppKit/AppKitExport.h>
 #import <ApplicationServices/ApplicationServices.h>
 
-@class NSWindow, NSMenu, NSMenuItem, NSCursor, NSClipView, NSPasteboard, NSTextInputContext, NSImage, NSBitmapImageRep, NSScrollView, NSTrackingArea, NSShadow, NSScreen, CALayer, CIFilter;
+@class NSWindow, NSMenu, NSMenuItem, NSCursor, NSClipView, NSPasteboard, NSTextInputContext, NSImage, NSBitmapImageRep, NSScrollView, NSTrackingArea, NSShadow, NSScreen, CALayer, CIFilter, CGLPixelSurface,CALayerContext;
 
 // See Cocoa Event Handling Guide : Using Tracking-Area Objects : Compatibility Issues
 typedef NSTrackingArea *NSTrackingRectTag;
@@ -65,7 +66,7 @@ APPKIT_EXPORT NSString * const NSViewFrameDidChangeNotification;
 APPKIT_EXPORT NSString * const NSViewBoundsDidChangeNotification;
 APPKIT_EXPORT NSString * const NSViewFocusDidChangeNotification;
 
-@interface NSView : NSResponder {
+@interface NSView : NSResponder <NSAnimatablePropertyContainer> {
    NSRect          _frame;
    NSRect          _bounds;
    NSWindow       *_window;
@@ -83,19 +84,31 @@ APPKIT_EXPORT NSString * const NSViewFocusDidChangeNotification;
    int             _tag;
    NSArray        *_draggedTypes;
    NSMutableArray *_trackingAreas;
-   NSRect          _invalidRect;
+   BOOL            _needsDisplay;
+   NSUInteger      _invalidRectCount;
+   NSRect         *_invalidRects;
+   CGFloat         _frameRotation;
+   CGFloat         _boundsRotation;
 
    BOOL              _validTrackingAreas;
    BOOL              _validTransforms;
    CGAffineTransform _transformFromWindow;
    CGAffineTransform _transformToWindow;
+   CGAffineTransform _transformToLayer;
    NSRect            _visibleRect;
    NSFocusRingType   _focusRingType;
    
    BOOL     _wantsLayer;
-   CALayer *_backingLayer;
    CALayer *_layer;
    NSArray *_contentFilters;
+   CIFilter *_compositingFilter;
+   NSViewLayerContentsPlacement _layerContentsPlacement;
+   NSViewLayerContentsRedrawPolicy _layerContentsRedrawPolicy;
+   NSShadow *_shadow;
+   NSDictionary *_animations;
+   
+   CALayerContext  *_layerContext;
+   CGLPixelSurface *_overlay;
 }
 
 +(NSView *)focusView;
@@ -119,7 +132,7 @@ APPKIT_EXPORT NSString * const NSViewFocusDidChangeNotification;
 -(void)scaleUnitSquareToSize:(NSSize)size;
 
 -(NSWindow *)window;
--superview;
+-(NSView *)superview;
 -(BOOL)isDescendantOf:(NSView *)other;
 -(NSView *)ancestorSharedWithView:(NSView *)view;
 -(NSScrollView *)enclosingScrollView;
@@ -367,13 +380,6 @@ APPKIT_EXPORT NSString * const NSViewFocusDidChangeNotification;
 -(NSRect)convertRectFromBase:(NSRect)aRect;
 -(NSRect)convertRectToBase:(NSRect)aRect;
 
-// layer
--(BOOL)wantsLayer;
--(CALayer *)layer;
--(CALayer *)makeBackingLayer;
-
--(void)setWantsLayer:(BOOL)value;
--(void)setLayer:(CALayer *)value;
 
 -(void)showDefinitionForAttributedString:(NSAttributedString *)string atPoint:(NSPoint)origin;
 // Blocks aren't supported by the compiler yet.

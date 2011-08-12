@@ -8,7 +8,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 #import <Foundation/Foundation.h>
 
-#define ONYX2D_EXPORT
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define ONYX2D_EXPORT extern
 #define ONYX2D_STATIC static
 #define ONYX2D_STATIC_INLINE static inline
 
@@ -18,9 +22,9 @@ typedef NSPoint O2Point;
 typedef NSSize O2Size;
 typedef NSRect O2Rect;
 
-const O2Rect O2RectZero;
-const O2Point O2PointZero;
-const O2Size O2SizeZero;
+extern const O2Rect O2RectZero;
+extern const O2Point O2PointZero;
+extern const O2Size O2SizeZero;
 
 static inline O2Rect O2RectMake(O2Float x, O2Float y, O2Float width, O2Float height) {
    return NSMakeRect(x,y,width,height);
@@ -63,4 +67,22 @@ static inline O2Rect O2RectIntersection(O2Rect rect0,O2Rect rect1) {
 // FIX: embed code
    return NSIntersectionRect(rect0,rect1);
 }
+
+static inline O2Rect O2RectIntegral(O2Rect rect){
+   float minx=floor(rect.origin.x);
+   float miny=floor(rect.origin.y);
+   float maxx=ceil(O2RectGetMaxX(rect));
+   float maxy=ceil(O2RectGetMaxY(rect));
+   
+   rect.origin.x=minx;
+   rect.origin.y=miny;
+   rect.size.width=maxx-minx;
+   rect.size.height=maxy-miny;
+
+   return rect; 
+}
+
+#ifdef __cplusplus
+}
+#endif
 

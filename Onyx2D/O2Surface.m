@@ -494,6 +494,11 @@ static BOOL initFunctionsForParameters(O2Surface *self,size_t bitsPerComponent,s
     m_ownsData=NO;
    }
    else {
+    if(bytesPerRow>0 && bytesPerRow<(width*bitsPerPixel)/8){
+     NSLog(@"invalid bytes per row=%d",bytesPerRow);
+     bytesPerRow=0;
+    }
+    
     if(bytesPerRow==0)
      bytesPerRow=(width*bitsPerPixel)/8;
      
@@ -512,13 +517,23 @@ static BOOL initFunctionsForParameters(O2Surface *self,size_t bitsPerComponent,s
     NSLog(@"O2Surface -init error, return");
 
    _clampExternalPixels=NO; // only set to yes if premultiplied
+   pthread_mutex_init(&_lock,NULL);
    return self;
 }
 
 -(void)dealloc {
     _pixelBytes=NULL; // if we own it, it's in the provider, if not, no release
-
+    pthread_mutex_destroy(&_lock);
+    
     [super dealloc];
+}
+
+void O2SurfaceLock(O2Surface *surface) {
+   pthread_mutex_lock(&(surface->_lock));
+}
+
+void O2SurfaceUnlock(O2Surface *surface) {
+   pthread_mutex_unlock(&(surface->_lock));
 }
 
 -(void *)pixelBytes {
@@ -544,6 +559,36 @@ static BOOL initFunctionsForParameters(O2Surface *self,size_t bitsPerComponent,s
     _provider=[[O2DataProvider alloc] initWithData:data];
     _pixelBytes=[data mutableBytes];
    }
+}
+
+void *O2SurfaceGetPixelBytes(O2Surface *surface) {
+  return surface->_pixelBytes;
+}
+
+size_t O2SurfaceGetWidth(O2Surface *surface) {
+  return surface->_width;
+}
+
+size_t O2SurfaceGetHeight(O2Surface *surface) {
+  return surface->_height;
+}
+
+size_t O2SurfaceGetBytesPerRow(O2Surface *surface) {
+   return surface->_bytesPerRow;
+}
+
+
+O2ImageRef O2SurfaceCreateImage(O2Surface *self) {
+   NSData           *data=[[NSData alloc] initWithBytes:self->_pixelBytes length:self->_bytesPerRow*self->_height];
+   O2DataProviderRef provider=O2DataProviderCreateWithCFData(data);
+  
+  O2Image *result=O2ImageCreate(self->_width,self->_height,self->_bitsPerComponent,self->_bitsPerPixel,self->_bytesPerRow,self->_colorSpace,
+     self->_bitmapInfo,provider,self->_decode,self->_interpolate,self->_renderingIntent);
+  
+  O2DataProviderRelease(provider);
+  [data release];
+  
+  return result;
 }
 
 void O2SurfaceWriteSpan_argb8u_PRE(O2Surface *self,int x,int y,O2argb8u *span,int length) {   
@@ -704,7 +749,7 @@ void O2SurfaceGaussianBlur(O2Surface *self,O2Image * src, O2GaussianKernel *kern
 	for(j=0;j<src->_height;j++){
      O2argb32f *tmpRow=tmp+j*src->_width;
      int         i,width=src->_width;
-     O2argb32f *direct=O2ImageReadSpan_largb32f_PRE(src,0,j,tmpRow,width);
+     O2argb32f *direct=O2Image_read_argb32f(src,0,j,tmpRow,width);
      
      if(direct!=NULL){
       for(i=0;i<width;i++)

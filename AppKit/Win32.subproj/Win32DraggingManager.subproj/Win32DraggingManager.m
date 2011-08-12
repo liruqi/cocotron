@@ -29,6 +29,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 -(void)registerWindow:(NSWindow *)window dragTypes:(NSArray *)dragTypes {
    Win32IDropTargetServer *target=[[[Win32IDropTargetServer alloc] initWithWindow:(Win32Window *)[window platformWindow]] autorelease];
 
+   if(target==nil) // RegisterDragDrop fails sometimes, unresolved.
+    return;
+    
    [_dropTargets addObject:target];
 }
 
@@ -49,10 +52,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    return _localDraggingSource;
 }
 
+static unsigned sourceOperationForSource(id source,BOOL isLocal){
+   if([source respondsToSelector:@selector(draggingSourceOperationMaskForLocal:)])
+    return [source draggingSourceOperationMaskForLocal:NO];
+   
+   return NSDragOperationCopy|NSDragOperationLink|NSDragOperationGeneric|NSDragOperationPrivate;
+}
+
 -(void)dragImage:(NSImage *)image at:(NSPoint)location offset:(NSSize)offset event:(NSEvent *)event pasteboard:(NSPasteboard *)pasteboard source:(id)source slideBack:(BOOL)slideBack {
    Win32IDataObjectServer *dataServer=[[Win32IDataObjectServer alloc] initWithPasteboard:(Win32Pasteboard *)pasteboard];
    Win32IDropSourceServer *dropSource=[[Win32IDropSourceServer alloc] initAsIDropSource];
-   unsigned                sourceOperation=[source draggingSourceOperationMaskForLocal:NO];
+   unsigned                sourceOperation=sourceOperationForSource(source,NO);
    unsigned                targetOperation;
    DWORD                   sourceEffect=Win32DropEffectFromDragOperation(sourceOperation);
    DWORD                   targetEffect=0;

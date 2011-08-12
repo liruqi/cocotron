@@ -85,20 +85,26 @@ NSString * const NSSplitViewWillResizeSubviewsNotification = @"NSSplitViewWillRe
    [self adjustSubviews];
 }
 
--(BOOL)isOpaque {
-   NSArray *subviews=[self subviews];
-   int      i,count=[subviews count];
-
-   for(i=0;i<count;i++){
-    if(![[subviews objectAtIndex:i] isOpaque])
-     return NO;
-   }
-
+-(BOOL)isFlipped {
    return YES;
 }
 
--(BOOL)isFlipped {
-   return YES;
+-(BOOL)isSubviewCollapsed:(NSView *)subview {
+    if (_isVertical) {
+        return [subview frame].size.width == 0.0;
+    } else {
+        return [subview frame].size.height == 0.0;
+    }
+}
+
+-(void)setDividerStyle:(NSSplitViewDividerStyle)style {
+	_dividerStyle = style;
+	[self setNeedsDisplay: YES];
+}
+
+- (NSSplitViewDividerStyle)dividerStyle
+{
+	return _dividerStyle;
 }
 
 -(void)adjustSubviews {
@@ -144,7 +150,11 @@ NSString * const NSSplitViewWillResizeSubviewsNotification = @"NSSplitViewWillRe
 }
 
 -(float)dividerThickness {
-   return 5;
+	if (_dividerStyle == NSSplitViewDividerStyleThick) {
+		return 10;
+	} else {
+		return 5;
+	}
 }
 
 -(NSImage *)dimpleImage {
@@ -158,8 +168,11 @@ NSString * const NSSplitViewWillResizeSubviewsNotification = @"NSSplitViewWillRe
    NSImage *image=[self dimpleImage];
    NSPoint  point;
 
-   [[NSColor controlColor] setFill];
-   NSRectFill(rect);
+	if (_dividerStyle != NSSplitViewDividerStylePaneSplitter) {
+		// Fill in the view - pane splitter means just draw the dimple
+		[[NSColor controlColor] setFill];
+		NSRectFill(rect);
+	}
 
    point=rect.origin;
 

@@ -25,6 +25,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    return [NSImage imageNamed:@"NSHighlightedBrowserCellArrow"];
 }
 
+// overrides NSCell behavior
+-init {
+   return [self initTextCell:@""];
+}
+
 -(BOOL)isLeaf {
    return _isLeaf;
 }
@@ -125,7 +130,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    titleRect.size.width-=(branchImageSize.width+2);
 
    if([self isHighlighted] || [self state]){
-    if([title attribute:NSForegroundColorAttributeName atIndex:0 effectiveRange:NULL]==nil){
+    /* check for length to avoid exception */
+    if([title length]>0 && [title attribute:NSForegroundColorAttributeName atIndex:0 effectiveRange:NULL]==nil){
      NSMutableAttributedString *change=[[title mutableCopy] autorelease];
 
      [change addAttribute:NSForegroundColorAttributeName value:[NSColor selectedControlTextColor] range:NSMakeRange(0,[title length])];
@@ -143,11 +149,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    if(drawTitle)
     [title _clipAndDrawInRect:titleRect];
 
-   if(drawBranchImage)
-    [branchImage compositeToPoint:branchImageOrigin operation:NSCompositeSourceOver];
+    if(drawBranchImage){
+        [branchImage drawInRect:NSMakeRect(branchImageOrigin.x,branchImageOrigin.y,branchImageSize.width,branchImageSize.height) fromRect:NSZeroRect operation:NSCompositeSourceOver fraction:1.0];
 
-   if(drawImage)
-    [image compositeToPoint:imageOrigin operation:NSCompositeSourceOver];
+    }
+    
+    if(drawImage){
+       [image drawInRect:NSMakeRect(imageOrigin.x,imageOrigin.y,imageSize.width,imageSize.height) fromRect:NSZeroRect operation:NSCompositeSourceOver fraction:1.0];
+    }
 }
 
 @end
