@@ -1,0 +1,5 @@
+#include "windows-i386"
+
+EXECUTABLE_SUFFIX = .1.0.dll
+PREBINDING = NO
+
