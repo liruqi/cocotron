@@ -492,7 +492,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 -(void)setEnabled:(BOOL)flag {
    if(_isEnabled!=flag){
     _isEnabled=flag;
-    [(NSControl *)[self controlView] updateCell:self];
     [[[self controlView] window] invalidateCursorRectsForView:[self controlView]];
    }
 }
