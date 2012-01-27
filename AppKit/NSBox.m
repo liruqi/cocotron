@@ -7,6 +7,7 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. */
 #import <AppKit/NSBox.h>
 #import <AppKit/NSApplication.h>
+#import <AppKit/NSBezierPath.h>
 #import <AppKit/NSGraphics.h>
 #import <AppKit/NSFont.h>
 #import <AppKit/NSAttributedString.h>
@@ -15,6 +16,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <AppKit/NSParagraphStyle.h>
 #import <AppKit/NSStringDrawer.h>
 #import <AppKit/NSCell.h>
+#import <AppKit/NSTextFieldCell.h>
 #import <Foundation/NSKeyedArchiver.h>
 #import <AppKit/NSGraphicsStyle.h>
 #import <AppKit/NSRaise.h>
@@ -80,7 +82,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
   NSView *contentview;
 
   [super initWithFrame: frame];
-   _isTransparent=YES;
+   
+   _isTransparent = YES;
+   _titleCell = [[NSTextFieldCell alloc] initTextCell:@""];
+   _borderType = NSLineBorder;
+   _titlePosition = NSAboveTop;
 
   contentview = [[NSView alloc] initWithFrame:NSMakeRect(0,0,NSWidth(frame),NSHeight(frame))];
   [contentview  setAutoresizingMask: NSViewWidthSizable| NSViewHeightSizable];
@@ -314,14 +320,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 			NSFrameRectWithWidth(_bounds,[self borderWidth]);
 		}
 	} else if (_boxType == NSBoxSeparator) {
+		// These are just the simple divider lines
 		[[NSColor grayColor] set];
+		NSBezierPath* line = [NSBezierPath bezierPath];
 		if (NSWidth(grooveRect) > NSHeight(grooveRect)) {
-			NSRect horizontal = NSMakeRect(NSMinX(grooveRect), NSMidY(grooveRect), NSMaxX(grooveRect), NSMidY(grooveRect));
-			NSRectFill(horizontal);
+			[line moveToPoint: NSMakePoint(NSMinX(grooveRect), NSMidY(grooveRect))];
+			[line lineToPoint: NSMakePoint(NSMaxX(grooveRect), NSMidY(grooveRect))];
 		} else {
-			NSRect vertical = NSMakeRect(NSMidX(grooveRect), NSMinY(grooveRect), NSMidX(grooveRect), NSMaxY(grooveRect));
-			NSRectFill(vertical);
+			[line moveToPoint: NSMakePoint(NSMidX(grooveRect), NSMinY(grooveRect))];
+			[line lineToPoint: NSMakePoint(NSMidX(grooveRect), NSMaxY(grooveRect))];
 		}
+		[line stroke];
 	}
 	else{
    switch(_borderType){

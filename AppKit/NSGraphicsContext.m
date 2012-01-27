@@ -17,12 +17,31 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 @implementation NSGraphicsContext
 
++ (void)initialize
+{
+	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+	NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
+	
+	BOOL enabled = [defaults boolForKey: @"NSQuartzDebugEnabled"];
+	
+	if (enabled) {
+		NSLog(@"enabling Quartz Debugging emulation");
+	}
+	
+	[NSGraphicsContext setQuartzDebuggingEnabled: enabled];
+	
+	[pool drain];
+}
+
 -initWithWindow:(NSWindow *)window {
    _graphicsPort=CGContextRetain([window cgContext]);
    _focusStack=[NSMutableArray new];
    _isDrawingToScreen=YES;
    _isFlipped=NO;
    _deviceDescription=[[window deviceDescription] copy];
+   _shouldAntialias=YES;
+   _renderingIntent=NSColorRenderingIntentDefault;
+   _compOperation=NSCompositeSourceOver;
    return self;
 }
 
@@ -32,6 +51,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    _isDrawingToScreen=NO;
    _isFlipped=flipped;
    _deviceDescription=[[NSDictionary dictionaryWithObject:[NSNumber numberWithBool:NO] forKey:NSDeviceIsScreen] copy];
+   _shouldAntialias=YES;
+   _renderingIntent=NSColorRenderingIntentDefault;
+   _compOperation=NSCompositeSourceOver;
    return self;
 }
 
@@ -175,14 +197,16 @@ NSMutableArray *NSCurrentFocusStack() {
 
 -(void)setShouldAntialias:(BOOL)flag {
    CGContextSetShouldAntialias(_graphicsPort,flag);
+   _shouldAntialias = flag;
 }
 
 -(void)setImageInterpolation:(NSImageInterpolation)value {
    CGContextSetInterpolationQuality(_graphicsPort,value);
 }
 
--(void)setColorRenderingIntent:(NSColorRenderingIntent)value {
+-(void)setColorRenderingIntent:(NSColorRenderingIntent)value {   
    CGContextSetRenderingIntent(_graphicsPort,value);
+   _renderingIntent = value;
 }
 
 -(void)setCompositingOperation:(NSCompositingOperation)value {
@@ -204,12 +228,34 @@ NSMutableArray *NSCurrentFocusStack() {
    };
    if(value<NSCompositeClear || value>NSCompositePlusLighter)
     return;
-   
+      
    CGContextSetBlendMode(_graphicsPort,blendMode[value]);
+   _compOperation = value;
 }
 
 -(void)setPatternPhase:(NSPoint)phase {
    CGContextSetPatternPhase(_graphicsPort,CGSizeMake(phase.x,phase.y));
+   _patternPhase = phase;
+}
+
+- (BOOL)shouldAntialias {
+    return _shouldAntialias;
+}
+
+- (NSImageInterpolation)imageInterpolation {
+    return CGContextGetInterpolationQuality(_graphicsPort);
+}
+
+- (NSColorRenderingIntent)colorRenderingIntent {
+    return _renderingIntent;
+}
+
+- (NSCompositingOperation)compositingOperation {
+    return _compOperation;
+}
+
+- (NSPoint)patternPhase {
+    return _patternPhase;
 }
 
 -(CIContext *)CIContext {
@@ -237,4 +283,29 @@ NSMutableArray *NSCurrentFocusStack() {
 
 @end
 
+static BOOL sQuartzDebuggingEnabled = NO;
+static BOOL sQuartzDebugging = NO;		
+				
+@implementation NSGraphicsContext (QuartzDebugging)
 
++ (void)setQuartzDebuggingEnabled:(BOOL)enabled
+{
+	sQuartzDebuggingEnabled = enabled;
+}
+
++ (BOOL)quartzDebuggingIsEnabled
+{
+	return sQuartzDebuggingEnabled;
+}
+
++ (BOOL)inQuartzDebugMode
+{
+	return sQuartzDebuggingEnabled && sQuartzDebugging;
+}
+
++ (void)setQuartzDebugMode:(BOOL)mode
+{
+	sQuartzDebugging = mode;
+}
+
+@end

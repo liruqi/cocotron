@@ -9,6 +9,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <AppKit/NSSegmentedControl.h>
 #import <AppKit/NSSegmentedCell.h>
 
+@interface NSSegmentedCell (PrivateToControlView)
+- (void)_wasDrawnWithFrame:(NSRect)cellFrame inView:(NSView *)controlView;
+@end
+
 @implementation NSSegmentedControl
 
 -(NSInteger)segmentCount {
@@ -122,6 +126,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    [_cell setSelectedSegment:segment];
    [self setNeedsDisplay:YES];
 }
+
+-(void)drawRect:(NSRect)rect {
+   [super drawRect:rect];
+   [_cell _wasDrawnWithFrame:rect inView:self];
+}
+
 @end
 
 @implementation NSSegmentedControl (Bindings)
@@ -138,7 +148,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 -(void)_setSelectedLabel:(id)label
 {
    int idx=[[_cell valueForKeyPath:@"segments.label"] indexOfObject:label];
-   return [_cell setSelectedSegment:idx];
+   [_cell setSelectedSegment:idx];
+	[self setNeedsDisplay:YES];
 }
 
 +(NSSet*)keyPathsForValuesAffectingSelectedLabel
@@ -146,14 +157,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    return [NSSet setWithObject:@"cell.selectedSegment"];
 }
 
--(NSInteger)_selectedTag
+// selectedTag is implemented by NSControl - so no need for a fancy bindings version
+-(NSInteger)selectedTag
 {
-   return [_cell tagForSegment:[_cell selectedSegment]];
+	NSInteger selectedSegment = [_cell selectedSegment];
+	NSInteger tag = [_cell tagForSegment: selectedSegment];
+   return tag;
 }
 
 -(void)_setSelectedTag:(NSInteger)tag
 {
    [_cell selectSegmentWithTag:tag];
+	[self setNeedsDisplay:YES];
 }
 
 +(NSSet*)keyPathsForValuesAffectingSelectedTag {
@@ -168,6 +183,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 -(void)_setSelectedIndex:(NSInteger)idx
 {
    [_cell setSelectedSegment:idx];
+	[self setNeedsDisplay:YES];
 }
 
 +(NSSet*)keyPathsForValuesAffectingSelectedIndex {
