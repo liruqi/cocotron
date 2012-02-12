@@ -26,6 +26,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 #import "NSKVCMutableArray.h"
 #import "NSString+KVCAdditions.h"
+#import "NSKeyValueObserving-Private.h"
 
 NSString *const NSUndefinedKeyException = @"NSUnknownKeyException";
 
@@ -296,13 +297,11 @@ NSString *const NSUndefinedKeyException = @"NSUnknownKeyException";
         return [self _setValue:value withSelector:sel fromKey:key];
     }
 
-    BOOL shouldNotify = [isa automaticallyNotifiesObserversForKey:key];
-    if (shouldNotify == NO) {
-    }
-    if ([isa accessInstanceVariablesDirectly]) {
-        // FIXME: doc.s don't mention _set, is that true?
-        strcpy(check, "_set"); strcat(check, uppercaseKeyCString); strcat(check, ":");
-        sel = sel_getUid(check);
+	BOOL shouldNotify=[isa automaticallyNotifiesObserversForKey:key] && [self _hasObserverForKey: key] ;
+	if (shouldNotify == YES) {
+	}
+	if([isa accessInstanceVariablesDirectly])
+	{
 
         if ([self respondsToSelector:sel]) {
             return [self _setValue:value withSelector:sel fromKey:key];
