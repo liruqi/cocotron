@@ -11674,7 +11674,7 @@
 				GCC_UNROLL_LOOPS = NO;
 				HEADER_SEARCH_PATHS = "$(TARGET_BUILD_DIR)/usr/include";
 				INFOPLIST_FILE = Info.plist;
-				LIBRARY_SEARCH_PATHS = /Developer/Cocotron/1.0/Windows/i386/libjpeg/lib;
+				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CFLAGS = (
 					"$(OTHER_CFLAGS)",
 					"-DAPPKIT_INSIDE_BUILD",
@@ -11684,7 +11684,6 @@
 				);
 				OTHER_LDFLAGS = (
 					"-static",
-					"-ljpeg",
 					"-shared",
 					"-lmsimg32",
 					"-lole32",
@@ -11953,7 +11952,7 @@
 				GCC_WARN_UNUSED_LABEL = YES;
 				HEADER_SEARCH_PATHS = "$(TARGET_BUILD_DIR)/usr/include";
 				INFOPLIST_FILE = Info.plist;
-				LIBRARY_SEARCH_PATHS = /Developer/Cocotron/1.0/Windows/i386/libjpeg/lib;
+				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CFLAGS = (
 					"$(OTHER_CFLAGS)",
 					"-DQUARTZCORE_INSIDE_BUILD",
@@ -11964,7 +11963,6 @@
 				);
 				OTHER_LDFLAGS = (
 					"-static",
-					"-ljpeg",
 					"-shared",
 					"-lmsimg32",
 					"-lole32",
@@ -12149,7 +12147,7 @@
 					/Developer/Cocotron/1.0/Darwin/i386/include/freetype2,
 					/Developer/Cocotron/1.0/Darwin/i386/include/X11/fontconfig,
 				);
-				INFOPLIST_FILE = "/Users/cjwl/Cocotron/1.0/rForwarding/AppKit/Info copy.plist";
+				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = /Developer/Cocotron/1.0/Darwin/i386/Frameworks;
 				LIBRARY_SEARCH_PATHS = /Developer/Cocotron/1.0/Darwin/i386/lib;
 				LIBRARY_SEARCH_PATHS_QUOTED_1 = "\"$(SRCROOT)/CoreGraphics.subproj\"";
