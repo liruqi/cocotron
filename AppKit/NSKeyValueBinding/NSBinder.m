@@ -15,7 +15,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <Foundation/NSKeyValueObserving.h>
 #import <Foundation/NSEnumerator.h>
 #import <Foundation/NSValueTransformer.h>
-#import <Foundation/NSDebug.h>
 #import <AppKit/NSController.h>
 
 static void* NSBinderChangeContext;
@@ -57,8 +56,8 @@ static void* NSBinderChangeContext;
 -(id)multipleValuesPlaceholder
 {
 	id ret=[_options objectForKey:NSMultipleValuesPlaceholderBindingOption];
-	if(!ret)
-		return NSMultipleValuesMarker;
+
+	// nil or whatever the was configured is fine
 
 	return ret;
 }
@@ -66,14 +65,18 @@ static void* NSBinderChangeContext;
 -(id)noSelectionPlaceholder
 {
 	id ret=[_options objectForKey:NSNoSelectionPlaceholderBindingOption];
-	if(!ret)
-		return NSNoSelectionMarker;
+
+	// nil or whatever the was configured is fine
 
 	return ret;
 }
 
 -(id)nullPlaceholder {
-	return [_options objectForKey:NSNullPlaceholderBindingOption];
+	id ret = [_options objectForKey:NSNullPlaceholderBindingOption];
+	
+	// nil or whatever the was configured is fine
+
+	return ret;
 }
 
 -valueTransformer {
@@ -87,9 +90,10 @@ static void* NSBinderChangeContext;
      
     result=[NSValueTransformer valueTransformerForName:name];
     
-    if(NSDebugEnabled && result==nil)
-     NSLog(@"[NSValueTransformer valueTransformerForName:%@] failed in NSBinder.m",name);
-    
+	   if(result==nil) {
+		   NSBindingDebugLog(kNSBindingDebugLogLevel1, @"[NSValueTransformer valueTransformerForName:%@] failed in NSBinder.m",name);
+	   }
+	   
     if(result!=nil)
      [_options setObject:result forKey:NSValueTransformerBindingOption];
    }
@@ -214,14 +218,16 @@ static void* NSBinderChangeContext;
 }
 
 - (void)observeValueForKeyPath:(NSString *)kp ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
+
+	NSBindingDebugLog(kNSBindingDebugLogLevel1, @"keyPath: %@\n   object: %@\n   change: %@\n    context: %p", kp, object, change, context);
    if([self allowsReverseTransformation]){
 
     if(context==&NSBinderChangeContext) {
       [self stopObservingChanges];
 
-      //NSLog(@"bind event from %@.%@ alias %@ to %@.%@ (%@)", [_source className], _binding, _bindingPath, [_destination className], _keyPath, self);
-      //NSLog(@"new value %@", [_source valueForKeyPath:_bindingPath]);
- //  NSLog(@"DST setting %@, for %@",[_source valueForKeyPath:_bindingPath],_keyPath);
+      NSBindingDebugLog(kNSBindingDebugLogLevel2, @"bind event from %@.%@ alias %@ to %@.%@ (%@)", [_source className], _binding, _bindingPath, [_destination className], _keyPath, self);
+      NSBindingDebugLog(kNSBindingDebugLogLevel2, @"new value %@", [_source valueForKeyPath:_bindingPath]);
+		NSBindingDebugLog(kNSBindingDebugLogLevel2, @"DST setting %@, for %@",[_source valueForKeyPath:_bindingPath],_keyPath);
       
        id value=[_source valueForKeyPath:_bindingPath];
        
@@ -270,19 +276,35 @@ static void* NSBinderChangeContext;
 	if(numberAtEnd.location==NSNotFound)
 		return nil;
    
+	// Check if the path is a valid path or some "fake" property like "enabled2", which then should be part of the "enabled"
+	// peers
+	BOOL isValidKeyPath = YES;
+	@try {
+		[_source valueForKeyPath: _bindingPath];
+	}
+	@catch (id e) {
+		// "XXXX[digit] is not a real property - could be something like "enable2" - it will be part of the peers for XXXX
+		isValidKeyPath = NO;
+	}
+	
+	if (isValidKeyPath == YES) {
+		// That's a real source property - won't be part of the peers
+		return nil;
+	}
+	
 	NSString       *baseName=[_binding substringToIndex:numberAtEnd.location];
 	NSMutableArray *result=[NSMutableArray array];
-    
+
    for(_NSBinder *check in allUsedBinders){
     if([[check binding] hasPrefix:baseName])
      [result addObject:check];
    }
-    
+
    return result;
 }
 
 -(NSString *)description {
-   return [NSString stringWithFormat:@"%@: %@, %@ -> %@", [self class], _binding, _source, _destination];
+   return [NSString stringWithFormat:@"%@:%p %@, %@ -> %@", [self class], self, _binding, _source, _destination];
 }
 
 @end

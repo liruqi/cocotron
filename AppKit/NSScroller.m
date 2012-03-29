@@ -124,6 +124,9 @@ static NSAppleScrollBarVariant appleScrollBarVariant(NSScroller *self){
    return _arrowsPosition;
 }
 
+- (NSControlSize)controlSize {
+    return _controlSize; }
+
 -(void)setFloatValue:(float)zeroToOneValue knobProportion:(float)zeroToOneKnob {
    _floatValue=zeroToOneValue;
    if(_floatValue>1)
@@ -153,6 +156,11 @@ static NSAppleScrollBarVariant appleScrollBarVariant(NSScroller *self){
 
 -(void)setArrowsPosition:(NSScrollArrowPosition)position {
    _arrowsPosition=position;
+}
+
+-(void)setControlSize:(NSControlSize)value {
+   _controlSize=value;
+   [self setNeedsDisplay:YES];
 }
 
 -(NSRect)frameOfDecrementPage {

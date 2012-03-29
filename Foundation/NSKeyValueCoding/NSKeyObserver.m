@@ -4,7 +4,7 @@
 @implementation NSKeyObserver
 
 -initWithObject:object key:(NSString *)key keyPathObserver:(NSKeyPathObserver *)keyPathObserver restOfPath:(NSString *)restOfPath {
-   _object=object;
+   _object=[object retain]; // We want this thing to stick around as long as we do, we are observing it after all...
    _key=[key copy];
    _keyPathObserver=[keyPathObserver retain];
    _branchPath=[restOfPath copy];
@@ -18,6 +18,7 @@
    [_branchPath release];
    [_branchObserver release];
    [_dependantKeyObservers release];
+	[_object release];
    [super dealloc];
 }
 
@@ -67,7 +68,7 @@
 }
 
 -(NSString *)description {
-   return [NSString stringWithFormat:@"<%@ %x %@ %@ %@>",isa,self,_object,_key,_branchPath];
+   return [NSString stringWithFormat:@"<%@ %x _object: %@ _key: %@ _branchPath: %@>",isa,self,_object,_key,_branchPath];
 }
 
 @end

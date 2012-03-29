@@ -13,6 +13,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import "NSAtomicList.h"
 
 #import <Foundation/NSAtomicCompareAndSwap.h>
+#include <stdlib.h>
 
 static int OSAtomicCompareAndSwapPtrBarrier(void* oldValue, void* newValue, void* volatile *theValue) {
    return __sync_bool_compare_and_swap(theValue,oldValue,newValue);
@@ -28,7 +29,7 @@ void NSAtomicListInsert( NSAtomicListRef *listPtr, void *elt )
 {
 	struct NSAtomicListNode *node = malloc( sizeof( *node ) );
 	node->elt = elt;
-	
+
 	do {
 		node->next = *listPtr;
 	} while( !OSAtomicCompareAndSwapPtrBarrier( node->next, node, (void **)listPtr ) );
@@ -48,22 +49,31 @@ void NSAtomicListReverse( NSAtomicListRef *listPtr )
 	struct NSAtomicListNode *cur = *listPtr;
 	struct NSAtomicListNode *prev = NULL;
 	struct NSAtomicListNode *next = NULL;
-	
+
 	if( !cur )
 		return;
-	
+
 	do {
 		next = cur->next;
 		cur->next = prev;
-		
+
 		if( next )
 		{
 			prev = cur;
 			cur = next;
 		}
 	} while( next );
-	
+
 	*listPtr = cur;
+}
+
+void NSAtomicListAddToArray(NSAtomicListRef *listPtr, NSMutableArray *array)
+{
+	struct NSAtomicListNode *node = NSAtomicListSteal(listPtr);
+	while (node) {
+		[array addObject:(id)node->elt];
+		 node = node->next;
+	};
 }
 
 void *NSAtomicListPop( NSAtomicListRef *listPtr)
@@ -71,9 +81,9 @@ void *NSAtomicListPop( NSAtomicListRef *listPtr)
 	struct NSAtomicListNode *node = *listPtr;
 	if( !node )
 		return NULL;
-	
+
 	*listPtr = node->next;
-	
+
 	void *elt = node->elt;
 	free( node );
 	return elt;

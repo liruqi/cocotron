@@ -38,7 +38,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    NSImageView    *imageView;
 
    if(defaultTitle==nil)
-    defaultTitle=@"OK";
+    defaultTitle= NSLocalizedStringFromTableInBundle(@"OK", nil, [NSBundle bundleForClass: [NSAlertPanel class]], @"");
 
    defaultSize=[drawer sizeOfString:defaultTitle withAttributes:nil inSize:size];
    buttonWidth=defaultSize.width;
@@ -99,10 +99,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    self=[self initWithContentRect:contentRect styleMask:sheet?NSDocModalWindowMask:NSTitledWindowMask|NSClosableWindowMask backing:NSBackingStoreBuffered defer:NO];
 
    if([title length]==0)
-    title=@"Alert";
+    title= NSLocalizedStringFromTableInBundle(@"Alert", nil, [NSBundle bundleForClass: [NSAlertPanel class]], @"Alert panel title");
 
    [self setTitle:title];
-
+	[self setLevel: NSModalPanelWindowLevel];
+	
    viewFrame.origin.y=BOTTOM_MARGIN;
    viewFrame.origin.x=LEFT_MARGIN+floor((panelSize.width-buttonTotalWidth)/2);
    viewFrame.size.width=buttonWidth;
@@ -156,6 +157,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    viewFrame.origin.x+=IMAGEMESSAGE_GAP;
    viewFrame.origin.y-=messageSize.height-imageSize.height;
    viewFrame.size=messageSize;
+	viewFrame.size.width += 6; // TextField's like to shrink the title area a bit - so make sure it doesn't make it too small for the message!
    _messageText=[[[NSTextField alloc] initWithFrame:viewFrame] autorelease];
    [_messageText setStringValue:message];
    [_messageText setSelectable:YES];

@@ -622,12 +622,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(void)_setSelectedIndexFromCell:(NSCell *)select {
+	[self willChangeValueForKey:@"selectedTag"];
+	[self willChangeValueForKey:@"selectedIndex"];
    if(select==nil)
     _selectedIndex=-1;
    else
     _selectedIndex=[_cells indexOfObjectIdenticalTo:select];
 
    _keyCellIndex=_selectedIndex;
+	[self didChangeValueForKey:@"selectedIndex"];
+	[self didChangeValueForKey:@"selectedTag"];
 }
 
 -(void)_selectCell:(NSCell *)select deselectOthers:(BOOL)deselectOthers {
@@ -1318,6 +1322,21 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 
 @implementation NSMatrix (Bindings)
+
+- (int)_selectedIndex
+{
+	return _selectedIndex;
+}
+
+- (void)_setSelectedIndex:(int)index
+{
+	if (_selectedIndex != index) {
+		if (index < [_cells count]) {
+			NSCell* cell = [_cells objectAtIndex: index];
+			[self selectCell: cell];
+		}
+	}
+}
 
 - (int) _selectedTag {
     return [[self selectedCell] tag];

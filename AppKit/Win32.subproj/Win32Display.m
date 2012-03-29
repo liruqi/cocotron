@@ -139,8 +139,6 @@ static DWORD WINAPI runWaitCursor(LPVOID arg){
 	[allPaths addObjectsFromArray: ttfPaths];
 	[allPaths addObjectsFromArray: TTFPaths];
 	
-	NSLog(@"Application Fonts: %@", allPaths);
-	
 	[self loadPrivateFontPaths: allPaths];
 }
 
@@ -156,7 +154,7 @@ static DWORD WINAPI runWaitCursor(LPVOID arg){
 
     _cursorDisplayCount=1;
     _cursorCache=[NSMutableDictionary new];
-	_pastLocation = NSMakePoint(FLT_MAX, FLT_MAX);
+	_pastLocation = [self mouseLocation];
     
     [self loadPrivateFonts];
    }
@@ -400,7 +398,7 @@ static BOOL CALLBACK monitorEnumerator(HMONITOR hMonitor,HDC hdcMonitor,LPRECT r
     result=[super nextEventMatchingMask:mask|NSPlatformSpecificDisplayMask untilDate:untilDate inMode:mode dequeue:dequeue];
     
     if([result type]==NSPlatformSpecificDisplayEvent){
-     Win32Event *win32Event=[(NSEvent_CoreGraphics *)result coreGraphicsEvent];
+     Win32Event *win32Event=(Win32Event *)[(NSEvent_CoreGraphics *)result coreGraphicsEvent];
      MSG msg=[win32Event msg];
      
      DispatchMessage(&msg);
@@ -968,18 +966,22 @@ The values should be upgraded to something which is more generic to implement, p
 
 -(BOOL)postMouseMSG:(MSG)msg type:(NSEventType)type location:(NSPoint)location modifierFlags:(unsigned)modifierFlags window:(NSWindow *)window {
 	NSEvent *event;
+/* Use mouseLocation to compute deltas, message coordinates are window based, and if the window is moving
+   with the mouse, things get messy
+ */
+    NSPoint currentLocation=[self mouseLocation];
+    CGFloat deltaX=currentLocation.x-_pastLocation.x;
+    CGFloat deltaY=-(currentLocation.y-_pastLocation.y);
+    
+	if (type == NSMouseMoved) {
+		if (fabs(deltaX) < 1. && fabs(deltaY) < 1.) {
+			return YES;
+		}
+	}
+   event = [NSEvent mouseEventWithType:type location:location modifierFlags:modifierFlags window:window clickCount:_clickCount deltaX:deltaX deltaY:deltaY];
 
-	if (((type == NSLeftMouseDragged) || (type == NSRightMouseDragged)) && (_pastLocation.x != FLT_MAX))
-		event = [NSEvent mouseEventWithType:type location:location modifierFlags:modifierFlags window:window clickCount:_clickCount deltaX:location.x - _pastLocation.x deltaY:-(location.y - _pastLocation.y)];
-	else
-		event = [NSEvent mouseEventWithType:type location:location modifierFlags:modifierFlags window:window clickCount:_clickCount deltaX:0.0 deltaY:0.0];
-	
-	if ((type == NSLeftMouseDragged) || (type == NSRightMouseDragged))
-		_pastLocation = location;
-	
-	if ((type == NSLeftMouseUp) || (type == NSRightMouseUp))
-		_pastLocation = NSMakePoint(FLT_MAX, FLT_MAX);
-	
+    _pastLocation = currentLocation;
+    
 	[self postEvent:event atStart:NO];
 	
 	return YES;
@@ -987,9 +989,7 @@ The values should be upgraded to something which is more generic to implement, p
 
 -(BOOL)postScrollWheelMSG:(MSG)msg type:(NSEventType)type location:(NSPoint)location modifierFlags:(unsigned)modifierFlags window:(NSWindow *)window {
    NSEvent *event;
-   float deltaY=((short)HIWORD(msg.wParam));
-
-   deltaY/=WHEEL_DELTA;
+   float deltaY=((float)GET_WHEEL_DELTA_WPARAM(msg.wParam));
 
    event=[NSEvent mouseEventWithType:type location:location modifierFlags:modifierFlags window:window deltaY:deltaY];
    [self postEvent:event atStart:NO];
@@ -1073,10 +1073,30 @@ NSArray *CGSOrderedWindowNumbers(){
    return result;
 }
 
+static HWND findWindowForScrollWheel(POINT point){
+   HWND check=GetTopWindow(NULL);
+   
+   while(check!=NULL){
+    RECT checkRect={0};
+
+    GetWindowRect(check,&checkRect);
+    
+    if(PtInRect(&checkRect,point)){
+     if((id)GetProp(check,"self")!=nil)
+      return check;
+    }
+    
+    check=GetNextWindow(check,GW_HWNDNEXT);
+   }
+   
+   return check;
+}
+
 
 -(BOOL)postMSG:(MSG)msg keyboardState:(BYTE *)keyboardState {
    NSEventType  type;
-   id           platformWindow=(id)GetProp(msg.hwnd,"Win32Window");
+   HWND         windowHandle=msg.hwnd;
+   id           platformWindow;
    NSWindow    *window=nil;
    POINT        deviceLocation;
    NSPoint      location;
@@ -1084,6 +1104,30 @@ NSArray *CGSOrderedWindowNumbers(){
    DWORD        tickCount=GetTickCount();
    int          lastClickCount=_clickCount;
 
+   deviceLocation.x=GET_X_LPARAM(msg.lParam);
+   deviceLocation.y=GET_Y_LPARAM(msg.lParam);
+
+   if(msg.message==WM_MOUSEWHEEL) {
+// Scroll wheel events go to the window under the mouse regardless of key. Win32 set hwnd to the active window
+// So we look for the window under the mouse and use that for the event.
+    POINT pt={GET_X_LPARAM(msg.lParam),GET_Y_LPARAM(msg.lParam)};
+    RECT  r;
+    
+    GetWindowRect(windowHandle,&r);
+    pt.x+=r.left;
+    pt.y+=r.top;
+    
+    HWND scrollWheelWindow=findWindowForScrollWheel(pt);
+    
+    if(scrollWheelWindow!=NULL)
+     windowHandle=scrollWheelWindow;
+     
+    platformWindow=(id)GetProp(windowHandle,"Win32Window");
+   }
+   else {
+    platformWindow=(id)GetProp(msg.hwnd,"Win32Window");
+   }
+   
    if([platformWindow respondsToSelector:@selector(appkitWindow)])
     window=[platformWindow performSelector:@selector(appkitWindow)];
 
@@ -1131,10 +1175,13 @@ NSArray *CGSOrderedWindowNumbers(){
       else if(msg.wParam&MK_RBUTTON)
        type=NSRightMouseDragged;
       else {
-       if(window!=nil && [window acceptsMouseMovedEvents])
+       ReleaseCapture();
+       if(window!=nil && [window acceptsMouseMovedEvents]){
         type=NSMouseMoved;
-       else
+       }
+       else {
         return YES;
+       }
       }
       break;
 
@@ -1183,8 +1230,6 @@ NSArray *CGSOrderedWindowNumbers(){
       return NO;
     }
 
-    deviceLocation.x=GET_X_LPARAM(msg.lParam);
-    deviceLocation.y=GET_Y_LPARAM(msg.lParam);
 
     location.x=deviceLocation.x;
     location.y=deviceLocation.y;
@@ -1343,20 +1388,41 @@ static int CALLBACK buildTypeface(const LOGFONTA *lofFont_old,
    return GetSystemMetrics(SM_CXHTHUMB);
 }
 
--(void)runModalPageLayoutWithPrintInfo:(NSPrintInfo *)printInfo {
+#define PTS2THOUSANDS(x) ((x/72.f) * 1000.f)
+#define THOUSANDS2PTS(x) ((x / 1000.f) * 72.f)
+
+-(int)runModalPageLayoutWithPrintInfo:(NSPrintInfo *)printInfo {
    PAGESETUPDLG setup;
 
    setup.lStructSize=sizeof(PAGESETUPDLG);
    setup.hwndOwner=[(Win32Window *)[[NSApp mainWindow] platformWindow] windowHandle];
    setup.hDevMode=NULL;
    setup.hDevNames=NULL;
-   setup.Flags=0;
-   //setup.ptPaperSize=0;
-   //setup.rtMinMargin=0;
+   setup.Flags=PSD_INTHOUSANDTHSOFINCHES;
+   setup.ptPaperSize.x = PTS2THOUSANDS([printInfo paperSize].width);
+   setup.ptPaperSize.y = PTS2THOUSANDS([printInfo paperSize].height);
+	setup.rtMargin.top = PTS2THOUSANDS([printInfo topMargin]);
+	setup.rtMargin.left = PTS2THOUSANDS([printInfo leftMargin]);
+	setup.rtMargin.right = PTS2THOUSANDS([printInfo rightMargin]);
+	setup.rtMargin.bottom = PTS2THOUSANDS([printInfo bottomMargin]);
 
    [self stopWaitCursor];
-   PageSetupDlg(&setup);
+   int check = PageSetupDlg(&setup);
    [self startWaitCursor];
+	if (check == 0) {
+		return NSCancelButton;
+	}
+	else {
+		NSSize size = NSMakeSize(THOUSANDS2PTS(setup.ptPaperSize.x),
+								 THOUSANDS2PTS(setup.ptPaperSize.y));
+		[printInfo setPaperSize: size];
+		
+		[printInfo setTopMargin: THOUSANDS2PTS(setup.rtMargin.top)];
+		[printInfo setLeftMargin: THOUSANDS2PTS(setup.rtMargin.left)];
+		[printInfo setRightMargin: THOUSANDS2PTS(setup.rtMargin.right)];
+		[printInfo setBottomMargin: THOUSANDS2PTS(setup.rtMargin.bottom)];
+	}
+	return NSOKButton;
 }
 
 -(int)runModalPrintPanelWithPrintInfoDictionary:(NSMutableDictionary *)attributes {
@@ -1413,7 +1479,7 @@ static int CALLBACK buildTypeface(const LOGFONTA *lofFont_old,
 
 -(int)openPanel:(NSOpenPanel *)openPanel runModalForDirectory:(NSString *)directory file:(NSString *)file types:(NSArray *)types {
    if([openPanel canChooseDirectories])
-    return [openPanel _SHBrowseForFolder:types];
+    return [openPanel _SHBrowseForFolder:directory];
    else
     return [openPanel _GetOpenFileNameForTypes:types];
 }
