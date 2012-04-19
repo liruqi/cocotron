@@ -168,35 +168,50 @@ static Class _fontPanelFactory;
 }
 
 -(BOOL)fontNamed:(NSString *)name hasTraits:(NSFontTraitMask)traits {
-   NSUnimplementedMethod();
-   return 0;
+	NSFont* font = [NSFont fontWithName: name size: 12];
+	NSFontTraitMask fontTraits=[self traitsOfFont:font];
+	return (traits & fontTraits) == traits;
 }
 
 -(NSFont *)fontWithFamily:(NSString *)familyName traits:(NSFontTraitMask)traits weight:(int)weight size:(float)size {
-#if 0
-   NSFontFamily *family=[NSFontFamily fontFamilyWithName:familyName];
-   NSArray      *typefaces=[family typefaces];
-   int           i,count=[typefaces count];
-   NSString     *fontName=nil; 
-   
-   for(i=0;i<count;i++){
-    NSFontTypeface *typeface=[typefaces objectAtIndex:i];
-    NSFontTraitMask checkTraits=[typeface traits];
-    
-    if(((traits&NSItalicFontMask)==(checkTraits&NSItalicFontMask)) &&
-        ((traits&NSBoldFontMask)==(checkTraits&NSBoldFontMask))
-   }
-   
-   if(fontName!=nil)
-    return [NSFont fontWithName:fontName size:size];
-#endif
-   NSUnimplementedMethod();
-   return nil;
+	// Note : weight is ignored 
+	
+	NSFontFamily *family=[NSFontFamily fontFamilyWithName:familyName];
+	NSArray      *typefaces=[family typefaces];
+	int           i,count=[typefaces count];
+	NSString     *fontName=nil; 
+	
+	for(i=0;i<count;i++){
+		NSFontTypeface *typeface=[typefaces objectAtIndex:i];
+		NSFontTraitMask checkTraits=[typeface traits];
+		
+		if(((traits&NSItalicFontMask)==(checkTraits&NSItalicFontMask)) &&
+		   ((traits&NSBoldFontMask)==(checkTraits&NSBoldFontMask))) {
+			fontName = [typeface name];
+			break;
+		}
+	}
+	
+	if (fontName == nil) {
+		// match something!
+		if ([typefaces count] > 0) {
+			NSFontTypeface *typeface=[typefaces objectAtIndex:0];
+			fontName = [typeface name];
+		}
+	}
+	
+	NSFont *font = nil;
+	if (fontName != nil) {
+		font = [NSFont fontWithName:fontName size:size];
+	} else {
+		NSLog(@"unable to match any font in faces '%@' of family '%@' with traits mask: %d", typefaces, familyName, traits);
+	}
+	
+	return font;
 }
 
 -(int)weightOfFont:(NSFont *)font {
-   NSUnimplementedMethod();
-   return 0;
+	return 5; // default to the normal weight
 }
 
 -(NSFontTraitMask)traitsOfFont:(NSFont *)font {
@@ -206,8 +221,10 @@ static Class _fontPanelFactory;
 }
 
 -(NSString *)localizedNameForFamily:(NSString *)family face:(NSString *)face {
-   NSUnimplementedMethod();
-   return 0;
+	if (face == nil) {
+		return family;
+	}
+	return [NSString stringWithFormat: @"%@ %@", family, face];
 }
 
 -(void)setFontPanel:(NSFontPanel *)panel {
@@ -221,6 +238,12 @@ static Class _fontPanelFactory;
     [NSBundle loadNibNamed:@"NSFontPanel" owner:self];
    }
 
+	if(![_panel setFrameUsingName:@"NSFontPanel"]) {
+		[_panel center];
+	}
+    [_panel setFrameAutosaveName:@"NSFontPanel"];
+	
+	
    [_panel setPanelFont:_selectedFont isMultiple:_isMultiple];
    return _panel;
 }
@@ -258,21 +281,21 @@ static Class _fontPanelFactory;
      if(tag&(NSItalicFontMask|NSUnitalicFontMask)){
       if(traits&NSItalicFontMask){
        [item setTag:NSUnitalicFontMask];
-       [item setTitle:@"Unitalic"];
+       [item setTitle: NSLocalizedStringFromTableInBundle(@"Unitalic", nil, [NSBundle bundleForClass: [NSFontManager class]], @"Remove the italic font trait")];
       }
       else {
        [item setTag:NSItalicFontMask];
-       [item setTitle:@"Italic"];
+       [item setTitle: NSLocalizedStringFromTableInBundle(@"Italic", nil, [NSBundle bundleForClass: [NSFontManager class]], @"Add the italic font trait")];
       }
      }
      if(tag&(NSBoldFontMask|NSUnboldFontMask)){
       if(traits& NSBoldFontMask){
        [item setTag:NSUnboldFontMask];
-       [item setTitle:@"Unbold"];
+       [item setTitle: NSLocalizedStringFromTableInBundle(@"Unbold", nil, [NSBundle bundleForClass: [NSFontManager class]], @"Remove the bold font trait")];
       }
       else {
        [item setTag:NSBoldFontMask];
-       [item setTitle:@"Bold"];
+		[item setTitle: NSLocalizedStringFromTableInBundle(@"Bold", nil, [NSBundle bundleForClass: [NSFontManager class]], @"Add the bold font trait")];
       }
      }
     }
@@ -303,6 +326,32 @@ static Class _fontPanelFactory;
    return [NSFont fontWithName:[font fontName] size:size];
 }
 
+- (BOOL)_canConvertFont:(NSFont*)font toHaveTrait: (NSFontTraitMask)addTraits
+{
+	NSFontFamily   *family = [NSFontFamily fontFamilyWithTypefaceName: [font fontName]];
+	NSFontTypeface *typeface = [family typefaceWithName: [font fontName]];
+	NSFontTraitMask traits = [typeface traits];
+	
+	if(addTraits & NSItalicFontMask) {
+		traits |= NSItalicFontMask;
+	}
+	
+	if(addTraits & NSBoldFontMask) {
+		traits |= NSBoldFontMask;
+	}
+	
+	if(addTraits & NSUnboldFontMask) {
+		traits &= ~NSBoldFontMask;
+	}
+	
+	if(addTraits & NSUnitalicFontMask) {
+		traits &= ~NSItalicFontMask;
+	}
+	
+	NSFontTypeface* newface = [family typefaceWithTraits:traits];
+	return newface != nil;
+}
+
 -(NSFont *)convertFont:(NSFont *)font toHaveTrait:(NSFontTraitMask)addTraits {
    NSFontFamily   *family=[NSFontFamily fontFamilyWithTypefaceName:[font fontName]];
    NSFontTypeface *typeface=[family typefaceWithName:[font fontName]];
@@ -320,31 +369,46 @@ static Class _fontPanelFactory;
 
    newface=[family typefaceWithTraits:traits];
 
-   if(newface!=nil)
-    return [NSFont fontWithName:[newface name] size:[font pointSize]];
-
+	if(newface!=nil) {
+		return [NSFont fontWithName:[newface name] size:[font pointSize]];
+	}
    NSLog(@"%s failed, %@ %d",sel_getName(_cmd),[font fontName],addTraits);
    return font;
 }
 
 -(NSFont *)convertFont:(NSFont *)font toNotHaveTrait:(NSFontTraitMask)trait {
-   NSUnimplementedMethod();
-   return nil;
+	NSFontFamily   *family=[NSFontFamily fontFamilyWithName: [font familyName]];
+	NSFontTypeface *typeface=[family typefaceWithName:[font fontName]];
+	NSFontTraitMask traits=[typeface traits];
+	traits ^= trait; // remove the traits
+	NSFontTypeface *newface;
+		
+	newface=[family typefaceWithTraits:traits];
+	
+	if(newface!=nil) {
+		return [NSFont fontWithName:[newface name] size:[font pointSize]];
+	}
+	
+	NSLog(@"%s failed, %@ %d",sel_getName(_cmd),[font fontName],trait);
+	return font;
 }
 
 -(NSFont *)convertFont:(NSFont *)font toFace:(NSString *)typeface {
-   NSUnimplementedMethod();
-   return nil;
+	return [NSFont fontWithName: typeface size: [font pointSize]];
 }
 
 -(NSFont *)convertFont:(NSFont *)font toFamily:(NSString *)family {
-   NSUnimplementedMethod();
-   return nil;
+
+	// Get the current traits so we try and match them...
+	NSFontFamily   *fontFamily=[NSFontFamily fontFamilyWithName: [font familyName]];
+	NSFontTypeface *typeface=[fontFamily typefaceWithName:[font fontName]];
+	NSFontTraitMask traits=[typeface traits];
+	return [self fontWithFamily: family traits: traits weight: 5 size: [font pointSize]];
 }
 
 -(NSFont *)convertWeight:(BOOL)heavierNotLighter ofFont:(NSFont *)font {
-   NSUnimplementedMethod();
-   return nil;
+	NSLog(@"convertWeight: %d ofFont: %@ ignored", heavierNotLighter, font);
+	return font;
 }
 
 -(NSDictionary *)convertAttributes:(NSDictionary *)attributes {
@@ -426,6 +490,20 @@ static Class _fontPanelFactory;
 
 -(void)orderFrontStylesPanel:sender {
    NSUnimplementedMethod();
+}
+
+#pragma mark -
+#pragma mark Font Menu Support
+
+- (BOOL)validateMenuItem:(NSMenuItem*)item
+{
+	BOOL valid = YES;
+	SEL action = [item action];
+	if (action == @selector(addFontTrait:)) {
+		NSInteger tag = [item tag];
+		valid = [self _canConvertFont: [self selectedFont] toHaveTrait: tag];
+	}
+	return valid;
 }
 
 @end

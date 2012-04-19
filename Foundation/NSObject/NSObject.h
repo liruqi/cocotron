@@ -81,6 +81,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 +copyWithZone:(NSZone *)zone;
 +mutableCopyWithZone:(NSZone *)zone;
 
++ (void)poseAsClass:(Class)aClass;
+
 +(NSString *)description;
 
 +alloc;
@@ -96,6 +98,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -(Class)classForCoder;
 -(Class)classForArchiver;
+-(Class)classForKeyedArchiver;
+
 -replacementObjectForCoder:(NSCoder *)coder;
 -awakeAfterUsingCoder:(NSCoder *)coder;
 

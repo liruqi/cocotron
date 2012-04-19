@@ -33,9 +33,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     _docView=[[keyed decodeObjectForKey:@"NSDocView"] retain];
     
     if(_docView!=nil)
-     [[NSNotificationCenter defaultCenter] addObserver:self
-        selector:@selector(viewFrameChanged:)
-            name:NSViewFrameDidChangeNotification object:_docView];
+		[[NSNotificationCenter defaultCenter] addObserver:self
+												 selector:@selector(viewFrameChanged:)
+													 name:NSViewFrameDidChangeNotification object:_docView];
+	   [[NSNotificationCenter defaultCenter] addObserver:self
+												selector:@selector(viewBoundsChanged:)
+													name: NSViewBoundsDidChangeNotification object:_docView];
    }
    else {
     [NSException raise:NSInvalidArgumentException format:@"-[%@ %s] is not implemented for coder %@",isa,sel_getName(_cmd),coder];
@@ -163,10 +166,26 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -(void)viewBoundsChanged:(NSNotification *)note {
    [self scrollToPoint:[self _scrollPoint]];
+
+	// Be sure our scrollbars are in sync with the new docview bounds
+	if([[self superview] isKindOfClass:[NSScrollView class]])
+		[[self superview] reflectScrolledClipView:self];
 }
 
 -(void)viewFrameChanged:(NSNotification *)note {
    [self scrollToPoint:[self _scrollPoint]];
+
+	// Be sure our scrollbars are in sync with the new docview frame
+	if([[self superview] isKindOfClass:[NSScrollView class]])
+		[[self superview] reflectScrolledClipView:self];
+	
+    // if the docview doesn't completely fill the clip view, we need a redraw
+	// because some of our content has been revealed
+    NSRect visibleRect=[self visibleRect];
+    NSRect frame=[_docView frame];
+    if(NSContainsRect(frame, visibleRect) == NO) {
+		[self setNeedsDisplay:YES];
+	}	
 }
 
 -(BOOL)isOpaque {
@@ -227,21 +246,28 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
      deltax=bounds.size.width;
    }
 
-   bounds.origin.y-=deltay;
-   bounds.origin.x-=deltax;
-
-   [self scrollToPoint:bounds.origin];
-
-   return YES;
+  // "Returns YES if any scrolling is performed; otherwise returns NO." - AppKit documentation
+	if (deltax != 0.f || deltay != 0.f) {
+		bounds.origin.y-=deltay;
+		bounds.origin.x-=deltax;
+		[self scrollToPoint:bounds.origin];
+		// Return YES only if some scrolling really happened
+		return NSEqualPoints(bounds.origin, _bounds.origin) == NO;
+	} else {
+		return NO;
+	}
 }
 
 -(void)scrollToPoint:(NSPoint)point {   
    point=[self constrainScrollPoint:point];
-   [self setBoundsOrigin:point];
-   [self setNeedsDisplay:YES];
-
-   if([[self superview] isKindOfClass:[NSScrollView class]])
-    [[self superview] reflectScrolledClipView:self];
+	// Not need for more work and a full redislay if we don't really scroll
+	if (!NSEqualPoints(point, _bounds.origin)) {
+		[self setBoundsOrigin:point];
+		[self setNeedsDisplay:YES];
+		
+		if([[self superview] isKindOfClass:[NSScrollView class]])
+			[[self superview] reflectScrolledClipView:self];
+	}
 }
 
 @end

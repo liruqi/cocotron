@@ -161,6 +161,10 @@ static NSMutableDictionary *cellClassDictionary = nil;
    return [[self selectedCell] doubleValue];
 }
 
+-(NSInteger)integerValue {
+   return [[self selectedCell] integerValue];
+}
+
 -selectedCell {
    return _cell;
 }
@@ -271,6 +275,10 @@ static NSMutableDictionary *cellClassDictionary = nil;
    [self setObjectValue:[NSNumber numberWithDouble:value]];
 }
 
+-(void)setIntegerValue:(NSInteger)value {
+   [self setObjectValue:[NSNumber numberWithInteger:value]];
+}
+
 -(void)setAttributedStringValue:(NSAttributedString *)value {
    [self setObjectValue:value];
 }
@@ -293,6 +301,10 @@ static NSMutableDictionary *cellClassDictionary = nil;
 
 -(void)takeDoubleValueFrom:sender {
    [self setDoubleValue:[sender doubleValue]];
+}
+
+-(void)takeIntegerValueFrom:sender {
+   [self setIntegerValue:[sender integerValue]];
 }
 
 -(void)selectCell:(NSCell *)cell {
@@ -418,7 +430,7 @@ static NSMutableDictionary *cellClassDictionary = nil;
 
 -(void)textDidEndEditing:(NSNotification *)note {
 // It is possible for an NSControl subclass to be the delegate of another text view
-   if([note object]!=_currentEditor)
+	if([note object]!=_currentEditor)
     return;
 
    [[self selectedCell] endEditing:_currentEditor];
@@ -459,7 +471,7 @@ static NSMutableDictionary *cellClassDictionary = nil;
      [_cell highlight:YES withFrame:[self bounds] inView:self];
      [self setNeedsDisplay:YES];
 
-     if([_cell trackMouse:event inRect:[self bounds] ofView:self untilMouseUp:NO]){
+     if([_cell trackMouse:event inRect:[self bounds] ofView:self untilMouseUp: [[_cell class] prefersTrackingUntilMouseUp]]){
       [_cell setState:![_cell state]];
       [self setNeedsDisplay:YES];
       sendAction=YES;

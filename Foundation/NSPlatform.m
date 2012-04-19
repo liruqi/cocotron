@@ -54,7 +54,7 @@ extern NSString *NSPlatformClassName;
 
 -(Class)recursiveLockClass
 {
-    // NSRecursiveLock is an *okay* default (doesn't use atomic operations)
+    NSInvalidAbstractInvocation();
    return Nil;
 }
 
@@ -92,6 +92,11 @@ extern NSString *NSPlatformClassName;
 -(NSString *)homeDirectory {
    NSInvalidAbstractInvocation();
    return nil;
+}
+
+-(NSString *)libraryDirectory {
+	NSInvalidAbstractInvocation();
+	return nil;
 }
 
 -(NSString *)temporaryDirectory {
@@ -138,7 +143,7 @@ extern NSString *NSPlatformClassName;
    NSInvalidAbstractInvocation();
 }
 
--(BOOL)writeContentsOfFile:(NSString *)path bytes:(const void *)bytes length:(NSUInteger)length atomically:(BOOL)atomically {
+-(BOOL)writeContentsOfFile:(NSString *)path bytes:(const void *)bytes length:(NSUInteger)length options:(NSUInteger)options error:(NSError **)errorp {
    NSInvalidAbstractInvocation();
    return NO;
 }

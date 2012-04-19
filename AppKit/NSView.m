@@ -98,12 +98,15 @@ static BOOL NSViewLayersEnabled=NO;
 // should be.
      _autoresizesSubviews=YES;
     _isHidden=(vFlags&0x80000000)?YES:NO;
-    _tag=-1;
+    _tag= 0; // IB assigns a default tag id of 0 - which is different from the default in the docs.
     if([keyed containsValueForKey:@"NSTag"])
      _tag=[keyed decodeIntForKey:@"NSTag"];
      
+	// Subviews come in from the nib in back to front order
     [_subviews addObjectsFromArray:[keyed decodeObjectForKey:@"NSSubviews"]];
+	[_subviews makeObjectsPerformSelector:@selector(viewWillMoveToSuperview:) withObject:self];
     [_subviews makeObjectsPerformSelector:@selector(_setSuperview:) withObject:self];
+	[_subviews makeObjectsPerformSelector:@selector(viewDidMoveToSuperview)];
 
     _needsDisplay=YES;
     _invalidRectCount=0;
@@ -138,7 +141,7 @@ static BOOL NSViewLayersEnabled=NO;
    _postsNotificationOnBoundsChange=YES;
    _autoresizesSubviews=YES;
    _autoresizingMask=NSViewNotSizable;
-   _tag=-1;
+   _tag=-1; // according to the docs - loading from a nib gets a default of 0.
    _needsDisplay=YES;
    _invalidRectCount=0;
    _invalidRects=NULL;
@@ -153,6 +156,10 @@ static BOOL NSViewLayersEnabled=NO;
 }
 
 -(void)dealloc {
+
+	// Do this first?
+	[self _unbindAllBindings];
+
    _window=nil;
    [_menu release];
 
@@ -162,12 +169,14 @@ static BOOL NSViewLayersEnabled=NO;
    [_subviews release];
    [_draggedTypes release];
    [_trackingAreas release];
-   [self _unbindAllBindings];
    [_contentFilters release];
 
    if(_invalidRects!=NULL)
     NSZoneFree(NULL,_invalidRects);
    
+	if (_rectsBeingRedrawn!=NULL) {
+		NSZoneFree(NULL, _rectsBeingRedrawn);
+	}
    [_layer release];
    
    [_layerContext invalidate];
@@ -192,6 +201,10 @@ static CGAffineTransform concatViewTransform(CGAffineTransform result,NSView *vi
    if(doFrame)
    result=CGAffineTransformTranslate(result,frame.origin.x,frame.origin.y);
 
+	// Apply bounds scaling to fit in the frame
+	CGAffineTransform scale = CGAffineTransformMakeScale(NSWidth(frame)/NSWidth(bounds), NSHeight(frame)/NSHeight(bounds));
+	result=CGAffineTransformConcat(scale,result);
+	
    if(flip){
     CGAffineTransform flip=CGAffineTransformMake(1,0,0,-1,0,bounds.size.height);
 
@@ -605,30 +618,32 @@ static inline void buildTransformsIfNeeded(NSView *self) {
    return nil;
 }
 
--(NSView *)hitTest:(NSPoint)point {
-   if(_isHidden)
-    return nil;
-   
-   point=[self convertPoint:point fromView:[self superview]];
+-(NSView *)hitTest:(NSPoint)point
+{
+	if(_isHidden) {
+		return nil;
+	}
+	
+	point = [self convertPoint:point fromView:[self superview]];
+	
+	if(NSMouseInRect(point, [self visibleRect], [self isFlipped]) == NO){
+		return nil;
+	} else {
+		// Subviews are ordered back to front so we need to go
+		// front to back in order to hit test correctly.
+		NSArray *subviews = [self subviews];
+		int      count = [subviews count];
+	   
+		while (--count >= 0) {
+			NSView *check = [subviews objectAtIndex: count];
+			NSView *hit = [check hitTest: point];
 
-   if(!NSMouseInRect(point,[self visibleRect],[self isFlipped])){
-    return nil;
-   }
-   else {
-    NSArray *subviews=[self subviews];
-    int      count=[subviews count];
-
-    while(--count>=0){ // front to back
-     NSView *check=[subviews objectAtIndex:count];
-     NSView *hit=[check hitTest:point];
-
-     if(hit!=nil){
-      return hit;
-     }
-    }
-
-    return self;
-   }
+			if (hit != nil) {
+				return hit;
+			}
+		}
+	}
+	return self;
 }
 
 -(NSPoint)convertPoint:(NSPoint)point fromView:(NSView *)viewOrNil {
@@ -709,16 +724,28 @@ static inline void buildTransformsIfNeeded(NSView *self) {
 }
 
 -(void)setFrame:(NSRect)frame {
-   // Cocoa does not post the notification if the frames are equal
+  // Cocoa does not post the notification if the frames are equal
    // Possible that resizeSubviewsWithOldSize is not called if the sizes are equal
    if(NSEqualRects(_frame,frame))
     return;
 
    NSSize oldSize=_bounds.size;
 
-   _frame=frame;
-   _bounds.size=frame.size;
-
+	if (_bounds.size.width == 0 || _bounds.size.height == 0) {
+		// No valid current bounds value - just update it to use the frame size
+		_bounds.size=frame.size;
+	} else {
+		// Get the bounds->frame transform
+		CGAffineTransform transform=concatViewTransform(CGAffineTransformIdentity,self,nil,YES,NO);
+		// ... and invert it so we can get the new bounds size from the new frame size
+		transform = CGAffineTransformInvert(transform);
+		
+		_bounds.size=CGSizeApplyAffineTransform(frame.size, transform);
+	}
+	_frame=frame;
+	
+	[_window invalidateCursorRectsForView:self]; // this also invalidates tracking areas
+	
    if(_autoresizesSubviews){
     [self resizeSubviewsWithOldSize:oldSize];
    }
@@ -728,7 +755,7 @@ static inline void buildTransformsIfNeeded(NSView *self) {
     if(_superview!=nil)
         layerFrame=[_superview convertRect:layerFrame toView:nil];
     
-    [[_layerContext pixelSurface] setFrame:layerFrame];
+    [_layerContext setFrame:layerFrame];
        
    invalidateTransform(self);
 
@@ -759,11 +786,15 @@ static inline void buildTransformsIfNeeded(NSView *self) {
 }
 
 -(void)setBounds:(NSRect)bounds {
-    _bounds=bounds;
-   invalidateTransform(self);
-
-   if(_postsNotificationOnBoundsChange)
-    [[NSNotificationCenter defaultCenter] postNotificationName:NSViewBoundsDidChangeNotification object:self];
+	if (!NSEqualRects(bounds, _bounds)) {
+		_bounds=bounds;
+		invalidateTransform(self);
+		
+		[_window invalidateCursorRectsForView:self]; // this also invalidates tracking areas
+		
+		if(_postsNotificationOnBoundsChange)
+			[[NSNotificationCenter defaultCenter] postNotificationName:NSViewBoundsDidChangeNotification object:self];
+	}
 }
 
 -(void)setBoundsSize:(NSSize)size {
@@ -814,6 +845,9 @@ static inline void buildTransformsIfNeeded(NSView *self) {
 
 -(void)_setSuperview:superview {
    _superview=superview;
+	
+   [_window invalidateCursorRectsForView:self]; // this also invalidates tracking areas
+
    [self setNextResponder:superview];
 }
 
@@ -1044,7 +1078,7 @@ static inline void buildTransformsIfNeeded(NSView *self) {
      [self updateTrackingAreas];
      _validTrackingAreas=YES;
     }
-    
+	   
     count=[_trackingAreas count];
     for(i=0;i<count;i++){
      NSTrackingArea *area=[_trackingAreas objectAtIndex:i];
@@ -1273,7 +1307,7 @@ static inline void buildTransformsIfNeeded(NSView *self) {
 }
 
 -(void)viewWillStartLiveResize {
-   _inLiveResize=YES;
+	_inLiveResize=YES;
    [_subviews makeObjectsPerformSelector:_cmd];
 }
 
@@ -1607,7 +1641,7 @@ static inline void buildTransformsIfNeeded(NSView *self) {
 
 static void removeRectFromInvalidInVisibleRect(NSView *self,NSRect rect,NSRect visibleRect) {
    int count=self->_invalidRectCount;
-   
+	
    while(--count>=0){
     self->_invalidRects[count]=NSIntersectionRect(self->_invalidRects[count],visibleRect);
     
@@ -1619,15 +1653,26 @@ static void removeRectFromInvalidInVisibleRect(NSView *self,NSRect rect,NSRect v
       self->_invalidRects[i]=self->_invalidRects[i+1];
     }
    }
-   if(self->_invalidRectCount==0){
-    if(self->_invalidRects!=NULL)
-     NSZoneFree(NULL,self->_invalidRects);
-    self->_invalidRects=NULL;
-   }
-   
-   if((self->_invalidRectCount==0) && NSEqualRects(visibleRect,rect)){
-    self->_needsDisplay=NO;
-   }
+	if(self->_invalidRectCount==0){
+		if(self->_invalidRects!=NULL) {
+			NSZoneFree(NULL,self->_invalidRects);
+			self->_invalidRects=NULL;
+			// We killed the last invalidRect - we're clean now
+			self->_needsDisplay=NO;
+		} else if (NSContainsRect(rect, visibleRect)) {
+			// We had no invalidRect, which means the full visibleRect was dirty
+			// We're now clean
+			self->_needsDisplay=NO;
+		}
+	}
+}
+
+static void clearRectsBeingRedrawn(NSView *self){
+	if (self->_rectsBeingRedrawn) {
+		NSZoneFree(NULL, self->_rectsBeingRedrawn);
+		self->_rectsBeingRedrawn = NULL;
+		self->_rectsBeingRedrawnCount = 0;
+	}	
 }
 
 static void clearInvalidRects(NSView *self){
@@ -1635,9 +1680,13 @@ static void clearInvalidRects(NSView *self){
     NSZoneFree(NULL,self->_invalidRects);
    self->_invalidRects=NULL;
    self->_invalidRectCount=0;
+	clearRectsBeingRedrawn(self);
 }
 
 static void clearNeedsDisplay(NSView *self){
+	if ([NSGraphicsContext inQuartzDebugMode]) {
+		return;
+	}
    clearInvalidRects(self);
    self->_needsDisplay=NO;
 }
@@ -1655,9 +1704,24 @@ static void clearNeedsDisplay(NSView *self){
 -(void)setNeedsDisplayInRect:(NSRect)rect {
 // We only add rects if its not the entire view
    if(!_needsDisplay || _invalidRects!=NULL){
-    _invalidRectCount++;
-    _invalidRects=NSZoneRealloc(NULL,_invalidRects,sizeof(NSRect)*_invalidRectCount);
-    _invalidRects[_invalidRectCount-1]=rect;
+	   // All of our clipping done by the context is rounded - so we need to do the same
+	   // here else we might get some artifact on clipping borders
+	   rect = [self convertRect:rect toView:nil];
+	   rect = NSIntegralRect(rect);
+	   rect = [self convertRect:rect fromView:nil];
+	   _invalidRectCount++;
+	   _invalidRects=NSZoneRealloc(NULL,_invalidRects,sizeof(NSRect)*_invalidRectCount);
+	   _invalidRects[_invalidRectCount-1]=rect;
+	   
+	   clearRectsBeingRedrawn(self);
+
+	   // We also needs to be sure all of our superviews will properly redraw this area, 
+	   // even if they are smart about what to redraw (using needsDisplayInRect:)
+	   NSView *opaqueAncestor = [self opaqueAncestor];
+	   if (opaqueAncestor != self) {
+			NSRect dirtyRect = [self convertRect:rect toView:opaqueAncestor];
+			[opaqueAncestor setNeedsDisplayInRect:dirtyRect];
+	   }
    }
    
    _needsDisplay=YES;
@@ -1766,12 +1830,92 @@ static NSGraphicsContext *graphicsContextForView(NSView *view){
 }
 
 -(BOOL)needsToDrawRect:(NSRect)rect {
-   NSUnimplementedMethod();
-   return YES;
+	BOOL needsToDrawRect = NO;
+
+	if (NSIntersectsRect(rect, _visibleRect)) {
+		const NSRect *rects;
+		NSUInteger count;
+		[self getRectsBeingDrawn:&rects count:&count];
+		if (count) {
+			for(int i=0; i<count && needsToDrawRect == NO;i++) {
+				needsToDrawRect = NSIntersectsRect(rect, rects[i]);
+			}		
+		} else {
+			// No rect = the full visible rect is being drawn
+			needsToDrawRect = YES;
+		}
+	}
+	return needsToDrawRect;
 }
 
 -(void)getRectsBeingDrawn:(const NSRect **)rects count:(NSInteger *)count {
-   NSUnimplementedMethod();
+	// This method returns all the rects being drawn concerning the view
+	// That's all of the dirty rects from the view, but also all the ones
+	// from the superview that might have caused the redraw.
+	// Since invalidating a rect also invalidates the first opaque superview,
+	// only the opaque views need to be checked
+	*rects = _rectsBeingRedrawn;
+	*count = _rectsBeingRedrawnCount;
+	
+	if  (_rectsBeingRedrawn == NULL) {
+		NSView *opaqueAncestor = [self opaqueAncestor];
+		if (opaqueAncestor != self) {
+			// Ask our opaque ancestor what to draw
+			const NSRect *ancestorRects;
+			[opaqueAncestor getRectsBeingDrawn:&ancestorRects count:&_rectsBeingRedrawnCount];
+			if (_rectsBeingRedrawnCount) {
+				_rectsBeingRedrawn = NSZoneCalloc(NULL, _rectsBeingRedrawnCount, sizeof(NSRect));
+				int rectsCount = 0;
+				for (int i = 0; i < _rectsBeingRedrawnCount; ++i) {
+					NSRect r = [opaqueAncestor convertRect:ancestorRects[i] toView:self];
+					// No need for the rects that are outside of the visibleRect
+					if (NSIntersectsRect(r, _visibleRect)) {
+						_rectsBeingRedrawn[rectsCount++] = r;
+					}
+				}
+				*rects = _rectsBeingRedrawn;
+				*count = rectsCount;
+			}
+		} else {
+			// We're opaque - concatenate our invalid rect with the one from the previous opaque view
+			NSView *view = [self superview];
+			if (view) {
+				NSView *opaqueAncestor = [view opaqueAncestor];
+				const NSRect *ancestorRects;
+				NSUInteger ancestorRectsCount;
+				[opaqueAncestor getRectsBeingDrawn:&ancestorRects count:&ancestorRectsCount];
+				if (ancestorRectsCount || _invalidRectCount) {
+					_rectsBeingRedrawn = NSZoneCalloc(NULL, _invalidRectCount + ancestorRectsCount, sizeof(NSRect));
+					int rectsCount = 0;
+					for (int i = 0; i < ancestorRectsCount; ++i) {
+						NSRect r = [opaqueAncestor convertRect:ancestorRects[i] toView:self];
+						// No need for the rects that are outside of the visibleRect
+						if (NSIntersectsRect(r, _visibleRect)) {
+							_rectsBeingRedrawn[rectsCount++] = r;
+						}
+					}
+					for (int i = 0; i < _invalidRectCount; ++i) {
+						_rectsBeingRedrawn[rectsCount++] = _invalidRects[i];
+					}
+					_rectsBeingRedrawnCount = rectsCount;
+					*rects = _rectsBeingRedrawn;
+					*count = _rectsBeingRedrawnCount;
+				}
+			}
+		}
+	}
+	// We had no info and no opaque ancestor gave us any useful rect - just use our invalid rects
+	if (*rects == NULL) {
+		if (_invalidRects == NULL) {
+			if (_needsDisplay) {
+				*rects = &_visibleRect;
+				*count = 1;
+			}
+		} else {
+			*rects = _invalidRects;
+			*count = _invalidRectCount;
+		}
+	}		
 }
 
 -(void)getRectsExposedDuringLiveResize:(NSRect)rects count:(NSInteger *)count {
@@ -1794,16 +1938,24 @@ static NSGraphicsContext *graphicsContextForView(NSView *view){
    [self displayRect:[self visibleRect]];
 }
 
+- (NSEnumerator*)_subviewsInDisplayOrderEnumerator
+{
+	// Subviews are ordered back to front - 
+	return [_subviews objectEnumerator];
+}
+
 -(void)_displayIfNeededWithoutViewWillDraw {
    if([self needsDisplay]){
     [self displayRect:unionOfInvalidRects(self)];
     clearNeedsDisplay(self);
    }
 
-   int i,count=[_subviews count];
+	NSEnumerator* viewEnumerator = [self _subviewsInDisplayOrderEnumerator];
 
-   for(i=0;i<count;i++) // back to front
-    [[_subviews objectAtIndex:i] _displayIfNeededWithoutViewWillDraw];
+	NSView* subView = nil;
+	while ((subView = [viewEnumerator nextObject])) {
+		[subView _displayIfNeededWithoutViewWillDraw];
+	}
 }
 
 -(void)displayIfNeeded {
@@ -1818,42 +1970,47 @@ static NSGraphicsContext *graphicsContextForView(NSView *view){
    if([self needsDisplay])
     [self displayRect:rect];
 
-   int i,count=[_subviews count];
-
-   for(i=0;i<count;i++){ // back to front
-    NSView *child=[_subviews objectAtIndex:i];
-    NSRect converted=NSIntersectionRect([self convertRect:rect toView:child],[child bounds]);
-   
-    if(!NSIsEmptyRect(converted))
-     [child displayIfNeededInRect:converted];
-   }
+	NSEnumerator* viewEnumerator = [self _subviewsInDisplayOrderEnumerator];
+	
+	NSView* child = nil;
+	while ((child = [viewEnumerator nextObject])) {
+		NSRect converted=NSIntersectionRect([self convertRect:rect toView:child],[child bounds]);   
+		if(!NSIsEmptyRect(converted)) {
+		 [child displayIfNeededInRect:converted];
+		}
+	}
 }
 
 -(void)displayIfNeededInRectIgnoringOpacity:(NSRect)rect {
-   int i,count=[_subviews count];
    
    rect=NSIntersectionRect(unionOfInvalidRects(self), rect);
 
    if([self needsDisplay])
     [self displayRectIgnoringOpacity:rect];
 
-   for(i=0;i<count;i++){ // back to front
-    NSView *child=[_subviews objectAtIndex:i];
-    NSRect  converted=NSIntersectionRect([self convertRect:rect toView:child],[child bounds]);
+	NSEnumerator* viewEnumerator = [self _subviewsInDisplayOrderEnumerator];
+	
+	NSView* child = nil;
+	while ((child = [viewEnumerator nextObject])) {
+		NSRect  converted=NSIntersectionRect([self convertRect:rect toView:child],[child bounds]);
    
-    if(!NSIsEmptyRect(converted))
-     [child displayIfNeededInRectIgnoringOpacity:converted];
+		if(!NSIsEmptyRect(converted)) {
+			[child displayIfNeededInRectIgnoringOpacity:converted];
+		}
    }
 }
 
 -(void)displayIfNeededIgnoringOpacity {
-   int i,count=[_subviews count];
 
    if([self needsDisplay])
     [self displayRectIgnoringOpacity:unionOfInvalidRects(self)];
 
-   for(i=0;i<count;i++) // back to front
-    [[_subviews objectAtIndex:i] displayIfNeededIgnoringOpacity];
+	NSEnumerator* viewEnumerator = [self _subviewsInDisplayOrderEnumerator];
+	
+	NSView* child = nil;
+	while ((child = [viewEnumerator nextObject])) {
+		[child displayIfNeededIgnoringOpacity];
+	}
 }
 
 -(void)displayRect:(NSRect)rect {
@@ -1869,7 +2026,6 @@ static NSGraphicsContext *graphicsContextForView(NSView *view){
    NSRect visibleRect=[self visibleRect];
 
    rect=NSIntersectionRect(rect,visibleRect);
-   removeRectFromInvalidInVisibleRect(self,rect,visibleRect);
 
    if(NSIsEmptyRect(rect))
     return;
@@ -1882,29 +2038,50 @@ static NSGraphicsContext *graphicsContextForView(NSView *view){
     NSGraphicsContext *context=[NSGraphicsContext currentContext];
     CGContextRef       graphicsPort=[context graphicsPort];
 
-    CGContextClipToRect(graphicsPort,rect);
+	   CGContextClipToRect(graphicsPort,rect);
+	   
+	   const NSRect *rects;
+	   NSUInteger rectsCount;
+	   [self getRectsBeingDrawn:&rects count:&rectsCount];
+	   // If there is only one rect, it's the visible rect - it's already clipped
+	   if (rectsCount > 1) {
+ 		   CGContextClipToRects(graphicsPort, rects, rectsCount);
+	   }
 
-    [self drawRect:rect];
+	   if ([NSGraphicsContext inQuartzDebugMode]) {
+		   [[NSColor yellowColor] set];
+		   NSRectFill(rect);
+	   } else {
+		   [self drawRect:rect];
+	   }
     [self unlockFocus];
 
-    NSInteger i,count=[_subviews count];
-    
-    for(i=0;i<count;i++){
-     NSView *view=[_subviews objectAtIndex:i];
-     NSRect  check=[self convertRect:rect toView:view];
+	   
+	   NSEnumerator* viewEnumerator = [self _subviewsInDisplayOrderEnumerator];
+	   
+	   NSView* child = nil;
+	   while ((child = [viewEnumerator nextObject])) {
+		   NSRect  check=[self convertRect:rect toView:child];
 
-     check=NSIntersectionRect(check,[view bounds]);
-     
-     if(!NSIsEmptyRect(check)){
-      [view displayRectIgnoringOpacity:check];
-     }
-    }
+		   check=NSIntersectionRect(check,[child bounds]);
+		   
+		   if(!NSIsEmptyRect(check)){
+			   [child displayRectIgnoringOpacity:check];
+		   }
+	   }
    }
 
    [_layerContext render];
    
+	// Don't do anything to interfere with what will be drawn in non-debug mode
+	if ([NSGraphicsContext inQuartzDebugMode] == NO) {
+		removeRectFromInvalidInVisibleRect(self,rect,visibleRect);
+
+		// Rects being drawn are only valid while we redraw
+		clearRectsBeingRedrawn(self);
+	}
+
 /*  We do the flushWindow here. If any of the display* methods are being used, you want it to update on screen immediately. If the view hierarchy is being displayed as needed at the end of an event, flushing will be disabled and this will just mark the window as needing flushing which will happen when all the views have finished being displayed */
- 
    [[self window] flushWindow];
 }
 
@@ -2066,6 +2243,7 @@ static NSGraphicsContext *graphicsContextForView(NSView *view){
 }
 
 -(void)dragImage:(NSImage *)image at:(NSPoint)location offset:(NSSize)offset event:(NSEvent *)event pasteboard:(NSPasteboard *)pasteboard source:source slideBack:(BOOL)slideBack {
+	location = [self convertPoint:location toView:nil];
    [[NSDraggingManager draggingManager] dragImage:image at:location offset:offset event:event pasteboard:pasteboard source:source slideBack:slideBack];
 }
 
@@ -2117,7 +2295,7 @@ static NSGraphicsContext *graphicsContextForView(NSView *view){
 }
 
 -(void)setMenu:(NSMenu *)menu {
-   menu=[menu copy];
+   menu=[menu retain];
    [_menu release];
    _menu=menu;
 }

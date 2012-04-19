@@ -14,7 +14,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 @implementation NSSegmentItem
 
 - (id)init {
-	if (self = [super init]) {
+	if ((self = [super init])) {
 		_isEnabled = YES;
 	}
 	return self;
@@ -32,7 +32,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(id)description {
-   return [NSString stringWithFormat:@"%@ - %@ (%f)", [super description], _label, _width];
+   return [NSString stringWithFormat:@"%@ - %@ (%f) [%d]", [super description], _label, _width, _tag];
 }
 
 -(void)dealloc {
@@ -75,7 +75,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    return _toolTip;
 }
 
--(float)width {
+-(CGFloat)width {
    return _width;
 }
 
@@ -115,7 +115,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    _toolTip=toolTip;
 }
 
--(void)setWidth:(float)width {
+-(void)setWidth:(CGFloat)width {
    _width=width;
 }
 

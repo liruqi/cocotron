@@ -61,21 +61,20 @@ static NSMutableArray *possibleContextClasses=nil;
     if(check!=Nil)
      [result addObject:check];
    }
-   
-   return result;
+
+	return result;
 }
 
 +(O2Context *)createContextWithSize:(O2Size)size window:(CGWindow *)window {
    NSArray *array=[self allContextClasses];
    int      count=[array count];
-   
-   while(--count>=0){
+
+	while(--count>=0){
     Class check=[array objectAtIndex:count];
-        
     if([check canInitWithWindow:window]){
      O2Context *result=[[check alloc] initWithSize:size window:window];
-     
-     if(result!=nil)
+
+	if(result!=nil)
       return result;
     }
    }
@@ -92,7 +91,6 @@ static NSMutableArray *possibleContextClasses=nil;
     
     if([check canInitBackingWithContext:context deviceDictionary:deviceDictionary]){
      O2Context *result=[[check alloc] initWithSize:size context:context];
-
      if(result!=nil)
       return result;
     }
@@ -235,9 +233,27 @@ O2ColorRef O2ContextFillColor(O2ContextRef self) {
    O2ContextSetCMYKFillColor(self,c,m,y,k,alpha);
 }
 
+-(void)setAlpha:(float)alpha
+{
+	O2GStateSetAlpha(O2ContextCurrentGState(self), alpha);
+	if ([self supportsGlobalAlpha] == NO) {
+		[self setStrokeAlpha:alpha];
+		[self setFillAlpha:alpha];
+	}
+}
+
+-(BOOL)supportsGlobalAlpha
+{
+	return NO;
+}
+
 -(void)drawPath:(O2PathDrawingMode)pathMode {
    O2InvalidAbstractInvocation();
 // reset path in subclass
+}
+
+-(void)replacePathWithStrokedPath {
+	O2UnimplementedFunction();
 }
 
 -(void)drawShading:(O2Shading *)shading {
@@ -493,7 +509,7 @@ void O2ContextReplacePathWithStrokedPath(O2ContextRef self) {
    if(self==nil)
     return;
 
-   O2UnimplementedFunction();
+	[self replacePathWithStrokedPath];
 }
 
 // gstate
@@ -874,8 +890,7 @@ void O2ContextSetAlpha(O2ContextRef self,O2Float alpha) {
    if(self==nil)
     return;
 
-   [self setStrokeAlpha:alpha];
-   [self setFillAlpha:alpha];
+	[self setAlpha:alpha];
 }
 
 void O2ContextSetPatternPhase(O2ContextRef self,O2Size phase) {
@@ -1381,7 +1396,7 @@ O2AffineTransform O2ContextGetTextRenderingMatrix(O2ContextRef self) {
    O2AffineTransform transformToDevice=gState->_deviceSpaceTransform;
    O2AffineTransform Tm=self->_textMatrix;
 
-   return O2AffineTransformConcat(Tm,transformToDevice);
+	return O2AffineTransformConcat(Tm,transformToDevice);
 }
 
 void O2ContextGetDefaultAdvances(O2ContextRef self,const O2Glyph *glyphs,O2Size *advances,size_t count) {
@@ -1431,5 +1446,8 @@ void O2ContextCopyBits(O2ContextRef self,O2Rect rect,O2Point point,int gState) {
    [self copyBitsInRect:rect toPoint:point gState:gState];
 }
 
-
+bool O2ContextSupportsGlobalAlpha(O2ContextRef self)
+{
+	return [self supportsGlobalAlpha];
+}
 @end

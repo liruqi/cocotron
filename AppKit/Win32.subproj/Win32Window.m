@@ -25,6 +25,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 #import "opengl_dll.h"
 
+@interface Win32Window(ForwardRefs)
+-(void)setupPixelFormat;
+-(void)flushBuffer:(BOOL)reloadBackingTexture only:(CGLContextObj)onlyContext;
+@end
+
 @implementation Win32Window
 
 static CGRect convertFrameToWin32ScreenCoordinates(CGRect rect){
@@ -243,6 +248,7 @@ static const char *Win32ClassNameForStyleMask(unsigned styleMask,bool hasShadow)
 
 -(void)dealloc {
     [self invalidate];
+	DeleteCriticalSection(&_lock);
     [_deviceDictionary release];
     if(_surfaces!=NULL)
         NSZoneFree(NULL,_surfaces);  
@@ -251,7 +257,6 @@ static const char *Win32ClassNameForStyleMask(unsigned styleMask,bool hasShadow)
     [_overlayResult release];
     if(_hglrc!=NULL)
         opengl_wglDeleteContext(_hglrc);
-
     [super dealloc];
 }
 
@@ -453,15 +458,27 @@ static const char *Win32ClassNameForStyleMask(unsigned styleMask,bool hasShadow)
 }
 
 -(void)bringToTop {
-   SetWindowPos(_handle,(_level>kCGNormalWindowLevel)?HWND_TOPMOST:HWND_TOP,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE|SWP_SHOWWINDOW);
-   }
+	HWND insertAfter = HWND_TOP;
+	if (_level > kCGNormalWindowLevel) { // Only two levels on Windows
+		insertAfter = HWND_TOPMOST;
+	}
+	SetWindowPos(_handle,insertAfter,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE|SWP_SHOWWINDOW);
+}
+
+-(void)makeTransparent {
+	SetWindowLong(_handle, GWL_EXSTYLE, GetWindowLong(_handle, GWL_EXSTYLE) | WS_EX_TRANSPARENT);
+}
 
 -(void)placeAboveWindow:(Win32Window *)other {
    HWND otherHandle=[other windowHandle];
 
-   if(otherHandle==NULL)
-    otherHandle=(_level>kCGNormalWindowLevel)?HWND_TOPMOST:HWND_TOP;
-
+	if(otherHandle==NULL) {
+		otherHandle = HWND_TOP;
+		if (_level > kCGNormalWindowLevel) { // Only two levels on Windows
+			otherHandle = HWND_TOPMOST;
+		}
+	}
+	
    SetWindowPos(_handle,otherHandle,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE|SWP_SHOWWINDOW);
 }
 
@@ -538,7 +555,7 @@ CGL_EXPORT CGLError CGLCopyPixels(CGLContextObj source,CGLContextObj destination
         GLint sourceSize[2];
         GLint sourceOpacity;
         
-        CGLGetParameter(_surfaces[i],kCGLCPOverlayPointer,&overlay);
+        CGLGetParameter(_surfaces[i],kCGLCPOverlayPointer,(GLint *)&overlay);
         CGLGetParameter(_surfaces[i],kCGLCPSurfaceBackingOrigin,sourceOrigin);
         CGLGetParameter(_surfaces[i],kCGLCPSurfaceBackingSize,sourceSize);
         CGLGetParameter(_surfaces[i],kCGLCPSurfaceOpacity,&sourceOpacity);
@@ -639,7 +656,7 @@ static int reportGLErrorIfNeeded(const char *function,int line){
    
         CGLPixelSurface *overlay;
     
-        CGLGetParameter(cglContext,kCGLCPOverlayPointer,&overlay);
+        CGLGetParameter(cglContext,kCGLCPOverlayPointer,(GLint *)&overlay);
 
         [overlay readBuffer];
    
@@ -777,7 +794,7 @@ static int reportGLErrorIfNeeded(const char *function,int line){
 
 -(void)openGLFlushBufferOnlyContext:(CGLContextObj)onlyContext {
     CGLError error;
-    O2Surface_DIBSection *surface=[_backingContext surface];
+    O2Surface_DIBSection *surface=(O2Surface_DIBSection *)[_backingContext surface];
 
     if(surface==nil){
         NSLog(@"no surface on %@",_backingContext);
@@ -1177,40 +1194,60 @@ static int reportGLErrorIfNeeded(const char *function,int line){
    return convertFrameFromWin32ScreenCoordinates(CGRectFromRECT(rect));
 }
 
--(void)_GetWindowRectDidSize:(BOOL)didSize {
-   CGRect frame=[self queryFrame];
-   
-    if(frame.size.width>0 && frame.size.height>0){
-    [_delegate platformWindow:self frameChanged:frame didSize:didSize];
-    }
+-(void)_GetWindowRectDidSize:(BOOL)didSize
+{
+	CGRect frame=[self queryFrame];
+	// Windows can come back with some crazy values for origin and
+	// size so we need to guard ourselves against them.
+	if (frame.origin.x <= -32000 || frame.origin.y <= -32000) {
+		frame.origin = [_delegate frame].origin;
+	}
+	if (didSize) {
+		NSSize minSize = [_delegate minSize];
+		NSSize maxSize = [_delegate maxSize];
+		if (frame.size.width < minSize.width) {
+			frame.size.width = minSize.width;
+		}
+		if (frame.size.width > maxSize.width) {
+			frame.size.width = maxSize.width;
+		}
+		if (frame.size.height < minSize.height) {
+			frame.size.height = minSize.height;
+		}
+		if (frame.size.height > maxSize.height) {
+			frame.size.height = maxSize.height;
+		}
+	}
+	[_delegate platformWindow:self frameChanged:frame didSize:didSize];
 }
 
--(int)WM_SIZE_wParam:(WPARAM)wParam lParam:(LPARAM)lParam {
-   CGSize contentSize={LOWORD(lParam),HIWORD(lParam)};
-
-   if(contentSize.width>0 && contentSize.height>0){
-       NSSize checkSize=[self queryFrame].size;
-       
-       if(NSEqualSizes(checkSize,_frame.size))
-           return 0;
-       
-    [self invalidateContextsWithNewSize:checkSize];
-
-    [self _GetWindowRectDidSize:YES];
-
-    switch(_backingType){
-
-     case CGSBackingStoreRetained:
-     case CGSBackingStoreNonretained:
-      break;
-
-     case CGSBackingStoreBuffered:
-      [_delegate platformWindow:self needsDisplayInRect:NSZeroRect];
-      break;
-    }
-   }
-
-   return 0;
+-(int)WM_SIZE_wParam:(WPARAM)wParam lParam:(LPARAM)lParam
+{
+	CGSize contentSize={LOWORD(lParam),HIWORD(lParam)};
+	
+	if (contentSize.width > 0 && contentSize.height > 0){
+		NSSize checkSize=[self queryFrame].size;
+		
+		if(NSEqualSizes(checkSize,_frame.size))
+			return 0;
+		
+		[self invalidateContextsWithNewSize:checkSize];
+		
+		[self _GetWindowRectDidSize:YES];
+		
+	}
+	
+	switch(_backingType){
+			
+		case CGSBackingStoreRetained:
+		case CGSBackingStoreNonretained:
+			break;
+			
+		case CGSBackingStoreBuffered:
+			[_delegate platformWindow:self needsDisplayInRect:NSZeroRect];
+			break;
+	}
+	return 0;
 }
 
 -(int)WM_MOVE_wParam:(WPARAM)wParam lParam:(LPARAM)lParam {
@@ -1468,7 +1505,8 @@ static LRESULT CALLBACK windowProcedure(HWND handle,UINT message,WPARAM wParam,L
 static void initializeWindowClass(WNDCLASS *class){
 /* WS_EX_LAYERED windows can not use CS_OWNDC or CS_CLASSDC */
 /* OpenGL windows want CS_OWNDC, so don't use OpenGL on a top level window */
-#warning different windows class, one with CS_OWNDC and one without
+// #warning different windows class, one with CS_OWNDC and one without
+// NT and above don't seem to care about this
    class->style=CS_HREDRAW|CS_VREDRAW|CS_DBLCLKS;
    class->lpfnWndProc=windowProcedure;
    class->cbClsExtra=0;
