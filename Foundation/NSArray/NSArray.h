@@ -62,10 +62,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 -lastObject;
 
 -(NSArray *)sortedArrayUsingSelector:(SEL)selector;
--(NSArray *)sortedArrayUsingFunction:(int (*)(id, id, void *))function
+-(NSArray *)sortedArrayUsingFunction:(NSInteger (*)(id, id, void *))function
    context:(void *)context;
 
 -(BOOL)writeToFile:(NSString *)path atomically:(BOOL)atomically;
+-(BOOL)writeToURL:(NSURL *)aURL atomically:(BOOL)atomically;
 
 -(void)makeObjectsPerformSelector:(SEL)selector;
 -(void)makeObjectsPerformSelector:(SEL)selector withObject:object;

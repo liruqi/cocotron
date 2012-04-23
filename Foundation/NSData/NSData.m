@@ -12,6 +12,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <Foundation/NSData_concrete.h>
 #import <Foundation/NSAutoreleasePool-private.h>
 #import <Foundation/NSKeyedUnarchiver.h>
+#import <Foundation/NSKeyedArchiver.h>
 
 #import <Foundation/NSRaise.h>
 #import <Foundation/NSPlatform.h>
@@ -23,7 +24,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <Foundation/NSURLError.h>
 #import <Foundation/NSCFTypeID.h>
 #import <Foundation/NSError.h>
-#import <Foundation/NSDIctionary.h>
+#import <Foundation/NSDictionary.h>
 
 @implementation NSData
 
@@ -74,15 +75,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     bytes=[[NSPlatform currentPlatform] mapContentsOfFile:path length:&length];
    else
     bytes=NSPlatformContentsOfFile(path,&length);
-  
+
    if(bytes==NULL){
-    
+
     if(errorp!=NULL){
      NSDictionary *userInfo=[NSDictionary dictionaryWithObject:[NSString stringWithFormat:@"Could not open file %@", path] forKey:NSLocalizedDescriptionKey];
-     
+
      *errorp=[NSError errorWithDomain:NSURLErrorDomain code:NSURLErrorCannotOpenFile userInfo:userInfo];
     }
-    
+
     [self dealloc];
     return nil;
    }
@@ -93,20 +94,26 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 -initWithContentsOfURL:(NSURL *)url options:(NSUInteger)options error:(NSError **)errorp {
 
    if(![url isFileURL]){
-    
+
 	   if ( [[url scheme] isEqual:@"http"] || [[url scheme] isEqual:@"https"]) {
 		   NSError *error=nil;
 		   NSURLResponse *response=nil;
 
 		   NSData *data = [NSURLConnection sendSynchronousRequest:[NSURLRequest requestWithURL:url] returningResponse:&response error:&error];
-
+		   if (data == nil) {
+			   if (errorp != NULL) {
+				   *errorp = error;
+			   }
+			   [self dealloc];
+			   return nil;
+		   }
 		   return [self initWithData:data];
 	   } else {
 		   [self dealloc];
-           
+
            if(errorp!=NULL){
             NSDictionary *userInfo=[NSDictionary dictionaryWithObject:[NSString stringWithFormat:@"Could not open url %@", url] forKey:NSLocalizedDescriptionKey];
-            
+
             *errorp=[NSError errorWithDomain:NSURLErrorDomain code:NSURLErrorBadURL userInfo:userInfo];
 	   }
     return nil;
@@ -132,7 +139,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    if([coder allowsKeyedCoding]){
     NSKeyedUnarchiver *keyed=(NSKeyedUnarchiver *)coder;
     NSData            *data=[keyed decodeObjectForKey:@"NS.data"];
-    
+
     return [self initWithData:data];
    }
    else {
@@ -142,7 +149,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(void)encodeWithCoder:(NSCoder *)coder {
-   [coder encodeDataObject:self];
+   if([coder isKindOfClass:[NSKeyedArchiver class]]){
+    NSKeyedArchiver *keyed=(NSKeyedArchiver *)coder;
+
+    [keyed encodeObject:self forKey:@"NS.data"];
+   }
+   else {
+    [coder encodeDataObject:self];
+   }
 }
 
 +data {
@@ -273,10 +287,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(BOOL)writeToFile:(NSString *)path options:(NSUInteger)options error:(NSError **)errorp {
-   BOOL atomically=(options&NSAtomicWrite);
-   if(errorp)
-     NSLog(@"-[%@ %s]: NSError not (yet) supported.",[self class],_cmd);
-   return [[NSPlatform currentPlatform] writeContentsOfFile:path bytes:[self bytes] length:[self length] atomically:atomically];
+   return [[NSPlatform currentPlatform] writeContentsOfFile:path bytes:[self bytes] length:[self length] options:options error:errorp];
 }
 
 -(BOOL)writeToURL:(NSURL *)url options:(NSUInteger)options error:(NSError **)errorp {

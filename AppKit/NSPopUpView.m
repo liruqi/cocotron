@@ -9,6 +9,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <AppKit/NSPopUpView.h>
 #import <AppKit/NSStringDrawer.h>
 #import <AppKit/NSGraphicsStyle.h>
+#import <AppKit/NSMenuItem.h>
+#import <AppKit/NSGraphicsStyle.h>
 
 enum {
     KEYBOARD_INACTIVE,
@@ -35,11 +37,18 @@ enum {
     nil];
 }
 
+-(NSDictionary *)disabledItemAttributes {
+	return [NSDictionary dictionaryWithObjectsAndKeys:
+			_font,NSFontAttributeName,
+			[NSColor grayColor],NSForegroundColorAttributeName,
+			nil];
+}
+
 -initWithFrame:(NSRect)frame {
    [super initWithFrame:frame];
    _cellSize=frame.size;
    _font=[[NSFont messageFontOfSize:12] retain];
-   _selectedIndex=NSNotFound;
+   _selectedIndex=-1;
    _pullsDown=NO;
 
    NSSize sz = [@"ABCxyzgjX" sizeWithAttributes: [self itemAttributes] ];
@@ -49,6 +58,7 @@ enum {
 }
 
 -(void)dealloc {
+	[_cachedOffsets release];
    [_font release];
    [super dealloc];
 }
@@ -85,113 +95,199 @@ enum {
       NSMenuItem * item = [items objectAtIndex: i];
       if( ![item isHidden ] )
 	  {
-	     result.height += _cellSize.height;
-		 NSSize titleSize = [[item title] sizeWithAttributes: attributes ];
+		  NSAttributedString* aTitle = [item attributedTitle];
+		  if (aTitle != nil && [aTitle length] > 0) {
+			  // The user is using an attributed title - so respect that when calc-ing the height and width
+			  NSSize size = [aTitle size];
+			  result.height += MAX(_cellSize.height, size.height);
+			  size.width += [item indentationLevel] * 5;
+			  result.width = MAX(result.width, size.width);
+		  } else {
+				result.height += _cellSize.height;
 
-		 if( result.width < titleSize.width )
-			result.width = titleSize.width;
+			  NSSize titleSize = [[item title] sizeWithAttributes: attributes ];
+
+			  titleSize.width += [item indentationLevel] * 5;
+
+			 if( result.width < titleSize.width )
+				result.width = titleSize.width;
+		  }
 	  }
    }
    
    return result;
 }
 
--(unsigned)itemIndexForPoint:(NSPoint)point {
-   unsigned result;
-   NSArray * items=[_menu itemArray];
-   int i, count = [items count];
-   
-   point.y-=2;
-
-   if( point.y < 0 )
-      return NSNotFound;
+- (void)_buildCachedOffsets
+{
+	NSRect result=NSMakeRect(2,2,[self bounds].size.width,_cellSize.height);
 	
-   for( i = 0; i < count; i++ )
-   {
-      if( [[items objectAtIndex: i] isHidden ] )
-	     continue;
-      if( point.y < _cellSize.height )
-	     return i;
-	  point.y -= _cellSize.height;
-   }
-   return NSNotFound;
+	NSArray * items=[_menu itemArray];
+	int i, count = [items count];
+	
+	_cachedOffsets = [[NSMutableArray arrayWithCapacity: count] retain];
+	
+	CGFloat yOffset = 0;
+	
+	// First offset is 0 of course
+	[_cachedOffsets addObject: [NSNumber numberWithFloat: 0]];
+	
+	// Stop one before the end because we're just figuring how far down each one is based on the preceding
+	// entries.
+	for( i = 0; i < count - 1; i++ )
+	{
+		NSMenuItem* item = [items objectAtIndex: i];
+		
+		if( [item isHidden ] ) {
+			continue;
+		}
+		
+		NSAttributedString* aTitle = [item attributedTitle];
+		if (aTitle != nil && [aTitle length] > 0) {
+			NSSize size = [aTitle size];
+			yOffset += MAX(_cellSize.height, size.height);
+		} else {
+			yOffset += _cellSize.height;
+		}
+		[_cachedOffsets addObject: [NSNumber numberWithFloat: yOffset]];
+	}
 }
 
--(NSRect)rectForItemAtIndex:(unsigned)index {
+// For attributed strings - precalcing the the offsets makes performance much faster.
+- (NSArray*)_cachedOffsets
+{
+	if (_cachedOffsets == nil) {
+		[self _buildCachedOffsets];
+	}
+	return _cachedOffsets;
+}
+
+-(NSRect)rectForItemAtIndex:(NSInteger)index {
    NSRect result=NSMakeRect(2,2,[self bounds].size.width,_cellSize.height);
 
    result.size.width-=4;
-   
-   NSArray * items=[_menu itemArray];
-   int i, count = [items count];
-   
-   for( i = 0; i < index; i++ )
-   {
-      if( [[items objectAtIndex: i] isHidden ] )
-	     continue;
-	  result.origin.y += _cellSize.height;
-   }
 
+	result.origin.y = [[[self _cachedOffsets] objectAtIndex: index] floatValue];
+
+	NSArray * items=[_menu itemArray];
+	NSMenuItem* item = [items objectAtIndex: index];
+
+	NSAttributedString* aTitle = [item attributedTitle];
+	// Fix up the cell height if needed
+	if (aTitle != nil && [aTitle length] > 0) {
+		NSSize size = [aTitle size];
+		result.size.height = MAX(_cellSize.height, size.height);
+	}
+	
    return result;
 }
 
 -(NSRect)rectForSelectedItem {
    if(_pullsDown)
     return [self rectForItemAtIndex:0];
-   else if(_selectedIndex==NSNotFound || _selectedIndex==-1)
+   else if(_selectedIndex==-1)
     return [self rectForItemAtIndex:0];
    else
     return [self rectForItemAtIndex:_selectedIndex];
 }
 
--(void)drawItemAtIndex:(unsigned)index {
+-(void)drawItemAtIndex:(NSInteger)index {
    NSMenuItem   *item=[_menu itemAtIndex:index];
    NSDictionary *attributes;
    NSRect    itemRect=[self rectForItemAtIndex:index];
 
    if( [item isHidden] )
       return;
-	
-   if(index==_selectedIndex)
-    attributes=[self selectedItemAttributes];
-   else
-    attributes=[self itemAttributes];
+
+	[[NSColor controlBackgroundColor] setFill];
+	NSRectFill(itemRect);
 
    if([item isSeparatorItem]){
-	NSRect r = itemRect;
-	r.origin.y += r.size.height / 2 - 1;
-	r.size.height = 2;
-	[[self graphicsStyle] drawMenuSeparatorInRect:r];
+		NSRect r = itemRect;
+		r.origin.y += r.size.height / 2 - 1;
+		r.size.height = 2;
+		[[self graphicsStyle] drawMenuSeparatorInRect:r];
    }
    else {
-    NSString *string=[item title];
-    NSSize    size=[string sizeWithAttributes:attributes];
+	   
+	   if(index==_selectedIndex && [item isEnabled]){
+		   [[NSColor selectedTextBackgroundColor] setFill];
+		   NSRectFill(itemRect);
+	   }
 
-    if(index==_selectedIndex){
-     [[NSColor selectedTextBackgroundColor] setFill];
-     NSRectFill(itemRect);
-    }
-    else {
-     [[NSColor controlColor] setFill];
-     NSRectFill(itemRect);
-    }
+	   // Accommodate indentation level
+	   itemRect = NSOffsetRect(itemRect, [item indentationLevel] * 5, 0);
 
-    itemRect=NSInsetRect(itemRect,2,2);
-    itemRect.origin.y+=floor((_cellSize.height-size.height)/2);
-    itemRect.size.height=size.height;
-   
-    [string _clipAndDrawInRect:itemRect withAttributes:attributes];
+	   // Check for an Attributed title first
+	   NSAttributedString* aTitle = [item attributedTitle];
+	   if (aTitle != nil && [aTitle length] > 0) {
+		   itemRect=NSInsetRect(itemRect,2,2);
+			[aTitle _clipAndDrawInRect: itemRect];
+	   } else {
+		   if(index==_selectedIndex && [item isEnabled]) {
+			   attributes=[self selectedItemAttributes];
+		   } else if ([item isEnabled] == NO) {
+			   attributes = [self disabledItemAttributes];
+		   } else {
+			   attributes=[self itemAttributes];
+		   }
+		   NSString *string=[item title];
+		   NSSize    size=[string sizeWithAttributes:attributes];
+		   
+		   itemRect=NSInsetRect(itemRect,2,2);
+		   itemRect.origin.y+=floor((_cellSize.height-size.height)/2);
+		   itemRect.size.height=size.height;
+		   
+		   [string _clipAndDrawInRect:itemRect withAttributes:attributes];
+	   }
    }
 }
+
+/*
+ * Returns NSNotFound if the point is outside of the menu
+ * Returns -1 if the point is inside the menu but on a disabled or separator item
+ * Returns a usable index if the point is on a selectable item
+ */
+-(NSInteger)itemIndexForPoint:(NSPoint)point {
+	NSInteger result;
+	NSArray * items=[_menu itemArray];
+	int i, count = [items count];
+	
+	point.y-=2;
+	
+	if( point.y < 0 ) {
+		return NSNotFound;
+	}
+	
+	for( i = 0; i < count; i++ )
+	{
+		if( [[items objectAtIndex: i] isHidden ] )
+			continue;
+		
+		NSRect itemRect = [self rectForItemAtIndex: i];
+		if (NSPointInRect( point, itemRect)) {
+			if (([[items objectAtIndex: i] isEnabled] == NO) ||
+				([[items objectAtIndex: i] isSeparatorItem])) {
+				return -1;
+			}
+			return i;
+		}
+	}
+	return NSNotFound;
+}
+
 
 -(void)drawRect:(NSRect)rect {
    NSArray      *items=[_menu itemArray];
    int           i,count=[items count];
 
-   [[self graphicsStyle] drawPopUpButtonWindowBackgroundInRect:[self bounds]];
+   [[self graphicsStyle] drawPopUpButtonWindowBackgroundInRect: rect];
 
    for(i=0;i<count;i++){
-    [self drawItemAtIndex:i];
+	   NSRect itemRect = [self rectForItemAtIndex: i];
+	   if (NSIntersectsRect(rect, itemRect)) {
+		   [self drawItemAtIndex:i];
+	   }
    }
 }
 
@@ -200,17 +296,18 @@ enum {
 }
 
 /*
- This method may return NSNotFound when the view positioned outside the initial tracking area due to preferredEdge settings and the user clicks the mouse. The NSPopUpButtonCell code deals with it. It might make sense for this to return the previous value.
+ * This method may return NSNotFound when the view positioned outside the initial tracking area due to preferredEdge settings and the user clicks the mouse.
+ * The NSPopUpButtonCell code deals with it. It might make sense for this to return the previous value.
  */
 -(int)runTrackingWithEvent:(NSEvent *)event {
-   enum {
+	enum {
     STATE_FIRSTMOUSEDOWN,
     STATE_MOUSEDOWN,
     STATE_MOUSEUP,
     STATE_EXIT
    } state=STATE_FIRSTMOUSEDOWN;
    NSPoint firstLocation,point=[event locationInWindow];
-   unsigned initialSelectedIndex = _selectedIndex;
+   NSInteger initialSelectedIndex = _selectedIndex;
 
    // Make sure we get mouse moved events, too, so we can respond apporpiately to
    // click-click actions as well as of click-and-drag
@@ -223,26 +320,35 @@ enum {
    point=[self convertPoint:point fromView:nil];
    firstLocation=point;
 
+	// Make sure we know if the user clicks away from the app in the middle of this
+	BOOL cancelled = NO;	
+	
    do {
-    unsigned index=[self itemIndexForPoint:point];
+    NSInteger index=[self itemIndexForPoint:point];
     NSRect   screenVisible;
 
 /*
   If the popup is activated programmatically with performClick: index may be NSNotFound because the mouse starts out
   outside the view. We don't change _selectedIndex in this case.   
  */
-    if(index!=NSNotFound && _keyboardUIState == KEYBOARD_INACTIVE){
+    if(index!= NSNotFound && _keyboardUIState == KEYBOARD_INACTIVE){
      if(_selectedIndex!=index){
-      unsigned previous=_selectedIndex;
-
+      NSInteger previous=_selectedIndex;
+		 if (previous != -1) {
+			 NSRect itemRect = [self rectForItemAtIndex: previous];
+			 [self setNeedsDisplayInRect: itemRect];
+		 }
       _selectedIndex=index;
+		 if (_selectedIndex != -1) {
+			 NSRect itemRect = [self rectForItemAtIndex: _selectedIndex];
+			 [self setNeedsDisplayInRect: itemRect];
+		 }
      }
     }
     
-    [self setNeedsDisplay:YES];
     [[self window] flushWindow];
 
-    event=[[self window] nextEventMatchingMask:NSLeftMouseUpMask|NSMouseMovedMask|NSLeftMouseDraggedMask|NSKeyDownMask];
+    event=[[self window] nextEventMatchingMask:NSLeftMouseUpMask|NSMouseMovedMask|NSLeftMouseDraggedMask|NSKeyDownMask|NSAppKitDefinedMask];
     if ([event type] == NSKeyDown) {
         [self interpretKeyEvents:[NSArray arrayWithObject:event]];
         switch (_keyboardUIState) {
@@ -262,7 +368,12 @@ enum {
     }
     else
         _keyboardUIState = KEYBOARD_INACTIVE;
-    
+ 
+	   if ([event type] == NSAppKitDefined) {
+		   if ([event subtype] == NSApplicationDeactivated) {
+			   cancelled = YES;
+		   }
+	   }
     point=[event locationInWindow];
     point=[[event window] convertBaseToScreen:point];
     screenVisible=NSInsetRect([[[self window] screen] visibleFrame],4,4);
@@ -282,7 +393,9 @@ enum {
 
      if(change)
       [[self window] setFrameOrigin:origin];
-    }
+    } else {
+		_selectedIndex == -1;
+	}
 
     point=[self convertPoint:[event locationInWindow] fromView:nil];
 
@@ -297,18 +410,26 @@ enum {
       break;
 
      default:
-      if([event type]==NSLeftMouseUp)
-       state=STATE_EXIT;
+			if([event type]==NSLeftMouseUp) {
+				// If the user clicked outside of the window - then they want
+				// to dismiss it without changing anything
+				NSPoint winPoint=[event locationInWindow];
+				winPoint=[[event window] convertBaseToScreen:winPoint];
+				if (NSPointInRect(winPoint,[[self window] frame]) == NO) {
+					_selectedIndex = -1;
+				}
+				state=STATE_EXIT;
+			}
       break;
     }
 
-   }while(state!=STATE_EXIT);
+   }while(cancelled == NO && state!=STATE_EXIT);
 
    [[self window] setAcceptsMouseMovedEvents: oldAcceptsMouseMovedEvents];
 
    _keyboardUIState = KEYBOARD_INACTIVE;
    
-   return _selectedIndex;
+	return (_selectedIndex == -1) ? NSNotFound : _selectedIndex;
 }
 
 - (void)keyDown:(NSEvent *)event {
@@ -316,11 +437,11 @@ enum {
 }
 
 - (void)moveUp:(id)sender {
-    int previous = _selectedIndex;
+    NSInteger previous = _selectedIndex;
 
 	// Find the previous visible item
 	NSArray *items = [_menu itemArray];
-	if( _selectedIndex == NSNotFound )
+	if( _selectedIndex == -1 )
 		_selectedIndex = [items count];
 
 	do
@@ -336,22 +457,22 @@ enum {
 }
 
 - (void)moveDown:(id)sender {
-    int previous = _selectedIndex;
+    NSInteger previous = _selectedIndex;
     
 	// Find the next visible item
 	NSArray *items = [_menu itemArray];
-	if( _selectedIndex == NSNotFound )
-		_selectedIndex = -1;
+	NSInteger searchIndex = _selectedIndex;
 		
 	do
 	{
-		_selectedIndex++;
-	} while( _selectedIndex < [items count] && ( [[items objectAtIndex: _selectedIndex] isHidden] ||
-									             [[items objectAtIndex: _selectedIndex] isSeparatorItem] )  );
+		searchIndex++;
+	} while( searchIndex < [items count] && ( [[items objectAtIndex: searchIndex] isHidden] ||
+									             [[items objectAtIndex: searchIndex] isSeparatorItem] )  );
 
-   if (_selectedIndex >= [items count])
+	if (searchIndex >= [items count]) {
         _selectedIndex = previous;
-
+	}
+	
     [self setNeedsDisplay:YES];
 }
 

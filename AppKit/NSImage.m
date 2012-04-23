@@ -19,6 +19,27 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <Foundation/NSKeyedArchiver.h>
 #import <AppKit/NSRaise.h>
 
+// Private class used so the context knows the flipped status of a locked image
+// 10.4 does something like that - probably for more than just getting the flippiness - 10.6 uses some special NSSnapshotBitmapGraphicsContext
+@interface NSImageCacheView : NSView {
+	BOOL _flipped;
+}
+- (id)initWithFlipped:(BOOL)flipped;
+@end
+@implementation NSImageCacheView
+- (id)initWithFlipped:(BOOL)flipped
+{
+	if ((self = [super init])) {
+		_flipped = flipped;
+	}
+	return self;
+}
+-(BOOL)isFlipped
+{
+	return _flipped;
+}
+@end
+
 @implementation NSImage
 
 +(NSArray *)imageFileTypes {
@@ -77,7 +98,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 +imageNamed:(NSString *)name {
    NSImage *image=[[self allImages] objectForKey:name];
-
    if(image==nil){
     NSArray *bundles=[self _checkBundles];
     int      i,count=[bundles count];
@@ -93,9 +113,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     }
    }
 
-// Must use copy here, the caller may modify the image, e.g. size, and you don't want
-// to wreck the cache values. 
-   return [[image copy] autorelease];
+  // Cocoa AppKit always returns the same shared cached image
+   return image;
 }
 
 -(void)encodeWithCoder:(NSCoder *)coder {
@@ -157,7 +176,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     }
 
 	if([reps count]==0){
-       [self dealloc];
+       [self release];
 		return nil;
 	}
 	
@@ -191,7 +210,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    NSData *data=[NSData dataWithContentsOfURL:url];
    
    if(data==nil){
-    [self dealloc];
+    [self release];
     return nil;
 }
 
@@ -199,8 +218,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -initWithPasteboard:(NSPasteboard *)pasteboard {
-   NSUnimplementedMethod();
-   return 0;
+
+	NSString *available=[pasteboard availableTypeFromArray:[[self class] imageUnfilteredPasteboardTypes]];
+	NSData *data = [pasteboard dataForType:available];
+	if (data == nil) {
+		[self release];
+		return nil;
+	}
+	return [self initWithData:data];
 }
 
 -initByReferencingFile:(NSString *)path {
@@ -208,8 +233,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -initByReferencingURL:(NSURL *)url {
-   NSUnimplementedMethod();
-   return 0;
+	// Better than nothing
+	return [self initWithContentsOfURL:url];
 }
 
 -(void)dealloc {
@@ -642,16 +667,22 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    CGContextSaveGState(graphicsPort);
    CGContextClipToRect(graphicsPort,NSMakeRect(0,0,[representation size].width,[representation size].height));
    
-   if([self isFlipped]){
+	// Some fake view, just so the context knows if it's flipped or not
+	NSView *view = [[[NSImageCacheView alloc] initWithFlipped:[self isFlipped]] autorelease];
+    [[context focusStack] addObject:self];
+
+	if([self isFlipped]){
     CGAffineTransform flip={1,0,0,-1,0,[self size].height};
-     
     CGContextConcatCTM(graphicsPort,flip);
    }
 
 }
 
 -(void)unlockFocus {
-   CGContextRef graphicsPort=NSCurrentGraphicsPort();
+	// Remove the pushed view
+	[[[NSGraphicsContext currentContext] focusStack] removeLastObject];
+
+	CGContextRef graphicsPort=NSCurrentGraphicsPort();
 
    CGContextRestoreGState(graphicsPort);
 
@@ -719,63 +750,85 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(void)drawInRect:(NSRect)rect fromRect:(NSRect)source operation:(NSCompositingOperation)operation fraction:(float)fraction {
-   NSAutoreleasePool *pool=[NSAutoreleasePool new];
-   NSImageRep        *any=[self _bestUncachedFallbackCachedRepresentationForDevice:nil size:rect.size];
-   NSImageRep        *drawRep=nil;
+
+	// Keep a lid on any intermediate allocations while producing caches
+	NSAutoreleasePool *pool=[NSAutoreleasePool new];
+   NSImageRep        *any=[[[self _bestUncachedFallbackCachedRepresentationForDevice:nil size:rect.size] retain] autorelease];
+   NSImageRep        *cachedRep=nil;
    CGContextRef       context;
       
-   if(NSIsEmptyRect(source)){
-    if([any isKindOfClass:[NSCachedImageRep class]])
-     drawRep=[any retain];
-    else if([any isKindOfClass:[NSBitmapImageRep class]])
-     drawRep=[any retain];
-   }
+	if(NSIsEmptyRect(source) && !_isFlipped) {
+		// If we're drawing a subset of the image and the image isn't flipped then
+		// we can just draw from a cached rep or a bitmap rep(assuming we have one)
+		if([any isKindOfClass:[NSCachedImageRep class]] ||
+		   [any isKindOfClass:[NSBitmapImageRep class]]) {
+			cachedRep=any;
+		}
+	}
     
-   if(drawRep==nil) {
-    NSImageRep       *uncached=any;
-    NSSize            uncachedSize=[uncached size];
-    BOOL              useSourceRect=NSIsEmptyRect(source)?NO:YES;
-    NSSize            cachedSize=useSourceRect?source.size:uncachedSize;
-    NSCachedImageRep *cached=[[NSCachedImageRep alloc] initWithSize:cachedSize depth:0 separate:YES alpha:YES];
+	if(cachedRep==nil) {
+		// Looks like we need to create a cached rep for this image
+		NSImageRep       *uncached=any;
+		NSSize            uncachedSize=[uncached size];
+		BOOL              useSourceRect=NSIsEmptyRect(source)?NO:YES;
+		NSSize            cachedSize=useSourceRect?source.size:uncachedSize;
+	
+		// Create a cached image rep to hold our image
+		NSCachedImageRep *cached=[[[NSCachedImageRep alloc] initWithSize:cachedSize depth:0 separate:YES alpha:YES] autorelease]; // remember that pool we created earlier
 
-    [self lockFocusOnRepresentation:cached];
+		// a non-nil object passed here means we need to manually add the rep
+		[self lockFocusOnRepresentation: cached];
    
-    if(useSourceRect){
-     context=NSCurrentGraphicsPort();
-     CGContextTranslateCTM(context,-source.origin.x,-source.origin.y);
-    }
-   
-    [self drawRepresentation:uncached inRect:NSMakeRect(0,0,uncachedSize.width,uncachedSize.height)];
+		context=NSCurrentGraphicsPort();
+		if(useSourceRect) {
+			// move to the origin of the source rect - remember we've locked focus so we've got a fresh CTM to work with
+			CGContextTranslateCTM(context,-source.origin.x,-source.origin.y);
+		}
+		if (_isFlipped) {
+			// Flip the CTM so the image is drawn the right way up in the cache
+			CGContextTranslateCTM(context, 0, uncachedSize.height);
+			CGContextScaleCTM(context, 1, -1);
+		}
+		// Draw into the new cache rep
+		[self drawRepresentation:uncached inRect:NSMakeRect(0,0,uncachedSize.width,uncachedSize.height)];
 
-    [self unlockFocus];
+		[self unlockFocus];
     
-    drawRep=cached;
-   }
+		// And add it
+		[self addRepresentation: cached];
+		
+		cachedRep=cached;
+	}
    
-   context=NSCurrentGraphicsPort();
-   
-   CGContextSaveGState(context);
-   
-   if(fraction!=1.0){
-// fraction is accomplished with a 1x1 alpha mask
-// FIXME: could use a float format image to completely preserve fraction
-    uint8_t           bytes[1]={ MIN(MAX(0,fraction*255),255) };
-    CGDataProviderRef provider=CGDataProviderCreateWithData(NULL,bytes,1,NULL);
-    CGImageRef        mask=CGImageMaskCreate(1,1,8,8,1,provider,NULL,NO);
-   
-    CGContextClipToMask(context,rect,mask);
-    CGImageRelease(mask);
-    CGDataProviderRelease(provider);
-   }
-   
-   [[NSGraphicsContext currentContext] setCompositingOperation:operation];
-      
-   [self drawRepresentation:drawRep inRect:rect];
-   
-   CGContextRestoreGState(context);
+	// OK now we've got a rep we can draw
+	
+	context=NSCurrentGraphicsPort();
 
-   [drawRep release];
-   [pool release];
+	CGContextSaveGState(context);
+   
+	if (CGContextSupportsGlobalAlpha(context) == NO) {
+		// That should really be done by setting the context alpha - and the compositing done in the context implementation
+		if(fraction!=1.0){
+			// fraction is accomplished with a 1x1 alpha mask
+			// FIXME: could use a float format image to completely preserve fraction
+			uint8_t           bytes[1]={ MIN(MAX(0,fraction*255),255) };
+			CGDataProviderRef provider=CGDataProviderCreateWithData(NULL,bytes,1,NULL);
+			CGImageRef        mask=CGImageMaskCreate(1,1,8,8,1,provider,NULL,NO);
+			
+			CGContextClipToMask(context,rect,mask);
+			CGImageRelease(mask);
+			CGDataProviderRelease(provider);
+		}
+	} else {
+		CGContextSetAlpha(context, fraction);
+	}	
+	[[NSGraphicsContext currentContext] setCompositingOperation:operation];
+    
+	[self drawRepresentation: cachedRep inRect:rect];
+   
+	CGContextRestoreGState(context);
+
+	[pool release];
 }
 
 -(NSString *)description {

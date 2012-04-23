@@ -20,7 +20,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(void)encodeWithCoder:(NSCoder *)coder {
-   [coder encodeObject:[_atitle string] forKey:@"NSMenuItem title"];
+   [coder encodeObject:_title forKey:@"NSMenuItem title"];
    [coder encodeObject:_keyEquivalent forKey:@"NSMenuItem keyEquivalent"];
    [coder encodeInt:_keyEquivalentModifierMask forKey:@"NSMenuItem keyEquivalentModifierMask"];
    [coder encodeObject:_submenu forKey:@"NSMenuItem submenu"];
@@ -40,8 +40,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 	_hidden = [keyed decodeBoolForKey:@"NSIsHidden"];
      
     if([keyed decodeBoolForKey:@"NSIsSeparator"]){
-     [_atitle release];
-     _atitle=nil;
+     [_title release];
+     _title=nil;
     }
    }
    else {
@@ -52,7 +52,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -initWithTitle:(NSString *)title action:(SEL)action keyEquivalent:(NSString *)keyEquivalent {
-   _atitle=(title==nil)?nil:[[NSAttributedString alloc] initWithString:title];
+	_title= [title copy];
    _target=nil;
    _action=action;
    _keyEquivalent=[keyEquivalent copy];
@@ -61,6 +61,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    _mnemonicLocation=0;
    _submenu=nil;
    _tag=-1;
+   _indentationLevel = 0;
    _enabled=YES;
    _hidden=NO;
 
@@ -68,6 +69,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(void)dealloc {
+	[_title release];
    [_atitle release];
    [_keyEquivalent release];
    [_submenu release];
@@ -79,16 +81,32 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    [super dealloc];
 }
 
+-copyWithZone:(NSZone *)zone {
+	NSMenuItem *copy=NSCopyObject(self, 0, zone);
+	
+	copy->_title=[_title copyWithZone:zone];
+	copy->_atitle=[_atitle copyWithZone:zone];
+	copy->_submenu=[_submenu copyWithZone:zone];
+	copy->_keyEquivalent=[_keyEquivalent copyWithZone:zone];;
+	copy->_image=[_image retain];
+	copy->_onStateImage=[_onStateImage retain];
+	copy->_mixedStateImage=[_mixedStateImage retain];
+	copy->_offStateImage=[_offStateImage retain];
+	copy->_representedObject=[_representedObject retain];
+	return copy;
+}
+
 -(NSMenu *)menu {
    return _menu;
 }
 
 -(void)_setMenu:(NSMenu *)menu {
    _menu=menu;
+   _submenu.supermenu=menu;
 }
 
 -(NSString *)title {
-   return [_atitle string];
+   return _title;
 }
 
 -(NSAttributedString *)attributedTitle {
@@ -109,6 +127,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -(SEL)action {
    return _action;
+}
+
+-(NSInteger)indentationLevel
+{
+	return _indentationLevel;
 }
 
 -(int)tag {
@@ -156,7 +179,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(BOOL)isSeparatorItem {
-   return _atitle==nil;
+   return _title==nil;
 }
 
 -(BOOL)isEnabled {
@@ -168,14 +191,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(void)setTitle:(NSString *)title {
-    [_atitle release];
-    _atitle=[[NSAttributedString alloc] initWithString:title];
+	title=[title copy];
+    [_title release];
+    _title=title;
 }
 
 -(void)setAttributedTitle:(NSAttributedString *)title {
    title=[title copy];
    [_atitle release];
    _atitle=title;
+	[self setTitle: [title string]];
 }
 
 -(void)setTitleWithMnemonic:(NSString *)mnemonic {
@@ -194,6 +219,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -(void)setAction:(SEL)action {
    _action=action;
+}
+
+-(void)setIndentationLevel:(NSInteger)indentationLevel
+{
+	_indentationLevel = indentationLevel;
 }
 
 -(void)setTag:(int)tag {
@@ -241,9 +271,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(void)setSubmenu:(NSMenu *)submenu {
-   submenu=[submenu copy];
+	submenu=[submenu retain];
    [_submenu release];
    _submenu=submenu;
+	[submenu setSupermenu:_menu];
 }
 
 -(void)setEnabled:(BOOL)flag {

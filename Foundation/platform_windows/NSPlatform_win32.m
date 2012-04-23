@@ -14,6 +14,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <Foundation/NSFileHandle_win32.h>
 #import <Foundation/NSPipe_win32.h>
 #import <Foundation/NSLock_win32.h>
+#import <Foundation/NSRecursiveLock_win32.h>
 #import <Foundation/NSPersistantDomain_win32.h>
 #import <Foundation/NSTimeZone_win32.h>
 #import <Foundation/NSString.h>
@@ -28,13 +29,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <Foundation/NSThread.h>
 #import <Foundation/NSRunLoop.h>
 #import <Foundation/NSFileManager.h>
-#import <stdlib.h>
-#import <winsock.h>
+#import <Foundation/NSError.h>
+#include <stdlib.h>
+#include <winsock.h>
 #import <Foundation/NSSocket_windows.h>
 #import <Foundation/NSParentDeathMonitor_win32.h>
 #import <Foundation/NSSelectInputSourceSet.h>
 #import <Foundation/NSCondition_win32.h>
-#import <stdio.h>
+#include <stdio.h>
 
 #import <objc/runtime.h>
 
@@ -56,6 +58,24 @@ static NSString *convertBackslashToSlash(NSString *string){
    }
    
    return [NSString stringWithCharacters:buffer length:length];
+}
+
+static NSError *NSErrorForGetLastErrorCode(DWORD code)
+{
+	NSString *localizedDescription=@"NSErrorForGetLastError localizedDescription";
+	unichar  *message;
+	
+	FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_IGNORE_INSERTS,NULL,code,MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),(LPWSTR) &message,0, NULL );
+	localizedDescription=NSStringFromNullTerminatedUnicode(message);
+	
+	LocalFree(message);
+	
+	return [NSError errorWithDomain:NSWin32ErrorDomain code:code userInfo:[NSDictionary dictionaryWithObject:localizedDescription forKey:NSLocalizedDescriptionKey]];
+}
+
+static NSError *NSErrorForGetLastError()
+{
+	return NSErrorForGetLastErrorCode(GetLastError());
 }
 
 @implementation NSPlatform_win32
@@ -121,6 +141,10 @@ static NSString *processName(){
    return [NSConditionLock_win32 class];
 }
 
+-(Class)recursiveLockClass {
+    return [NSRecursiveLock_win32 class];
+}
+
 -(Class)persistantDomainClass {
    return [NSPersistantDomain_win32 class];
 }
@@ -162,6 +186,12 @@ static NSString *processName(){
     return nil;
 
    return convertBackslashToSlash([drive stringByAppendingPathComponent:path]);
+}
+
+-(NSString *)libraryDirectory {
+	NSString *appdata=[[[NSProcessInfo processInfo] environment] objectForKey:@"APPDATA"];
+	
+	return convertBackslashToSlash([appdata stringByAppendingPathComponent:@"CocotronLibrary"]);
 }
 
 -(NSString *)temporaryDirectory {
@@ -435,7 +465,8 @@ void *NSPlatformContentsOfFile(NSString *path,NSUInteger *lengthp) {
    }
 }
 
--(BOOL)writeContentsOfFile:(NSString *)path bytes:(const void *)bytes length:(NSUInteger)length atomically:(BOOL)atomically {
+-(BOOL)writeContentsOfFile:(NSString *)path bytes:(const void *)bytes length:(NSUInteger)length options:(NSUInteger)options error:(NSError **)errorp {
+   BOOL atomically=(options&NSAtomicWrite);
    HANDLE   file;
    DWORD    wrote;
    const uint16_t *pathW=[path fileSystemRepresentationW];
@@ -468,6 +499,7 @@ void *NSPlatformContentsOfFile(NSString *path,NSUInteger *lengthp) {
 
    file=CreateFileW(pathW,GENERIC_WRITE,0,NULL,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);   
    if(!WriteFile(file,bytes,length,&wrote,NULL)){
+    if (errorp) *errorp = NSErrorForGetLastError();
     CloseHandle(file);
     return NO;
    }

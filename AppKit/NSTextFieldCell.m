@@ -88,10 +88,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    return _drawsBackground;
 }
 
--(BOOL)isBezeled {
-   return _isBezeled;
-}
-
 -(NSTextFieldBezelStyle)bezelStyle {
    return _bezelStyle;
 }
@@ -124,10 +120,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -(void)setDrawsBackground:(BOOL)flag {
    _drawsBackground=flag;
-}
-
--(void)setBezeled:(BOOL)value {
-   _isBezeled=value;
 }
 
 -(void)setBezelStyle:(NSTextFieldBezelStyle)value {
@@ -271,7 +263,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
    }
 
-   [drawValue _clipAndDrawInRect:titleRect];
+	[drawValue _clipAndDrawInRect:titleRect truncatingTail: _lineBreakMode > NSLineBreakByClipping];
 }
 
 static void drawRoundedBezel(CGContextRef context,CGRect frame){
