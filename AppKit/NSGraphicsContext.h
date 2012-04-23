@@ -35,6 +35,11 @@ typedef enum {
    BOOL            _isDrawingToScreen;
    BOOL            _isFlipped;
    NSDictionary   *_deviceDescription;
+   
+   BOOL _shouldAntialias;
+   NSColorRenderingIntent _renderingIntent;
+   NSCompositingOperation _compOperation;
+   NSPoint _patternPhase;
 }
 
 +(NSGraphicsContext *)graphicsContextWithWindow:(NSWindow *)window;
@@ -61,6 +66,12 @@ typedef enum {
 -(void)setCompositingOperation:(NSCompositingOperation)value;
 -(void)setPatternPhase:(NSPoint)phase;
 
+- (BOOL)shouldAntialias;
+- (NSImageInterpolation)imageInterpolation;
+- (NSColorRenderingIntent)colorRenderingIntent;
+- (NSCompositingOperation)compositingOperation;
+- (NSPoint)patternPhase;
+
 -(CIContext *)CIContext;
 
 -(void)saveGraphicsState;
@@ -70,3 +81,14 @@ typedef enum {
 
 @end
 
+@interface NSGraphicsContext (QuartzDebugging)
+
++ (void)setQuartzDebuggingEnabled:(BOOL)enabled;
+
++ (BOOL)quartzDebuggingIsEnabled;
+
++ (BOOL)inQuartzDebugMode;
+
++ (void)setQuartzDebugMode:(BOOL)mode;
+
+@end

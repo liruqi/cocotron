@@ -28,6 +28,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <AppKit/NSDockTile.h>
 #import <CoreGraphics/CGWindow.h>
 #import <AppKit/NSRaise.h>
+#import <AppKit/NSSpellChecker.h>
 #import <objc/message.h>
 #import <pthread.h>
 
@@ -72,7 +73,6 @@ id NSApp=nil;
 
 +(void)initialize {
    if(self==[NSApplication class]){
-
     [NSClassFromString(@"Win32RunningCopyPipe") performSelector:@selector(startRunningCopyPipe)];
    }
 }
@@ -137,8 +137,8 @@ id NSApp=nil;
    _dockTile=[[NSDockTile alloc] initWithOwner:self];
    _modalStack=[NSMutableArray new];
     
-   _lock=malloc(sizeof(pthread_mutex_t));
-   
+   _lock=NSZoneMalloc(NULL,sizeof(pthread_mutex_t));
+
    pthread_mutex_init(_lock,NULL);
    
    [self _showSplashImage];
@@ -317,7 +317,7 @@ id NSApp=nil;
    int i,count=[_windows count];
 
    [_mainMenu autorelease];
-   _mainMenu=[menu copy];
+   _mainMenu=[menu retain];
 
    for(i=0;i<count;i++){
     NSWindow *window=[_windows objectAtIndex:i];
@@ -336,7 +336,7 @@ id NSApp=nil;
    [_applicationIconImage release];
    _applicationIconImage=image;
    
-   NSUnimplementedMethod();
+	[image setName: @"NSApplicationIcon"];
 }
 
 -(void)setWindowsMenu:(NSMenu *)menu {
@@ -418,6 +418,16 @@ id NSApp=nil;
     [self reportException:localException];
    NS_ENDHANDLER
 
+	// Load the application icon if we have one
+	NSString* iconName = [[[NSBundle mainBundle]
+						   infoDictionary]
+						  objectForKey:@"CFBundleIconFile"];
+	if (iconName) {
+		iconName = [iconName stringByAppendingPathExtension: @"icns"];
+		NSImage* image = [NSImage imageNamed: iconName];
+		[self setApplicationIconImage: image];
+	}
+	
 // Give us a first event
    [NSTimer scheduledTimerWithTimeInterval:0.1 target:nil
      selector:NULL userInfo:nil repeats:NO];
@@ -505,8 +515,9 @@ id NSApp=nil;
 #if 1
    if([self isActive])
     [_windows makeObjectsPerformSelector:@selector(_showForActivation)];
-   else
+   else {
     [_windows makeObjectsPerformSelector:@selector(_hideForDeactivation)];
+   }
 #endif
 }
 
@@ -899,10 +910,35 @@ id NSApp=nil;
 -(void)beginSheet:(NSWindow *)sheet modalForWindow:(NSWindow *)window modalDelegate:modalDelegate didEndSelector:(SEL)didEndSelector contextInfo:(void *)contextInfo {
     NSSheetContext *context=[NSSheetContext sheetContextWithSheet:sheet modalDelegate:modalDelegate didEndSelector:didEndSelector contextInfo:contextInfo frame:[sheet frame]];
 
-   [window _attachSheetContextOrderFrontAndAnimate:context];
+	if ([[NSUserDefaults standardUserDefaults] boolForKey: @"NSRunAllSheetsAsModalPanel"]) {
+		[sheet _setSheetContext: context];
+		[sheet setLevel: NSModalPanelWindowLevel];
+		NSModalSession session = [self beginModalSessionForWindow: sheet];
+		[context setModalSession: session];
+		while([NSApp runModalSession:session] == NSRunContinuesResponse){
+			[[NSRunLoop currentRunLoop] runMode:NSModalPanelRunLoopMode beforeDate:[NSDate distantFuture]];
+		}
+		[self endModalSession:session];
+	} else {
+		[window _attachSheetContextOrderFrontAndAnimate:context];
+	}
 }
 
 -(void)endSheet:(NSWindow *)sheet returnCode:(int)returnCode {
+	
+	if ([[NSUserDefaults standardUserDefaults] boolForKey: @"NSRunAllSheetsAsModalPanel"]) {
+		NSSheetContext* context = [sheet _sheetContext];
+		NSModalSession session = [context modalSession];
+		[session stopModalWithCode: NSRunStoppedResponse];
+		IMP function=[[context modalDelegate] methodForSelector:[context didEndSelector]];
+		
+		if(function!=NULL) {
+			function([context modalDelegate],[context didEndSelector],sheet,returnCode,[context contextInfo]);
+		}
+		[sheet _setSheetContext: nil];
+		
+	} else {
+	
    int count=[_windows count];
 
    while(--count>=0){
@@ -923,6 +959,7 @@ id NSApp=nil;
      return;
     }
    }
+	}
 }
 
 -(void)endSheet:(NSWindow *)sheet {
@@ -1026,7 +1063,7 @@ id NSApp=nil;
   if (didCloseAll)
     {
       if ([_delegate respondsToSelector:@selector(applicationShouldTerminate:)])
-        [self replyToApplicationShouldTerminate:[_delegate applicationShouldTerminate:self]];
+        [self replyToApplicationShouldTerminate: [_delegate applicationShouldTerminate:self] == NSTerminateNow];
       else
         [self replyToApplicationShouldTerminate:YES];
     }
@@ -1034,7 +1071,7 @@ id NSApp=nil;
 
 -(void)replyToApplicationShouldTerminate:(BOOL)terminate 
 {
-  if (terminate == NSTerminateNow)
+  if (terminate == YES)
     {
       [[NSNotificationCenter defaultCenter] postNotificationName:NSApplicationWillTerminateNotification object:self];
       
@@ -1126,34 +1163,43 @@ standardAboutPanel] retain];
    NSUnimplementedMethod();
 }
 
--(void)showHelp:sender {
-   NSString *helpBookFolder = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleHelpBookFolder"];
-   if(helpBookFolder != nil) {
-    BOOL isDir;
-    NSString *folder = [[NSBundle mainBundle] pathForResource:helpBookFolder ofType:nil];
-    if(folder != nil && [[NSFileManager defaultManager] fileExistsAtPath:folder isDirectory:&isDir] && isDir) {
-     NSString *helpBookName = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleHelpBookName"];
-     if(helpBookName != nil) {
-      NSString *filePath = [folder stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.html", helpBookName]];
-      if([[NSFileManager defaultManager] fileExistsAtPath:filePath]) {
-       if([[NSWorkspace sharedWorkspace] openFile:filePath withApplication:@"Help Viewer"]==YES) {
-        return;
-       }
-      }
-     }
-     NSString *filePath = [folder stringByAppendingPathComponent:@"index.html"];
-     if([[NSFileManager defaultManager] fileExistsAtPath:filePath]) {
-      if([[NSWorkspace sharedWorkspace] openFile:filePath withApplication:@"Help Viewer"]==YES) {
-       return;
-      }
-     }
-    }
-   }
+-(void)showGuessPanel:sender {
+	[[[NSSpellChecker sharedSpellChecker] spellingPanel] makeKeyAndOrderFront: self];
+}
 
+-(void)showHelp:sender
+{
+	NSString *helpBookFolder = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleHelpBookFolder"];
+	if(helpBookFolder != nil) {
+		BOOL isDir;
+		NSString *folder = [[NSBundle mainBundle] pathForResource:helpBookFolder ofType:nil];
+		if(folder != nil && [[NSFileManager defaultManager] fileExistsAtPath:folder isDirectory:&isDir] && isDir) {
+			NSBundle* helpBundle = [NSBundle bundleWithPath: folder];
+			if (helpBundle) {
+				NSString *helpBookName = [[helpBundle infoDictionary] objectForKey:@"CFBundleHelpTOCFile"];
+				if(helpBookName != nil) {
+					NSString* helpFilePath = [helpBundle pathForResource: helpBookName ofType: nil];
+					if (helpFilePath) {
+						if([[NSWorkspace sharedWorkspace] openFile:helpFilePath withApplication:@"Help Viewer"]==YES) {
+							return;
+						}
+					}
+				}
+				// Perhaps there's an index.html file that'll be usable?
+				NSString* helpFilePath = [helpBundle pathForResource: @"index" ofType: @"html"];
+				if (helpFilePath) {
+					if([[NSWorkspace sharedWorkspace] openFile:helpFilePath withApplication:@"Help Viewer"]==YES) {
+						return;
+					}
+				}
+			}
+		}
+	}
+	
    NSString *processName = [[NSProcessInfo processInfo] processName];
    NSAlert *alert = [[NSAlert alloc] init];
-   [alert setMessageText:@"Help"];
-   [alert setInformativeText:[NSString stringWithFormat:@"Help isn't available for %@.", processName]];
+   [alert setMessageText: NSLocalizedStringFromTableInBundle(@"Help", nil, [NSBundle bundleForClass: [NSApplication class]], @"Help alert title")];
+   [alert setInformativeText:[NSString stringWithFormat: NSLocalizedStringFromTableInBundle(@"Help isn't available for %@.", nil, [NSBundle bundleForClass: [NSApplication class]], @""), processName]];
    [alert runModal];
    [alert release];
 }
@@ -1190,13 +1236,22 @@ standardAboutPanel] retain];
 
 -(void)_windowWillBecomeDeactive:(NSWindow *)window {
    if(![self isActiveExcludingWindow:window]){
-    [[NSNotificationCenter defaultCenter] postNotificationName:NSApplicationWillResignActiveNotification object:self];
+	   [[NSNotificationCenter defaultCenter] postNotificationName:NSApplicationWillResignActiveNotification object:self];
    }
 }
 
 -(void)_windowDidBecomeDeactive:(NSWindow *)window {
    if(![self isActive]){
-    [[NSNotificationCenter defaultCenter] postNotificationName:NSApplicationDidResignActiveNotification object:self];
+	   
+	   // Exposed menus are running tight event tracking loops and would remain visible when the app deactivates (making
+	   // the UI less than community minded) - unfortunately because they're in these tracking loops they're waiting
+	   // on events and even though they could receive the notification sent here they can't deal with it until an event is
+	   // received to let them proceed. This special event type was added to help them get unstuck and remove the menu on
+	   // deactivation
+	   NSEvent* appKitEvent = [NSEvent otherEventWithType: NSAppKitDefined location: NSZeroPoint modifierFlags: 0 timestamp: 0 windowNumber: 0 context: nil subtype: NSApplicationDeactivated data1: 0 data2: 0];
+	   [self postEvent: appKitEvent atStart: YES];
+	   
+	   [[NSNotificationCenter defaultCenter] postNotificationName:NSApplicationDidResignActiveNotification object:self];
    }
 }
   //private method called when the application is reopened

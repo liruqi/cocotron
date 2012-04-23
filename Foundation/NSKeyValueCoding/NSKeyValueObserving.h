@@ -33,6 +33,15 @@ enum {
 };
 typedef NSUInteger NSKeyValueChange;
 
+enum {
+    NSKeyValueUnionSetMutation = 1,
+    NSKeyValueMinusSetMutation = 2,
+    NSKeyValueIntersectSetMutation = 3,
+    NSKeyValueSetSetMutation = 4
+    
+};
+typedef NSUInteger NSKeyValueSetMutationKind;
+
 @interface NSObject (NSKeyValueObserving)
 + (BOOL)automaticallyNotifiesObserversForKey:(NSString *)key;
 +(NSSet*)keyPathsForValuesAffectingValueForKey:(NSString*)key;
@@ -46,6 +55,8 @@ typedef NSUInteger NSKeyValueChange;
 -(void)didChangeValueForKey:(NSString*)key;
 -(void)willChange:(NSKeyValueChange)change valuesAtIndexes:(NSIndexSet *)indexes forKey:(NSString *)key;
 -(void)didChange:(NSKeyValueChange)change valuesAtIndexes:(NSIndexSet *)indexes forKey:(NSString *)key;
+-(void)willChangeValueForKey:(NSString *)key withSetMutation:(NSKeyValueSetMutationKind)mutation usingObjects:(NSSet*)objects;
+-(void)didChangeValueForKey:(NSString *)key withSetMutation:(NSKeyValueSetMutationKind)mutation usingObjects:(NSSet*)objects;
 
 -(void)setObservationInfo:(void*)newInfo;
 -(void*)observationInfo;
@@ -60,4 +71,16 @@ typedef NSUInteger NSKeyValueChange;
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context;
 @end
 
+
+enum {
+	kNSKeyValueDebugLevel1 = 1, // public method calls
+	kNSKeyValueDebugLevel2,	// some clarifying logging
+	kNSKeyValueDebugLevel3, // Most intimate function calls
+};
+
+FOUNDATION_EXPORT void NSDetermineKeyValueDebugLoggingLevel();
+
+FOUNDATION_EXPORT int NSKeyValueDebugLogLevel;
+
+#define NSKeyValueDebugLog(level, format, args...) NSDetermineKeyValueDebugLoggingLevel(); if (level <= NSKeyValueDebugLogLevel) NSLog(@"%d: %s line: %d | %@", level, __PRETTY_FUNCTION__, __LINE__, [NSString stringWithFormat: format, ## args])
 

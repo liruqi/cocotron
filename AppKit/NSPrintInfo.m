@@ -18,6 +18,13 @@ NSString * const NSPrintPrinterName=@"NSPrintPrinterName";
 NSString * const NSPrintJobDisposition=@"NSPrintJobDisposition"; 
 NSString * const NSPrintDetailedErrorReporting=@"NSPrintDetailedErrorReporting"; 
 
+NSString * const NSPrintSpoolJob = @"NSPrintSpoolJob";
+NSString * const NSPrintPreviewJob = @"NSPrintPreviewJob";
+NSString * const NSPrintSaveJob = @"NSPrintSaveJob";
+NSString * const NSPrintCancelJob = @"NSPrintCancelJob";
+
+NSString * const NSPrintSavePath = @"NSPrintSavePath";
+
 NSString * const NSPrintCopies=@"NSPrintCopies"; 
 NSString * const NSPrintAllPages=@"NSPrintAllPages"; 
 NSString * const NSPrintFirstPage=@"NSPrintFirstPage"; 
@@ -49,10 +56,17 @@ NSString * const NSPrintVerticallyCentered=@"NSPrintVerticallyCentered";
 }
 
 -init {
-   NSDictionary *defaults=[NSDictionary dictionaryWithObjectsAndKeys:
-    [NSNumber numberWithInt:1],NSPrintCopies,
-    [NSNumber numberWithBool:YES],NSPrintAllPages,
-    nil];
+   NSDictionary *defaults= [NSDictionary dictionaryWithObjectsAndKeys:
+						   [NSNumber numberWithInt: 1],		NSPrintCopies,
+						   [NSNumber numberWithBool: YES],	NSPrintAllPages,
+							@"US Letter",					NSPrintPaperName,
+							[NSValue valueWithSize: NSMakeSize(612, 792)], NSPrintPaperSize,
+							[NSNumber numberWithFloat: 36], NSPrintTopMargin,
+							[NSNumber numberWithFloat: 36], NSPrintLeftMargin,
+							[NSNumber numberWithFloat: 36], NSPrintRightMargin,
+							[NSNumber numberWithFloat: 36], NSPrintBottomMargin,
+							[NSNumber numberWithInt: NSPortraitOrientation], NSPrintOrientation,
+							nil];
     
    return [self initWithDictionary:defaults];
 }

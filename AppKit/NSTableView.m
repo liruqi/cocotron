@@ -741,10 +741,9 @@ _dataSource);
       [_editingCell setBackgroundColor:_backgroundColor];
       
       NSText *oldEditor = _currentEditor;
-      NSText *editor=[[self window] fieldEditor:YES forObject:self];
-       _currentEditor=[[_editingCell setUpFieldEditorAttributes:editor] retain];
-
-       [oldEditor release];
+      NSText* editor =[[self window] fieldEditor:YES forObject:self];
+      _currentEditor=[[_editingCell setUpFieldEditorAttributes: editor] retain];
+      [oldEditor release];
       
       if (select == YES)
          [_editingCell selectWithFrame:_editingFrame inView:self editor:_currentEditor delegate:self start:0 length:[[_editingCell stringValue] length]];
@@ -792,6 +791,13 @@ _dataSource);
     [_selectedRowIndexes release];
     _selectedRowIndexes=[[NSIndexSet alloc] initWithIndex:0];
    }
+   
+   if ([_selectedRowIndexes count] > 0 && [_selectedColumns count] > 0) {
+    // selecting a row deselects the previously selected column
+    [_selectedColumns removeAllObjects];
+    [self setNeedsDisplay:YES];
+    [_headerView setNeedsDisplay:YES];
+   }
 
     [self noteSelectionDidChange];
 }
@@ -812,6 +818,7 @@ _dataSource);
    // Selecting a row deselects all columns.
    if ([_selectedColumns count]) {
     [_selectedColumns removeAllObjects];
+    [self setNeedsDisplay:YES];
     [_headerView setNeedsDisplay:YES];
     changed = YES;
    }
@@ -846,7 +853,8 @@ _dataSource);
      if ([_selectedRowIndexes containsIndex:i] != [newIndexes containsIndex:i]) {
       if (_editedRow == i && _editingCell != nil)
        [self abortEditing];
-      [self setNeedsDisplayInRect:NSInsetRect([self rectOfRow:i], 0, -1)];
+
+      [self setNeedsDisplay:YES];
       changed = YES;
       // NSLog(@"NSTableView row %d for redraw.", i);
      }
