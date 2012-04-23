@@ -197,6 +197,11 @@ static NSString * const NSPopUpButtonBindingObservationContext=@"NSPopUpButtonBi
     SEL         action=[item action];
     id          target=[item target];
 
+	   if (action != NULL) {
+		   // The item has an explicit action - so it's going to be the sender
+		   sender = item;
+	   }
+	   
     [_cell setState:![_cell state]];
     [self setNeedsDisplay:YES];
 
@@ -208,8 +213,9 @@ static NSString * const NSPopUpButtonBindingObservationContext=@"NSPopUpButtonBi
      target=[self target];
     }
 
-    [self sendAction:action to:target];
+	   [NSApp sendAction:action to:target from: sender];
    }
+	
 }
 
 -(void)mouseDown:(NSEvent *)event {
@@ -235,7 +241,7 @@ static NSString * const NSPopUpButtonBindingObservationContext=@"NSPopUpButtonBi
      target=[self target];
     }
 
-    [self sendAction:action to:target];
+	   [self sendAction:action to:target];
    }
 #endif
 }
@@ -277,6 +283,14 @@ static NSString * const NSPopUpButtonBindingObservationContext=@"NSPopUpButtonBi
     
     [[menu itemAtIndex:i] setValue:[values objectAtIndex:i] forKey:key];
    }
+	// Remove any additional unwanted item
+	while (numberOfItems > count) {
+		[menu removeItemAtIndex:--numberOfItems];
+	}
+	if ([self indexOfSelectedItem] >= count) {
+		[self selectItem:nil];
+	}
+	[self synchronizeTitleAndSelectedItem];
 }
 
 -(id)_contentValues
@@ -308,7 +322,7 @@ static NSString * const NSPopUpButtonBindingObservationContext=@"NSPopUpButtonBi
 	[self _setItemValues:values forKey:@"representedObject"];
 	if(![self _binderForBinding:@"contentValues"])
 	{
-		[self _setItemValues:[[values valueForKey:@"value"] valueForKey:@"description"] forKey:@"title"];
+		[self _setItemValues: [values valueForKey: @"description"] forKey:@"title"];
 	}
 }
 
@@ -342,21 +356,28 @@ static NSString * const NSPopUpButtonBindingObservationContext=@"NSPopUpButtonBi
 
 -(void)_setSelectedValue:(id)value
 {
-	return [self selectItemWithTitle:value];
+	if (value && ![value isKindOfClass:[NSString class]]) {
+		// Cocoa actually accepts non string values
+		value = [NSString stringWithFormat:@"%@", value];
+	}
+	[self selectItemWithTitle:value];
 }
 
 - (void) bind:(NSString *)binding toObject:(id)observable withKeyPath:(NSString *)keyPath options:(NSDictionary *)options
 {
-	[self addObserver:self 
-		   forKeyPath:@"cell.menu.itemArray" 
-			  options:NSKeyValueObservingOptionPrior
-			  context:NSPopUpButtonBindingObservationContext];
-	
-	[self addObserver:self 
-		   forKeyPath:@"cell.selectedItem" 
-			  options:NSKeyValueObservingOptionPrior
-			  context:NSPopUpButtonBindingObservationContext];
-	
+	// No need to observe the same thing many times when we have several bindings
+	if (!_observerAdded) {
+		_observerAdded = YES;
+		[self addObserver:self 
+			   forKeyPath:@"cell.menu.itemArray" 
+				  options:NSKeyValueObservingOptionPrior
+				  context:NSPopUpButtonBindingObservationContext];
+		
+		[self addObserver:self 
+			   forKeyPath:@"cell.selectedItem" 
+				  options:NSKeyValueObservingOptionPrior
+				  context:NSPopUpButtonBindingObservationContext];
+	}
 	[super bind:binding toObject:observable withKeyPath:keyPath options:options];
 }
 
@@ -370,6 +391,7 @@ static NSString * const NSPopUpButtonBindingObservationContext=@"NSPopUpButtonBi
 				[self willChangeValueForKey:@"selectedIndex"];
             [self willChangeValueForKey:@"selectedValue"];
             [self willChangeValueForKey:@"selectedObject"];
+				[self willChangeValueForKey:@"selectedTag"];
 
 			}
 			else
@@ -377,6 +399,7 @@ static NSString * const NSPopUpButtonBindingObservationContext=@"NSPopUpButtonBi
             [self didChangeValueForKey:@"selectedObject"];
             [self didChangeValueForKey:@"selectedValue"];
 				[self didChangeValueForKey:@"selectedIndex"];
+				[self didChangeValueForKey:@"selectedTag"];
 			}
 		}
 		else

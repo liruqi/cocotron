@@ -21,6 +21,11 @@ NSString * const NSFontFaceAttribute=@"NSFontFaceAttribute";
 NSString * const NSFontFixedAdvanceAttribute=@"NSFontFixedAdvanceAttribute";
 NSString * const NSFontVisibleNameAttribute=@"NSFontVisibleNameAttribute";
 
+NSString * const NSFontSymbolicTrait = @"NSFontSymbolicTrait";
+NSString * const NSFontWeightTrait = @"NSFontWeightTrait";
+NSString * const NSFontWidthTrait = @"NSFontWidthTrait";
+NSString * const NSFontSlantTrait = @"NSFontSlantTrait";
+
 @implementation NSFontDescriptor : NSObject
 
 -initWithFontAttributes:(NSDictionary *)attributes {
@@ -57,7 +62,7 @@ NSString * const NSFontVisibleNameAttribute=@"NSFontVisibleNameAttribute";
 +fontDescriptorWithName:(NSString *)name size:(float)pointSize {
    NSDictionary *attributes=[NSDictionary dictionaryWithObjectsAndKeys:
     name,NSFontNameAttribute,
-    [NSNumber numberWithFloat:pointSize],NSFontSizeAttribute,
+    [[NSNumber numberWithFloat:pointSize] stringValue],NSFontSizeAttribute,
     nil];
    
    return [[[self allocWithZone:NULL] initWithFontAttributes:attributes] autorelease];
@@ -80,7 +85,8 @@ NSString * const NSFontVisibleNameAttribute=@"NSFontVisibleNameAttribute";
 }
 
 -(NSFontSymbolicTraits)symbolicTraits {
-   return [[_attributes objectForKey:NSFontTraitsAttribute] unsignedIntValue];
+	NSDictionary* fontTraits = [_attributes objectForKey:NSFontTraitsAttribute];
+	return [[fontTraits objectForKey: NSFontSymbolicTrait] unsignedIntValue];
 }
 
 -(NSFontDescriptor *)fontDescriptorByAddingAttributes:(NSDictionary *)attributes {
@@ -126,7 +132,9 @@ NSString * const NSFontVisibleNameAttribute=@"NSFontVisibleNameAttribute";
 -(NSFontDescriptor *)fontDescriptorWithSymbolicTraits:(NSFontSymbolicTraits)traits {
    NSMutableDictionary *copy=[NSMutableDictionary dictionaryWithDictionary:_attributes];
 
-   [copy setObject:[NSNumber numberWithUnsignedInt:traits] forKey:NSFontTraitsAttribute];
+	NSMutableDictionary *traitsCopy = [NSMutableDictionary dictionaryWithDictionary: [_attributes objectForKey: NSFontTraitsAttribute]];
+	[traitsCopy setObject: [NSNumber numberWithUnsignedInt: traits] forKey: NSFontSymbolicTrait];
+   [copy setObject:traitsCopy forKey:NSFontTraitsAttribute];
 
    return [isa fontDescriptorWithFontAttributes:copy];
 }

@@ -13,6 +13,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <Foundation/NSFileHandle_posix.h>
 #import <Foundation/NSFileManager_posix.h>
 #import <Foundation/NSLock_posix.h>
+#import <Foundation/NSRecursiveLock_posix.h>
 #import <Foundation/NSCondition_posix.h>
 #import <Foundation/NSConditionLock_posix.h>
 #import <Foundation/NSPersistantDomain_posix.h>
@@ -21,8 +22,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <Foundation/NSPipe_posix.h>
 #import <Foundation/NSRaiseException.h>
 
-#import <pwd.h>
-#import <unistd.h>
+#include <pwd.h>
+#include <unistd.h>
 #import <rpc/types.h>
 #include <sys/mman.h>
 #include <sys/types.h>
@@ -38,6 +39,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #include <poll.h>
 #include <pthread.h>
 #import <sys/socket.h>
+#include <errno.h>
 
 BOOL NSCurrentLocaleIsMetric(){
    return NO;
@@ -69,6 +71,10 @@ BOOL NSCurrentLocaleIsMetric(){
 
 -(Class)conditionLockClass {
    return [NSConditionLock_posix class];
+}
+
+-(Class)recursiveLockClass {
+    return [NSRecursiveLock_posix class];
 }
 
 -(Class)persistantDomainClass {
@@ -106,6 +112,10 @@ static struct passwd *pwent = NULL;
 -(NSString *)homeDirectory {
     [self _checkAndGetPWEnt];
     return [NSString stringWithCString:pwent->pw_dir];
+}
+
+-(NSString *)libraryDirectory {
+    return [[self homeDirectory] stringByAppendingPathComponent:@".CocotronLibrary"];
 }
 
 -(NSString *)temporaryDirectory {
@@ -213,6 +223,11 @@ NSUInteger NSPlatformThreadID() {
 {
     struct in_addr addr;
     struct hostent *remoteHost;
+
+    if ([address length] == 0) {
+        return nil;
+    }
+
     addr.s_addr = inet_addr([address cString]);
     if (addr.s_addr == INADDR_NONE) {
         return nil;
@@ -297,7 +312,8 @@ void *NSPlatformContentsOfFile(NSString *path,NSUInteger *lengthp) {
     }
 }
 
--(BOOL)writeContentsOfFile:(NSString *)path bytes:(const void *)bytes length:(NSUInteger)length atomically:(BOOL)atomically {
+-(BOOL)writeContentsOfFile:(NSString *)path bytes:(const void *)bytes length:(NSUInteger)length options:(NSUInteger)options error:(NSError **)errorp {
+    BOOL atomically = (options & NSAtomicWrite);
     NSString *atomic = nil;
     int fd;
     size_t total = 0;
@@ -308,19 +324,24 @@ void *NSPlatformContentsOfFile(NSString *path,NSUInteger *lengthp) {
         } while ([[NSFileManager defaultManager] fileExistsAtPath:atomic] == YES);
                 
         fd = open([atomic fileSystemRepresentation], O_WRONLY|O_CREAT, FOUNDATION_FILE_MODE);
-        if (fd == -1)
+        if (fd == -1) {
+            if (errorp) *errorp = [NSError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:nil];
             return NO;
+        }
     }
     else {
         fd = open([path fileSystemRepresentation], O_WRONLY|O_CREAT, FOUNDATION_FILE_MODE);
-        if (fd == -1)
+        if (fd == -1) {
+            if (errorp) *errorp = [NSError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:nil];
             return NO;
+        }
     }
 
     do {
         size_t written = write(fd, bytes+total, length);
 
         if (written == -1) {
+            if (errorp) *errorp = [NSError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:nil];
             close(fd);
             return NO;
         }
@@ -331,8 +352,10 @@ void *NSPlatformContentsOfFile(NSString *path,NSUInteger *lengthp) {
     close(fd);
 
     if (atomically)
-        if (rename([atomic fileSystemRepresentation], [path fileSystemRepresentation]) == -1)
+        if (rename([atomic fileSystemRepresentation], [path fileSystemRepresentation]) == -1) {
+            if (errorp) *errorp = [NSError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:nil];
             return NO;
+        }
 
     return YES;
 }
