@@ -17,7 +17,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 enum {
    NSPrintOperationPDFInRect,
    NSPrintOperationEPSInRect,
-   NSPrintOperationPrinter,
+	NSPrintOperationPrinter,
+	NSPrintOperationFile,
 };
 
 @implementation NSPrintOperation
@@ -31,7 +32,7 @@ static NSPrintOperation *_currentOperation=nil;
 -initWithView:(NSView *)view printInfo:(NSPrintInfo *)printInfo insideRect:(NSRect)rect toData:(NSMutableData *)data type:(int)type {
    _view=[view retain];
    _printInfo=[printInfo copy];
-   if(type==NSPrintOperationPDFInRect || type==NSPrintOperationEPSInRect)
+   if(type==NSPrintOperationPDFInRect || type==NSPrintOperationEPSInRect || type==NSPrintOperationFile)
     [_printInfo setPaperSize:rect.size];
    _printPanel=[[NSPrintPanel printPanel] retain];
    _showsPrintPanel=YES;
@@ -43,7 +44,12 @@ static NSPrintOperation *_currentOperation=nil;
 }
 
 -initWithView:(NSView *)view printInfo:(NSPrintInfo *)printInfo {
-   return [self initWithView:view printInfo:printInfo insideRect:[view bounds] toData:nil type:NSPrintOperationPrinter];
+	int type = NSPrintOperationPrinter;
+
+	if ([[printInfo jobDisposition] isEqualToString: NSPrintSaveJob]) {
+		type = NSPrintOperationFile;
+	}
+   return [self initWithView:view printInfo:printInfo insideRect:[view bounds] toData:nil type:type];
 }
 
 -(void)dealloc {
@@ -195,25 +201,31 @@ static NSPrintOperation *_currentOperation=nil;
     if(_showsPrintPanel){
      NSPrintPanel *printPanel=[self printPanel];
      int           panelResult;
-     
+
+		// We can't assume that there are valid titles on every window
+		NSString* title = [[_view window] title];
+		if (title == nil) {
+			title = @"Printing View";
+		}
+		
      [[_printInfo dictionary] setObject:_view forKey:@"_NSView"];
-     [[_printInfo dictionary] setObject:[[_view window] title] forKey:@"_title"];
+     [[_printInfo dictionary] setObject: title forKey:@"_title"];
      panelResult=[printPanel runModal];
      [[_printInfo dictionary] removeObjectForKey:@"_NSView"];
      [[_printInfo dictionary] removeObjectForKey:@"_title"];
    
-     if(panelResult!=NSOKButton)
-      return NO;
+		if (panelResult != NSOKButton) {
+			return nil;
+		}
     }
     else {
      NSLog(@"Printing not implemented without print panel yet");
-     return NO;
+     return nil;
     }
    
     if((context=(CGContextRef)[[_printInfo dictionary] objectForKey:@"_KGContext"])==nil)
      return nil;
-   }
-   else if(_type==NSPrintOperationPDFInRect){
+   } else if(_type==NSPrintOperationPDFInRect){
     NSDictionary *auxiliaryInfo=[NSDictionary dictionaryWithObject:[[_view window] title] forKey:(NSString *)kCGPDFContextTitle];
     
     CGDataConsumerRef consumer=CGDataConsumerCreateWithCFData((CFMutableDataRef)_mutableData);
@@ -222,10 +234,20 @@ static NSPrintOperation *_currentOperation=nil;
     [(id)context autorelease];
     
     CGDataConsumerRelease(consumer);
-   }
-   else
+   } else if (_type == NSPrintOperationFile) {
+	   NSDictionary *auxiliaryInfo=[NSDictionary dictionaryWithObject:[[_view window] title] forKey:(NSString *)kCGPDFContextTitle];
+	   
+	   NSString *filePath = [_printInfo.dictionary objectForKey:NSPrintSavePath];
+	   CGDataConsumerRef consumer=CGDataConsumerCreateWithURL((CFURLRef)[NSURL fileURLWithPath:filePath]);
+	   
+	   context=CGPDFContextCreate(consumer,&_insideRect,(CFDictionaryRef)auxiliaryInfo);
+	   [(id)context autorelease];
+	   
+	   CGDataConsumerRelease(consumer);
+	   
+   } else {
     return nil;
-    
+   }
    return [NSGraphicsContext graphicsContextWithGraphicsPort:context flipped:NO];
 }
 
@@ -257,6 +279,11 @@ static NSPrintOperation *_currentOperation=nil;
    }
    
    graphicsContext=[self createContext];
+	if (graphicsContext == nil) {
+		// It'll be nil if the user cancelled the print panel for example.
+		return NO;
+	}
+	
    context=[graphicsContext graphicsPort];
    
    [_printInfo setUpPrintOperationDefaultValues];

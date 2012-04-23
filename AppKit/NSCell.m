@@ -27,9 +27,24 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 @implementation NSCell
 
+#pragma mark -
+#pragma mark Class Methods
+
 +(NSFocusRingType)defaultFocusRingType {
    return NSFocusRingTypeExterior;
 }
+
++ (NSMenu *)defaultMenu
+{
+	return nil;
+}
+
++(BOOL)prefersTrackingUntilMouseUp
+{
+	return NO;
+}
+
+#pragma mark -
 
 -(void)encodeWithCoder:(NSCoder *)coder {
    NSUnimplementedMethod();
@@ -293,7 +308,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(float)floatValue {
-   NSString *objString = ([_objectValue isKindOfClass:[NSAttributedString class]]) ? [_objectValue string] : (NSString *)_objectValue;
+	if (_objectValue == nil) {
+		// [nil someFloatMethod] doesn't return 0.f on Cocotron - tmp fix until the runtime is fixed
+		return 0.f;
+	}
+	NSString *objString = ([_objectValue isKindOfClass:[NSAttributedString class]]) ? [_objectValue string] : (NSString *)_objectValue;
    if([objString isKindOfClass:[NSString class]])
    {
       float f = 0.0;
@@ -305,6 +324,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(double)doubleValue {
+	if (_objectValue == nil) {
+		// [nil someDoubleMethod] doesn't return 0. on Cocotron - tmp fix until the runtime is fixed
+		return 0.;
+	}
+	
    NSString *objString = ([_objectValue isKindOfClass:[NSAttributedString class]]) ? [_objectValue string] : (NSString *)_objectValue;
    if([objString isKindOfClass:[NSString class]])
    {
@@ -314,6 +338,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    }
    else
       return [_objectValue doubleValue];
+}
+
+-(NSInteger)integerValue {
+   NSString *objString = ([_objectValue isKindOfClass:[NSAttributedString class]]) ? [_objectValue string] : (NSString *)_objectValue;
+   if([objString isKindOfClass:[NSString class]])
+   {
+      NSInteger i = 0;
+      [[NSScanner localizedScannerWithString:objString] scanInteger:&i];
+      return i;
+   }
+   else
+      return [_objectValue integerValue];
 }
 
 -(NSAttributedString *)attributedStringValue {
@@ -480,7 +516,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 -(void)setEnabled:(BOOL)flag {
    if(_isEnabled!=flag){
     _isEnabled=flag;
-    [(NSControl *)[self controlView] updateCell:self];
     [[[self controlView] window] invalidateCursorRectsForView:[self controlView]];
    }
 }
@@ -586,6 +621,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    [self setObjectValue:[NSNumber numberWithDouble:value]];
 }
 
+-(void)setIntegerValue:(NSInteger)value {
+   [self setObjectValue:[NSNumber numberWithInteger:value]];
+}
+
 
 -(void)setAttributedStringValue:(NSAttributedString *)value {
    value=[value copy];
@@ -628,6 +667,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -(void)takeFloatValueFrom:sender {
    [self setFloatValue:[sender floatValue]];
+}
+
+-(void)takeDoubleValueFrom:sender {
+   [self setDoubleValue:[sender doubleValue]];
+}
+
+-(void)takeIntegerValueFrom:sender {
+   [self setIntegerValue:[sender integerValue]];
 }
 
 -(NSSize)cellSize {
@@ -717,7 +764,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
      break;
     }
 
-    if(isWithinCellFrame) {
+    if(untilMouseUp || isWithinCellFrame) {
      if(![self continueTracking:lastPoint at:[event locationInWindow] inView:view])
       break;
 
@@ -737,7 +784,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 -(NSText *)setUpFieldEditorAttributes:(NSText *)editor {
    [editor setEditable:[self isEditable]];
    [editor setSelectable:[self isSelectable]];
-   [editor setString:[self stringValue]];
+	[editor setString:[self stringValue]];
    [editor setFont:[self font]];
    [editor setAlignment:[self alignment]];
    if([self respondsToSelector:@selector(drawsBackground)])
@@ -756,12 +803,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    if([self isScrollable] || [self wraps]){
     NSClipView *clipView;
 
-    if([[editor superview] isKindOfClass:[NSClipView class]]){
+    if([[editor superview] isKindOfClass:[NSClipView class]] && [[editor superview] superview] == view){
      clipView=(NSClipView *)[editor superview];
      [clipView setFrame:frame];
     }
     else {
      clipView=[[[NSClipView alloc] initWithFrame:frame] autorelease];
+	 [editor setFrameOrigin:NSZeroPoint];
+	 [editor setFrameSize:frame.size];
      [clipView setDocumentView:editor];
      [view addSubview:clipView];
     }
@@ -774,8 +823,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     [editor setNeedsDisplay:YES];
    }
    else {
-    [editor setFrame:frame];
-    [view addSubview:editor];
+	   [editor setHorizontallyResizable:NO];
+	   [editor setVerticallyResizable:NO];
+	   [editor setFrame:frame];
+	   [view addSubview:editor];
    }
    [[view window] makeFirstResponder:editor];
    [editor setDelegate:delegate];

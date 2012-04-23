@@ -8,12 +8,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <Foundation/NSPersistantDomain_win32.h>
 #import <Foundation/NSString.h>
 #import <Foundation/NSArray.h>
+#import <Foundation/NSBundle.h>
 #import <Foundation/NSDictionary.h>
 #import <Foundation/NSData.h>
 #import <Foundation/NSPropertyList.h>
 #import <Foundation/NSException.h>
 
-#import <windows.h>
+#include <windows.h>
 
 @implementation NSPersistantDomain_win32
 
@@ -40,7 +41,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -initWithName:(NSString *)name {
-   _path=[[NSArray arrayWithObjects:@"Software",@"Cocotron",name,nil] retain];
+	// Allow software to specify a more meaningful registry group key
+	NSString  *company=[[NSBundle mainBundle] objectForInfoDictionaryKey: @"Win32RegistryCompanyIdentifier"];
+	if (company == nil) {
+		company = @"Cocotron";
+	}
+   _path=[[NSArray arrayWithObjects:@"Software",company,name,nil] retain];
    _handle=[self rootHandle];
    _cache=[NSMutableDictionary new];
    return self;
@@ -138,14 +144,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(void)removeObjectForKey:(NSString *)key {
-   LONG      error;
 
-   [_cache removeObjectForKey:key];
+	if ([_cache objectForKey: key]) {
+		[_cache removeObjectForKey:key];
 
-   error=RegDeleteValueA(_handle,[key cString]);
-   if(error!=ERROR_SUCCESS){
-    NSLog(@"RegDeleteValue failed %@ %@",_path,key);
-   }
+		LONG error = RegDeleteValueA(_handle,[key cString]);
+		if(error != ERROR_SUCCESS){
+			NSLog(@"RegDeleteValue failed %@ %@",_path,key);
+		}
+	}
 }
 
 @end

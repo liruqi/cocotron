@@ -10,10 +10,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 @class CGWindow;
 
+// style flag for private windows (that NSApp doesn't have to know about)
+#define NSAppKitPrivateWindow 0x8000000
+
 @interface NSWindow(NSWindow_private)
 -(CGWindow *)platformWindow;
 -(CGContextRef)cgContext;
 -(BOOL)_isActive;
+-(void)_setVisible:(BOOL)visible;
 -(NSArray *)_draggedTypes;
 -(void)_addCursorRect:(NSRect)rect cursor:(NSCursor *)cursor view:(NSView *)view;
 -(void)_removeCursorRect:(NSRect)rect cursor:(NSCursor *)cursor view:(NSView *)view;
@@ -23,6 +27,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 -(void)_removeTrackingRect:(NSTrackingRectTag)tag;
 -(void)_removeAllToolTips;
 -(void)_attachSheetContextOrderFrontAndAnimate:(NSSheetContext *)sheetContext;
+-(void)_setSheetContext:(NSSheetContext*)sheetContext;
 -(NSSheetContext *)_sheetContext;
 -(void)_detachSheetContextAnimateAndOrderOut;
 -(void)_attachDrawer:(NSDrawer *)drawer;

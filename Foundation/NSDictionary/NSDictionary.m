@@ -73,16 +73,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
      objects[i]=[objects[i] copyWithZone:NULL];
     }
    }
-   
+
    [self initWithObjects:objects forKeys:keys count:count];
-   
+
    if(copyItems){
     for(i=0;i<count;i++){
      [keys[i] release];
      [objects[i] release];
     }
    }
-    
+
    return self;
 }
 
@@ -126,12 +126,22 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -initWithContentsOfURL:(NSURL *)url {
-   if(![url isFileURL]){
-    [self dealloc];
-    return nil;
-   }
-   
-   return [self initWithContentsOfFile:[url path]];
+	if ([url isFileURL]) { 
+		return [self initWithContentsOfFile:[url path]];
+	} else {
+		NSError* error = nil;
+		NSData* data = [NSData dataWithContentsOfURL:url options:0 error: &error];
+		NSDictionary* dict = nil;
+		if (data && [data length] > 0) {
+			dict = [NSPropertyListReader propertyListFromData: data];
+		}
+		if (dict) {
+			return [self initWithDictionary: dict];
+		} else {
+			[self dealloc];
+			return nil;
+		}
+	}
 }
 
 +dictionary {
@@ -219,7 +229,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     NSKeyedUnarchiver *keyed=(NSKeyedUnarchiver *)coder;
     NSArray           *keys=[keyed decodeObjectForKey:@"NS.keys"];
     NSArray           *objects=[keyed decodeObjectForKey:@"NS.objects"];
-    
+
     return [self initWithObjects:objects forKeys:keys];
    }
    else {
@@ -242,7 +252,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 -(void)encodeWithCoder:(NSCoder *)coder {
   if([coder isKindOfClass:[NSKeyedArchiver class]]){
     NSKeyedArchiver *keyed=(NSKeyedArchiver *)coder;
-    
+
     [keyed encodeArray:[self allKeys] forKey:@"NS.keys"];
     [keyed encodeArray:[self allValues] forKey:@"NS.objects"];
   }
@@ -286,10 +296,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    NSEnumerator *state=[self keyEnumerator];
    id            key;
    NSInteger     i;
-   
+
    for(i=0;(key=[state nextObject])!=nil;i++){
     id value=[self objectForKey:key];
-    
+
     objects[i]=value;
     keys[i]=key;
    }
@@ -330,7 +340,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
      return NO;
    }
 
-   return YES;   
+   return YES;
 }
 
 - (NSUInteger)countByEnumeratingWithState:(NSFastEnumerationState *)state objects:(id *)stackbuf count:(NSUInteger)len
@@ -339,7 +349,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(NSArray *)allKeys {
-   NSInteger i,count=[self count];
+   NSInteger count=[self count];
    id keys[count],objects[count];
 
    [self getObjects:objects andKeys:keys];
@@ -362,22 +372,22 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    return result;
 }
 
-- (NSArray *) keysSortedByValueUsingSelector: (SEL)selector 
-        { // there is probably a faster implementation, but at least this is easy to understand. 
-        NSMutableArray * result = nil; 
-        NSAutoreleasePool * pool = [NSAutoreleasePool new]; 
-        NSArray * values = [[self allValues] sortedArrayUsingSelector: selector]; 
-        id value; 
-        NSEnumerator * de = [values objectEnumerator]; 
-        result = [NSMutableArray array]; 
-        while((value = [de nextObject])) 
-                { 
-                [result addObjectsFromArray: [self allKeysForObject: value]]; 
-                } 
-        result = [result copy]; 
-        [pool release]; 
-        return [result autorelease]; 
-        } 
+- (NSArray *) keysSortedByValueUsingSelector: (SEL)selector
+        { // there is probably a faster implementation, but at least this is easy to understand.
+        NSMutableArray * result = nil;
+        NSAutoreleasePool * pool = [NSAutoreleasePool new];
+        NSArray * values = [[self allValues] sortedArrayUsingSelector: selector];
+        id value;
+        NSEnumerator * de = [values objectEnumerator];
+        result = [NSMutableArray array];
+        while((value = [de nextObject]))
+                {
+                [result addObjectsFromArray: [self allKeysForObject: value]];
+                }
+        result = [result copy];
+        [pool release];
+        return [result autorelease];
+        }
 
 -(NSArray *)allValues {
    NSInteger count=[self count];
@@ -411,7 +421,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 -(BOOL)writeToURL:(NSURL *)url atomically:(BOOL)atomically {
    if([url isFileURL])
     return [self writeToFile:[url path] atomically:atomically];
-   
+
    return NO;
 }
 

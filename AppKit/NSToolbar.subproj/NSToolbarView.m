@@ -124,7 +124,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
    int       p,priorityCount=4;
    
    [_visibleItems removeAllObjects];
-      
+   
    for(i=0;i<count;i++){
     NSToolbarItem *item=[items objectAtIndex:i];
     NSString      *identifier=[item itemIdentifier];
@@ -230,6 +230,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
      [item _setItemViewFrame:frames[i]];
      if([item _enclosingView]!=self)
       [self addSubview:[item _enclosingView]];
+	  	[[item _enclosingView] setToolTip:[item toolTip]];
+
      x+=frames[i].size.width;
     }
    }
@@ -262,6 +264,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(void)_removeItemAtIndex:(NSInteger)index {
+   [[[[self subviews] copy] autorelease] makeObjectsPerformSelector:@selector(removeFromSuperview)];
    [self layoutViews];
 }
 
@@ -391,7 +394,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
      
    NSArray      *items=[_toolbar items];
    NSInteger     i,count=[items count];
-   NSMenu       *menu=[[NSMenu alloc] initWithTitle:@"Overflow"];
+   NSMenu       *menu=[[NSMenu alloc] initWithTitle: NSLocalizedStringFromTableInBundle(@"Overflow", nil, [NSBundle bundleForClass: [NSToolbarView class]], @"Describes the overflow area of the toolbar")];
    NSMenuWindow *window;
    NSMenuItem   *item;
    NSRect       menuFrame = [self frame];

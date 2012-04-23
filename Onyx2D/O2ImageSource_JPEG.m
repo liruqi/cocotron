@@ -15,6 +15,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <Onyx2D/O2DataProvider.h>
 #import <Onyx2D/O2ColorSpace.h>
 #import <Onyx2D/O2Image.h>
+#ifdef LIBJPEG_PRESENT
+#import <libjpeg/include/jpeglib.h>
+#endif
 
 #import <assert.h>
 #import <string.h>
@@ -26,15 +29,159 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 enum
 {
-   STBI_default = 0, // only used for req_comp
-
-   STBI_grey       = 1,
-   STBI_grey_alpha = 2,
-   STBI_rgb        = 3,
-   STBI_rgb_alpha  = 4,
+	STBI_default = 0, // only used for req_comp
+	
+	STBI_grey       = 1,
+	STBI_grey_alpha = 2,
+	STBI_rgb        = 3,
+	STBI_rgb_alpha  = 4,
 };
 
+#ifdef LIBJPEG_PRESENT
 
+typedef struct o2jpg_error_mgr {
+	struct jpeg_error_mgr err;
+	jmp_buf jmp; // Additional info about where to go on error
+} o2jpg_error_mgr;
+
+// Use libjpeg to do the decoding
+static void o2error_exit(j_common_ptr cinfo)
+{
+	o2jpg_error_mgr *o2err = (o2jpg_error_mgr *)cinfo->err;
+
+	// Doesn't hurt to display what went wrong
+	(*cinfo->err->output_message)(cinfo);
+	
+	// Jump to our error handling code
+	longjmp(o2err->jmp, 1);
+}
+
+static unsigned char *stbi_jpeg_load_from_memory(jpeg *j,char const *buffer, int len, int *x, int *y, int *comp, int req_comp)
+{
+	struct jpeg_decompress_struct cinfo;
+	jpeg_create_decompress(&cinfo);
+	
+	o2jpg_error_mgr jerr;
+
+	cinfo.err = jpeg_std_error(&jerr.err);
+	// Use our own exit routine - we don't want to exit the app when something goes wrong
+	jerr.err.error_exit = o2error_exit;
+	// We need to use setjmp since the error exit method must no return
+	if (setjmp(jerr.jmp)) {
+		// Do some cleaning and return an empty image
+		jpeg_destroy_decompress(&cinfo);
+		return 0;
+	}
+	
+	/// Read the data from our memory buffer
+	jpeg_mem_src( &cinfo, (char *)buffer, len );
+
+	// Setup the jpeg header and set the decompress options
+	jpeg_read_header(&cinfo, TRUE);
+
+	// We only support RGBA format for the output format
+	if (cinfo.jpeg_color_space == JCS_CMYK || cinfo.jpeg_color_space == JCS_YCCK) {
+		// libjpeg doesn't know how to do the CMYK->RGBx conversion - we'll have to do it
+		// ourself
+		cinfo.out_color_space = JCS_CMYK;
+	} else {
+#ifdef JCS_ALPHA_EXTENSIONS
+		// libjpeg turbo can convert the output data directly to the RGBA buffer format we want
+		cinfo.out_color_space = JCS_EXT_RGBA;
+#else
+		cinfo.out_color_space = JCS_RGB;
+#endif
+	}
+    int wantedPixelSize = cinfo.output_components = cinfo.out_color_components = 4;
+	
+	
+	jpeg_start_decompress( &cinfo );
+	*x = cinfo.output_width;
+	*y = cinfo.output_height;
+	*comp = wantedPixelSize;
+	
+	// Number of bytes in a decompressed row
+	int bytesPerRow = cinfo.output_width*wantedPixelSize;
+	
+	// Buffer for the final decompressed data
+	unsigned char *outputImage = (unsigned char*)malloc(bytesPerRow*cinfo.output_height);
+	
+#ifdef JCS_ALPHA_EXTENSIONS
+	// Scanline buffers pointers - they'll point directly to the final image buffer
+	JSAMPROW scanlineBuffer[cinfo.rec_outbuf_height];
+#else 
+	// Scanline buffers
+	JSAMPARRAY scanlineBuffer = (*cinfo.mem->alloc_sarray)((j_common_ptr) &cinfo, JPOOL_IMAGE, bytesPerRow, cinfo.rec_outbuf_height);
+#endif
+	
+	while(cinfo.output_scanline < cinfo.image_height) {
+		int currentLine = cinfo.output_scanline;
+#ifdef JCS_ALPHA_EXTENSIONS
+		// We'll decode directly into the final buffer
+		for (int i = 0; i < cinfo.rec_outbuf_height; ++i) {
+			scanlineBuffer[i] = outputImage + (currentLine + i)*bytesPerRow;
+		}
+		jpeg_read_scanlines(&cinfo, scanlineBuffer, cinfo.rec_outbuf_height);
+		if (cinfo.out_color_space == JCS_CMYK) {
+			// Convert from CMYK to RGBA
+			for (int i = 0; i < cinfo.rec_outbuf_height; ++i) {
+				char *out = outputImage + (currentLine++)*bytesPerRow;
+				for (int j = 0; j < cinfo.output_width; ++j) {
+					unsigned char c = out[0];
+					unsigned char m = out[1];
+					unsigned char y = out[2];
+					unsigned char k = out[3];
+					int r = (c*k)/255;
+					int g = (m*k)/255;
+					int b = (y*k)/255;
+
+					*out++ = r;
+					*out++ = g;
+					*out++ = b;
+					*out++ = 0xff; // add the alpha component
+				}					
+			}				
+		}
+#else
+		int count = jpeg_read_scanlines(&cinfo, scanlineBuffer, cinfo.rec_outbuf_height);
+		for (int i = 0; i < count; ++i) {
+			char *out = outputImage + (currentLine++)*bytesPerRow;
+			const char *scanline = scanlineBuffer[i];
+			for (int j = 0; j < cinfo.output_width; ++j) {
+				if (cinfo.out_color_space == JCS_CMYK) {
+					// Convert from CMYK to RGBA
+					unsigned char c = *scanline++;
+					unsigned char m = *scanline++;
+					unsigned char y = *scanline++;
+					unsigned char k = *scanline++;
+					int r = (c*k)/255;
+					int g = (m*k)/255;
+					int b = (y*k)/255;
+					
+					*out++ = r;
+					*out++ = g;
+					*out++ = b;
+					*out++ = 0xff; // add the alpha component
+				} else {
+					// Convert from RGB to RGBA
+					*out++ = *scanline++;
+					*out++ = *scanline++;
+					*out++ = *scanline++;
+					*out++ = 0xff; // add the alpha component
+				}
+			}
+		}
+#endif
+	}
+	
+	// We're done - do some cleanup
+	jpeg_finish_decompress( &cinfo );
+	jpeg_destroy_decompress( &cinfo );
+	
+	return outputImage;
+}
+
+#else
 typedef unsigned char stbi_uc;
 
 // this is not threadsafe
@@ -1054,6 +1201,7 @@ static unsigned char *stbi_jpeg_load_from_memory(jpeg *j,stbi_uc const *buffer, 
    start_mem(&(j->s), buffer,len);
    return load_jpeg_image(j, x,y,comp,req_comp);
 }
+#endif
 
 NSData *O2DCTDecode(NSData *data) {
    jpeg decoder;
@@ -1104,7 +1252,6 @@ NSData *O2DCTDecode(NSData *data) {
 -(O2ImageRef)createImageAtIndex:(unsigned)index options:(CFDictionaryRef)options {
    int            width=0,height=0;
    int            comp;
-
    _bitmap=stbi_jpeg_load_from_memory(&(self->jpeg_decoder),[_jpg bytes],[_jpg length],&width,&height,&comp,STBI_rgb_alpha);
    int            bitsPerPixel=32;
    int            bytesPerRow=(bitsPerPixel/(sizeof(char)*8))*width;
