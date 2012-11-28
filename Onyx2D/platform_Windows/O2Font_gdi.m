@@ -105,10 +105,10 @@ static int CALLBACK EnumFontFromFamilyCallBack(const EXTLOGFONTW* longFont,const
 }
 
 // Add the longFont family to the list of known families
-static int CALLBACK EnumFamiliesCallBack(const LOGFONTW* longFont,const TEXTMETRICW* metrics, DWORD ignored, LPARAM p)
-{
+static int CALLBACK EnumFamiliesCallBackW(const EXTLOGFONTW* logFont,const TEXTMETRICW* metrics, DWORD ignored, LPARAM p) {
 	NSMutableArray *families = (NSMutableArray *)p;
-	NSString *winName = [NSString stringWithFormat:@"%S", longFont->lfFaceName];
+	NSString *winName = [NSString stringWithFormat:@"%S", logFont->elfLogFont.lfFaceName];
+
 	[families addObject:winName];
 	return 1;
 }
@@ -121,7 +121,10 @@ static int CALLBACK EnumFamiliesCallBack(const LOGFONTW* longFont,const TEXTMETR
 	
 	// Get a list of all of the families
 	NSMutableArray *families = [NSMutableArray arrayWithCapacity:100];
-	EnumFontFamiliesW(dc, (LPCWSTR)NULL, (FONTENUMPROCW)EnumFamiliesCallBack, (LPARAM)families); 
+	LOGFONTW logFont = { 0 };
+	
+	logFont.lfCharSet=DEFAULT_CHARSET;
+	EnumFontFamiliesExW(dc,&logFont,(FONTENUMPROCW)EnumFamiliesCallBackW,(LPARAM)families,0);
 	for (NSString *familyName in families) {
 		// Enum all of the faces for that family
 		LOGFONTW logFont = { 0 };
@@ -172,6 +175,17 @@ static int CALLBACK EnumFamiliesCallBack(const LOGFONTW* longFont,const TEXTMETR
 {
 	// For now, we're using the Win32 name as the display name
 	return [self postscriptNameForNativeName:name];
+}
+
++ (NSString *)postscriptNameForFontName:(NSString *)name
+{
+	// If name is an available PS name, then use that
+	// Else check if 'name' is an available display name
+	if ([sPSToWin32Table objectForKey:name]) {
+		return name;
+	} else {
+		return [self postscriptNameForDisplayName:name];
+	}
 }
 
 + (NSString *)displayNameForPostscriptName:(NSString *)name

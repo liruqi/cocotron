@@ -19,6 +19,16 @@
 		49A7975A14224021001CE4C2 /* O2Encoder_JPG.m in Sources */ = {isa = PBXBuildFile; fileRef = 49A7975214224021001CE4C2 /* O2Encoder_JPG.m */; };
 		49A7975B14224021001CE4C2 /* O2Encoder_JPG.h in Headers */ = {isa = PBXBuildFile; fileRef = 49A7975114224021001CE4C2 /* O2Encoder_JPG.h */; };
 		49A7975C14224021001CE4C2 /* O2Encoder_JPG.m in Sources */ = {isa = PBXBuildFile; fileRef = 49A7975214224021001CE4C2 /* O2Encoder_JPG.m */; };
+		49D5D245165F9D0000D6A8EE /* NSUndoTextOperation.h in Headers */ = {isa = PBXBuildFile; fileRef = 49D5D243165F9D0000D6A8EE /* NSUndoTextOperation.h */; };
+		49D5D246165F9D0000D6A8EE /* NSUndoTextOperation.h in Headers */ = {isa = PBXBuildFile; fileRef = 49D5D243165F9D0000D6A8EE /* NSUndoTextOperation.h */; };
+		49D5D247165F9D0000D6A8EE /* NSUndoTextOperation.h in Headers */ = {isa = PBXBuildFile; fileRef = 49D5D243165F9D0000D6A8EE /* NSUndoTextOperation.h */; };
+		49D5D248165F9D0000D6A8EE /* NSUndoTextOperation.h in Headers */ = {isa = PBXBuildFile; fileRef = 49D5D243165F9D0000D6A8EE /* NSUndoTextOperation.h */; };
+		49D5D249165F9D0000D6A8EE /* NSUndoTextOperation.h in Headers */ = {isa = PBXBuildFile; fileRef = 49D5D243165F9D0000D6A8EE /* NSUndoTextOperation.h */; };
+		49D5D24A165F9D0000D6A8EE /* NSUndoTextOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 49D5D244165F9D0000D6A8EE /* NSUndoTextOperation.m */; };
+		49D5D24B165F9D0000D6A8EE /* NSUndoTextOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 49D5D244165F9D0000D6A8EE /* NSUndoTextOperation.m */; };
+		49D5D24C165F9D0000D6A8EE /* NSUndoTextOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 49D5D244165F9D0000D6A8EE /* NSUndoTextOperation.m */; };
+		49D5D24D165F9D0000D6A8EE /* NSUndoTextOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 49D5D244165F9D0000D6A8EE /* NSUndoTextOperation.m */; };
+		49D5D24E165F9D0000D6A8EE /* NSUndoTextOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 49D5D244165F9D0000D6A8EE /* NSUndoTextOperation.m */; };
 		630DC9DA14CE3F2D0009A039 /* NSColorPanel.nib in Resources */ = {isa = PBXBuildFile; fileRef = 630DC9D814CE3F2D0009A039 /* NSColorPanel.nib */; };
 		630DC9DB14CE3F2D0009A039 /* NSColorPanel.nib in Resources */ = {isa = PBXBuildFile; fileRef = 630DC9D814CE3F2D0009A039 /* NSColorPanel.nib */; };
 		630DC9DC14CE3F2D0009A039 /* NSColorPanel.nib in Resources */ = {isa = PBXBuildFile; fileRef = 630DC9D814CE3F2D0009A039 /* NSColorPanel.nib */; };
@@ -4231,6 +4241,16 @@
 			);
 			script = "";
 		};
+		FE01AABE0C5D9BCB00AEA51A /* PBXBuildRule */ = {
+			isa = PBXBuildRule;
+			compilerSpec = org.cocotron.1.0.windows.i386.gcc.default;
+			fileType = sourcecode.c;
+			isEditable = 1;
+			outputFiles = (
+				"",
+			);
+			script = "";
+		};
 		FE5A8BDF10C6F50E005E348A /* PBXBuildRule */ = {
 			isa = PBXBuildRule;
 			compilerSpec = org.cocotron.1.0.freebsd.i386.gcc.default;
@@ -4482,6 +4502,8 @@
 		36570F990E818CD5008FE1BE /* NSGradient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NSGradient.m; sourceTree = "<group>"; };
 		49A7975114224021001CE4C2 /* O2Encoder_JPG.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = O2Encoder_JPG.h; sourceTree = "<group>"; };
 		49A7975214224021001CE4C2 /* O2Encoder_JPG.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = O2Encoder_JPG.m; sourceTree = "<group>"; };
+		49D5D243165F9D0000D6A8EE /* NSUndoTextOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NSUndoTextOperation.h; sourceTree = "<group>"; };
+		49D5D244165F9D0000D6A8EE /* NSUndoTextOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NSUndoTextOperation.m; sourceTree = "<group>"; };
 		630DC9D914CE3F2D0009A039 /* de */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = de; path = de.lproj/NSColorPanel.nib; sourceTree = "<group>"; };
 		630DC9E014CE3F6A0009A039 /* de */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = de; path = NSColorPicker.subproj/de.lproj/NSColorPickerColorList.nib; sourceTree = "<group>"; };
 		630DC9E714CE40B80009A039 /* de */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = de; path = NSColorPicker.subproj/de.lproj/NSColorPickerSliders.nib; sourceTree = "<group>"; };
@@ -6044,6 +6066,8 @@
 				6E404FE60A52FEA900FA9AE5 /* NSTextViewSharedData.m */,
 				6E2B55890976075300DA0954 /* NSTypesetter.h */,
 				6E2B55740976075300DA0954 /* NSTypesetter.m */,
+				49D5D243165F9D0000D6A8EE /* NSUndoTextOperation.h */,
+				49D5D244165F9D0000D6A8EE /* NSUndoTextOperation.m */,
 			);
 			name = NSTextView;
 			path = NSTextView.subproj;
@@ -7315,6 +7339,7 @@
 				FEB3F1ED14049CC400059C8F /* NSSpellCheckerTagData.h in Headers */,
 				63138206145F3A5F00765AA7 /* NSColorPickerWheel.h in Headers */,
 				6313829E145F6ED300765AA7 /* NSColorPickerWheelView.h in Headers */,
+				49D5D246165F9D0000D6A8EE /* NSUndoTextOperation.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -7723,6 +7748,7 @@
 				FEB3F1E914049CC400059C8F /* NSSpellCheckerTagData.h in Headers */,
 				63138208145F3A5F00765AA7 /* NSColorPickerWheel.h in Headers */,
 				631382A0145F6ED300765AA7 /* NSColorPickerWheelView.h in Headers */,
+				49D5D247165F9D0000D6A8EE /* NSUndoTextOperation.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -8128,6 +8154,7 @@
 				FEB3F1EB14049CC400059C8F /* NSSpellCheckerTagData.h in Headers */,
 				63138202145F3A5F00765AA7 /* NSColorPickerWheel.h in Headers */,
 				6313829A145F6ED300765AA7 /* NSColorPickerWheelView.h in Headers */,
+				49D5D245165F9D0000D6A8EE /* NSUndoTextOperation.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -8538,6 +8565,7 @@
 				FEB3F1EF14049CC400059C8F /* NSSpellCheckerTagData.h in Headers */,
 				63138204145F3A5F00765AA7 /* NSColorPickerWheel.h in Headers */,
 				6313829C145F6ED300765AA7 /* NSColorPickerWheelView.h in Headers */,
+				49D5D249165F9D0000D6A8EE /* NSUndoTextOperation.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -8865,6 +8893,7 @@
 				FEB3F1F114049CC400059C8F /* NSSpellCheckerTagData.h in Headers */,
 				6313820A145F3A5F00765AA7 /* NSColorPickerWheel.h in Headers */,
 				631382A2145F6ED300765AA7 /* NSColorPickerWheelView.h in Headers */,
+				49D5D248165F9D0000D6A8EE /* NSUndoTextOperation.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -8930,6 +8959,7 @@
 				FE01AABD0C5D9BCB00AEA51A /* Rez */,
 			);
 			buildRules = (
+				FE01AABE0C5D9BCB00AEA51A /* PBXBuildRule */,
 			);
 			dependencies = (
 				FE01AACC0C5D9BE700AEA51A /* PBXTargetDependency */,
@@ -9654,7 +9684,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "#!/bin/sh\nmkdir -p $DERIVED_FILE_DIR\necho \"\" > $DERIVED_FILE_DIR/O2Defines_FreeType.h\n\nif [ -d /Developer/Cocotron/1.0/Windows/i386/freetype-2.3.5 ]; then\n\techo \"FreeType 2.3.5 present.\"\n\techo \"#define FREETYPE_PRESENT 1\" >> $DERIVED_FILE_DIR/O2Defines_FreeType.h\nelse\n# Create empty libfreetype for link phase\n echo \"FreeType 2.3.5 not found\"\n touch $DERIVED_FILE_DIR/libfreetype.c\n /Developer/Cocotron/1.0/Windows/i386/gcc-4.3.1/bin/i386-mingw32msvc-gcc $DERIVED_FILE_DIR/libfreetype.c -c -o $DERIVED_FILE_DIR/libfreetype.o\n /Developer/Cocotron/1.0/Windows/i386/gcc-4.3.1/bin/i386-mingw32msvc-ar cr $DERIVED_FILE_DIR/libfreetype.a $DERIVED_FILE_DIR/libfreetype.o\nfi\n\necho \"\" > $DERIVED_FILE_DIR/O2Defines_libjpeg.h\nif [ -d /Developer/Cocotron/1.0/Windows/i386/libjpeg ]; then\n\techo \"libjpeg present.\"\n\techo \"#define LIBJPEG_PRESENT 1\" >> $DERIVED_FILE_DIR/O2Defines_libjpeg.h\nelse\n# Create empty libjpeg for link phase\n echo \"libjpeg not found\"\n touch $DERIVED_FILE_DIR/libjpeg.c\n /Developer/Cocotron/1.0/Windows/i386/gcc-4.3.1/bin/i386-mingw32msvc-gcc $DERIVED_FILE_DIR/libjpeg.c -c -o $DERIVED_FILE_DIR/libjpeg.o\n /Developer/Cocotron/1.0/Windows/i386/gcc-4.3.1/bin/i386-mingw32msvc-ar cr $DERIVED_FILE_DIR/libjpeg.a $DERIVED_FILE_DIR/libjpeg.o\nfi\n\necho \"\" > $DERIVED_FILE_DIR/O2Defines_zlib.h\nif [ -d /Developer/Cocotron/1.0/Windows/i386/zlib-1.2.5 ]; then\n\techo \"zlib present.\"\n\techo \"#define ZLIB_PRESENT 1\" >> $DERIVED_FILE_DIR/O2Defines_zlib.h\nelse\n# Create empty zlib for link phase\n echo \"zlib not found\"\n touch $DERIVED_FILE_DIR/zlib.c\n /Developer/Cocotron/1.0/Windows/i386/gcc-4.3.1/bin/i386-mingw32msvc-gcc $DERIVED_FILE_DIR/zlib.c -c -o $DERIVED_FILE_DIR/zlib.o\n /Developer/Cocotron/1.0/Windows/i386/gcc-4.3.1/bin/i386-mingw32msvc-ar cr $DERIVED_FILE_DIR/libz.a $DERIVED_FILE_DIR/zlib.o\nfi\n\necho \"\" > $DERIVED_FILE_DIR/O2Defines_libpng.h\nif [ -d /Developer/Cocotron/1.0/Windows/i386/libpng ]; then\n\techo \"libpng present.\"\n\techo \"#define LIBPNG_PRESENT 1\" >> $DERIVED_FILE_DIR/O2Defines_libpng.h\nelse\n# Create empty libpng for link phase\n echo \"libpng not found\"\n touch $DERIVED_FILE_DIR/libpng.c\n /Developer/Cocotron/1.0/Windows/i386/gcc-4.3.1/bin/i386-mingw32msvc-gcc $DERIVED_FILE_DIR/libpng.c -c -o $DERIVED_FILE_DIR/libpng.o\n /Developer/Cocotron/1.0/Windows/i386/gcc-4.3.1/bin/i386-mingw32msvc-ar cr $DERIVED_FILE_DIR/libpng.a $DERIVED_FILE_DIR/libpng.o\nfi\n\n";
+			shellScript = "#!/bin/sh\nmkdir -p $DERIVED_FILE_DIR\necho \"\" > $DERIVED_FILE_DIR/O2Defines_FreeType.h\n\nif [ -d /Developer/Cocotron/1.0/Windows/i386/freetype-2.3.5 ]; then\n\techo \"FreeType 2.3.5 present.\"\n\techo \"#define FREETYPE_PRESENT 1\" >> $DERIVED_FILE_DIR/O2Defines_FreeType.h\nelse\n# Create empty libfreetype for link phase\n echo \"FreeType 2.3.5 not found\"\n touch $DERIVED_FILE_DIR/libfreetype.c\n /Developer/Cocotron/1.0/Windows/i386/gcc-4.3.1/bin/i386-mingw32msvc-gcc $DERIVED_FILE_DIR/libfreetype.c -c -o $DERIVED_FILE_DIR/libfreetype.o\n /Developer/Cocotron/1.0/Windows/i386/gcc-4.3.1/bin/i386-mingw32msvc-ar cr $DERIVED_FILE_DIR/libfreetype.a $DERIVED_FILE_DIR/libfreetype.o\nfi\n\necho \"\" > $DERIVED_FILE_DIR/O2Defines_libjpeg.h\nif [ -d /Developer/Cocotron/1.0/Windows/i386/libjpeg ]; then\n\techo \"libjpeg present.\"\n\techo \"#define LIBJPEG_PRESENT 1\" >> $DERIVED_FILE_DIR/O2Defines_libjpeg.h\nelse\n# Create empty libjpeg for link phase\n echo \"libjpeg not found\"\n touch $DERIVED_FILE_DIR/libjpeg.c\n /Developer/Cocotron/1.0/Windows/i386/gcc-4.3.1/bin/i386-mingw32msvc-gcc $DERIVED_FILE_DIR/libjpeg.c -c -o $DERIVED_FILE_DIR/libjpeg.o\n /Developer/Cocotron/1.0/Windows/i386/gcc-4.3.1/bin/i386-mingw32msvc-ar cr $DERIVED_FILE_DIR/libjpeg.a $DERIVED_FILE_DIR/libjpeg.o\nfi\n\necho \"\" > $DERIVED_FILE_DIR/O2Defines_zlib.h\nif [ -d /Developer/Cocotron/1.0/Windows/i386/zlib-1.2.5 ]; then\n\techo \"zlib present.\"\n\techo \"#define ZLIB_PRESENT 1\" >> $DERIVED_FILE_DIR/O2Defines_zlib.h\nelse\n# Create empty zlib for link phase\n echo \"zlib not found\"\n touch $DERIVED_FILE_DIR/zlib.c\n /Developer/Cocotron/1.0/Windows/i386/gcc-4.3.1/bin/i386-mingw32msvc-gcc $DERIVED_FILE_DIR/zlib.c -c -o $DERIVED_FILE_DIR/zlib.o\n /Developer/Cocotron/1.0/Windows/i386/gcc-4.3.1/bin/i386-mingw32msvc-ar cr $DERIVED_FILE_DIR/libz.a $DERIVED_FILE_DIR/zlib.o\nfi\n\necho \"\" > $DERIVED_FILE_DIR/O2Defines_libtiff.h\nif [ -d /Developer/Cocotron/1.0/Windows/i386/libtiff ]; then\n\techo \"libitff present.\"\n\techo \"#define LIBTIFF_PRESENT 1\" >> $DERIVED_FILE_DIR/O2Defines_libtiff.h\nelse\n# Create empty libtiff for link phase\n echo \"libtiff not found\"\n touch $DERIVED_FILE_DIR/libtiff.c\n /Developer/Cocotron/1.0/Windows/i386/gcc-4.3.1/bin/i386-mingw32msvc-gcc $DERIVED_FILE_DIR/libtiff.c -c -o $DERIVED_FILE_DIR/libtiff.o\n /Developer/Cocotron/1.0/Windows/i386/gcc-4.3.1/bin/i386-mingw32msvc-ar cr $DERIVED_FILE_DIR/libtiff.a $DERIVED_FILE_DIR/libtiff.o\nfi\n\necho \"\" > $DERIVED_FILE_DIR/O2Defines_libpng.h\nif [ -d /Developer/Cocotron/1.0/Windows/i386/libpng ]; then\n\techo \"libpng present.\"\n\techo \"#define LIBPNG_PRESENT 1\" >> $DERIVED_FILE_DIR/O2Defines_libpng.h\nelse\n# Create empty libpng for link phase\n echo \"libpng not found\"\n touch $DERIVED_FILE_DIR/libpng.c\n /Developer/Cocotron/1.0/Windows/i386/gcc-4.3.1/bin/i386-mingw32msvc-gcc $DERIVED_FILE_DIR/libpng.c -c -o $DERIVED_FILE_DIR/libpng.o\n /Developer/Cocotron/1.0/Windows/i386/gcc-4.3.1/bin/i386-mingw32msvc-ar cr $DERIVED_FILE_DIR/libpng.a $DERIVED_FILE_DIR/libpng.o\nfi\n\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -10061,6 +10091,7 @@
 				FEB3F1EE14049CC400059C8F /* NSSpellCheckerTagData.m in Sources */,
 				63138207145F3A5F00765AA7 /* NSColorPickerWheel.m in Sources */,
 				6313829F145F6ED300765AA7 /* NSColorPickerWheelView.m in Sources */,
+				49D5D24B165F9D0000D6A8EE /* NSUndoTextOperation.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -10465,6 +10496,7 @@
 				FEB3F1EA14049CC400059C8F /* NSSpellCheckerTagData.m in Sources */,
 				63138209145F3A5F00765AA7 /* NSColorPickerWheel.m in Sources */,
 				631382A1145F6ED300765AA7 /* NSColorPickerWheelView.m in Sources */,
+				49D5D24C165F9D0000D6A8EE /* NSUndoTextOperation.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -10904,6 +10936,7 @@
 				FEFD32061434A4F400C14B08 /* O2Font_freetype.m in Sources */,
 				63138203145F3A5F00765AA7 /* NSColorPickerWheel.m in Sources */,
 				6313829B145F6ED300765AA7 /* NSColorPickerWheelView.m in Sources */,
+				49D5D24A165F9D0000D6A8EE /* NSUndoTextOperation.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -11310,6 +11343,7 @@
 				FEB3F1F014049CC400059C8F /* NSSpellCheckerTagData.m in Sources */,
 				63138205145F3A5F00765AA7 /* NSColorPickerWheel.m in Sources */,
 				6313829D145F6ED300765AA7 /* NSColorPickerWheelView.m in Sources */,
+				49D5D24E165F9D0000D6A8EE /* NSUndoTextOperation.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -11611,6 +11645,7 @@
 				FEB3F1F214049CC400059C8F /* NSSpellCheckerTagData.m in Sources */,
 				6313820B145F3A5F00765AA7 /* NSColorPickerWheel.m in Sources */,
 				631382A3145F6ED300765AA7 /* NSColorPickerWheelView.m in Sources */,
+				49D5D24D165F9D0000D6A8EE /* NSUndoTextOperation.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -11863,7 +11898,6 @@
 			baseConfigurationReference = FE70846E1431168800B99A95 /* windows-i386-framework.xcconfig */;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = stabs;
 				GCC_ENABLE_CPP_EXCEPTIONS = NO;
 				GCC_ENABLE_CPP_RTTI = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -11875,6 +11909,7 @@
 				HEADER_SEARCH_PATHS = "$(TARGET_BUILD_DIR)/usr/include";
 				INFOPLIST_FILE = Info.plist;
 				LIBRARY_SEARCH_PATHS = (
+					/Developer/Cocotron/1.0/Windows/i386/libtiff/lib,
 					/Developer/Cocotron/1.0/Windows/i386/libpng/lib,
 					/Developer/Cocotron/1.0/Windows/i386/libjpeg/lib,
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1)",
@@ -11882,6 +11917,7 @@
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "/Developer/Cocotron/1.0/Windows/i386/zlib-1.2.5/lib";
 				OTHER_CFLAGS = (
 					"$(OTHER_CFLAGS)",
+					"-DQUARTZCORE_INSIDE_BUILD",
 					"-DAPPKIT_INSIDE_BUILD",
 					"-DCORETEXT_INSIDE_BUILD",
 					"-DCOREGRAPHICS_INSIDE_BUILD",
@@ -11889,6 +11925,10 @@
 				);
 				OTHER_LDFLAGS = (
 					"-static",
+					"-lpng",
+					"-ltiff",
+					"-ljpeg",
+					"-lz",
 					"-shared",
 					"-lmsimg32",
 					"-lole32",
@@ -12133,7 +12173,6 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = FE70846E1431168800B99A95 /* windows-i386-framework.xcconfig */;
 			buildSettings = {
-				DEBUG_INFORMATION_FORMAT = stabs;
 				GCC_ENABLE_CPP_EXCEPTIONS = NO;
 				GCC_ENABLE_CPP_RTTI = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -12154,6 +12193,7 @@
 				HEADER_SEARCH_PATHS = "$(TARGET_BUILD_DIR)/usr/include";
 				INFOPLIST_FILE = Info.plist;
 				LIBRARY_SEARCH_PATHS = (
+					/Developer/Cocotron/1.0/Windows/i386/libtiff/lib,
 					/Developer/Cocotron/1.0/Windows/i386/libpng/lib,
 					"/Developer/Cocotron/1.0/Windows/i386/zlib-1.2.5/lib",
 					/Developer/Cocotron/1.0/Windows/i386/libjpeg/lib,
@@ -12172,6 +12212,10 @@
 				);
 				OTHER_LDFLAGS = (
 					"-static",
+					"-lpng",
+					"-ltiff",
+					"-ljpeg",
+					"-lz",
 					"-shared",
 					"-lmsimg32",
 					"-lole32",
