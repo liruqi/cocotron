@@ -9,7 +9,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import <Foundation/Foundation.h>
 #import <AppKit/NSFont.h>
 
-@class NSTextStorage,NSGlyphGenerator,NSTypesetter,NSTextContainer,NSTextView;
+@class NSTextStorage,NSGlyphGenerator,NSTypesetter,NSTextContainer,NSTextView,NSRulerView;
 @class NSWindow,NSColor,NSCell;
 
 typedef enum {
@@ -106,6 +106,7 @@ typedef enum {
 -(void)textStorage:(NSTextStorage *)storage edited:(unsigned)editedMask range:(NSRange)range changeInLength:(int)changeInLength invalidatedRange:(NSRange)invalidateRange;
 
 -(void)textContainerChangedGeometry:(NSTextContainer *)container;
+-(void)ensureLayoutForTextContainer:(NSTextContainer *)container;
 
 -(unsigned)glyphIndexForPoint:(NSPoint)point inTextContainer:(NSTextContainer *)container fractionOfDistanceThroughGlyph:(float *)fraction;
 -(unsigned)glyphIndexForPoint:(NSPoint)point inTextContainer:(NSTextContainer *)container;
@@ -151,6 +152,8 @@ typedef enum {
 - (NSDictionary *)temporaryAttributesAtCharacterIndex:(NSUInteger)location longestEffectiveRange:(NSRangePointer)range inRange:(NSRange)rangeLimit;
 - (void)addTemporaryAttribute:(NSString *)attrName value:(id)value forCharacterRange:(NSRange)charRange;
 
+- (NSArray *)rulerMarkersForTextView:(NSTextView *)view paragraphStyle:(NSParagraphStyle *)style ruler:(NSRulerView *)ruler;
+- (NSView *)rulerAccessoryViewForTextView:(NSTextView *)view paragraphStyle:(NSParagraphStyle *)style ruler:(NSRulerView *)ruler enabled:(BOOL)isEnabled;
 @end
 
 @protocol NSLayoutManagerDelegate <NSObject>

@@ -125,7 +125,7 @@ NSString * const NSSplitViewWillResizeSubviewsNotification = @"NSSplitViewWillRe
      frame.size.width=floor(frame.size.width);
      
      [[_subviews objectAtIndex:i] setFrame:frame];
-  
+        
      frame.origin.x+=frame.size.width;
      frame.origin.x+=[self dividerThickness];
     }
@@ -148,6 +148,7 @@ NSString * const NSSplitViewWillResizeSubviewsNotification = @"NSSplitViewWillRe
     }
    }
 
+    [self setNeedsDisplay: YES];
    [self _postNoteDidResize];
 }
 
@@ -245,6 +246,7 @@ NSString * const NSSplitViewWillResizeSubviewsNotification = @"NSSplitViewWillRe
     [view setFrame:frame];
    }
 
+    [self setNeedsDisplay: YES];
    [self _postNoteDidResize];
 }
 
@@ -294,91 +296,34 @@ static float constrainTo(float value,float min,float max){
 }
 
 -(void)mouseDown:(NSEvent *)event {
-   NSPoint  firstPoint=[self convertPoint:[event locationInWindow] fromView:nil];
-   unsigned divider=[self dividerIndexAtPoint:firstPoint];
-   NSRect   frame0,frame1;
-   float    maxSize,minSize;
-   NSEventType eventType;
-   BOOL delegateWantsTrackConstraining = [_delegate respondsToSelector:@selector(splitView:constrainSplitPosition:ofSubviewAt:)];
 
-   if(divider==NSNotFound)
-    return;
+    NSPoint  firstPoint=[self convertPoint:[event locationInWindow] fromView:nil];
+    unsigned divider=[self dividerIndexAtPoint:firstPoint];
+
+    if (divider == NSNotFound) {
+        return;
+    }
+    
+    NSEventType eventType;
 
    [self _postNoteWillResize];
-
-   frame0=[[[self subviews] objectAtIndex:divider] frame];
-   frame1=[[[self subviews] objectAtIndex:divider+1] frame];
-   if([self isVertical]){
-    minSize=frame0.origin.x;
-    maxSize=frame0.size.width+frame1.size.width;
-   }
-   else {
-    minSize=frame0.origin.y;
-    maxSize=frame0.size.height+frame1.size.height;
-   }
-
-   if([_delegate respondsToSelector:@selector(splitView:constrainMinCoordinate:maxCoordinate:ofSubviewAt:)]) {
-       float delegateMin=minSize, delegateMax=maxSize;
-       
-       [_delegate splitView:self constrainMinCoordinate:&delegateMin maxCoordinate:&delegateMax ofSubviewAt:divider];
-
-       if (delegateMin > minSize)
-           minSize = delegateMin;
-
-       if (delegateMax < maxSize)
-           maxSize = delegateMax;
-   }
 
    do{
     NSAutoreleasePool *pool=[NSAutoreleasePool new];
     NSPoint point;
-    float   delta;
-    NSRect  resize0=frame0;
-    NSRect  resize1=frame1;
 
     event=[[self window] nextEventMatchingMask:NSLeftMouseUpMask|
                           NSLeftMouseDraggedMask];
     eventType=[event type];
 
     point=[self convertPoint:[event locationInWindow] fromView:nil];
-    if([self isVertical]){
-     if(delegateWantsTrackConstraining) {
-      point.x = [_delegate splitView:self constrainSplitPosition:point.x ofSubviewAt:divider];
-     }
-     point.x = constrainTo(point.x,minSize,maxSize);
-        
-     delta=floor(point.x-firstPoint.x);
-     resize0.size.width+=delta;
 
-     resize0.size.width=constrainTo(resize0.size.width,minSize,maxSize);
-
-     resize1.size.width-=delta;
-     resize1.size.width=constrainTo(resize1.size.width,0,maxSize);
-     resize1.origin.x=(frame1.origin.x+frame1.size.width)-resize1.size.width;
-    }
-    else {
-     if(delegateWantsTrackConstraining) {
-       point.y = [_delegate splitView:self constrainSplitPosition:point.y ofSubviewAt:divider];
-     }
-     point.y = constrainTo(point.y,minSize,maxSize);
-
-     delta=floor(point.y-firstPoint.y);
-
-     resize0.size.height+=delta;
-   //  resize0.size.height=constrainTo(resize0.size.height,minSize,maxSize);
-
-     resize1.size.height-=delta;
-   //  resize1.size.height=constrainTo(resize1.size.height,0,maxSize);
-     resize1.origin.y=(frame1.origin.y+frame1.size.height)-resize1.size.height;
-    }
-
-    [[[self subviews] objectAtIndex:divider] setFrameOrigin:resize0.origin];
-    [[[self subviews] objectAtIndex:divider] setFrameSize:resize0.size];
-    [[[self subviews] objectAtIndex:divider+1] setFrameOrigin:resize1.origin];
-    [[[self subviews] objectAtIndex:divider+1] setFrameSize:resize1.size];
- 
-    [self setNeedsDisplay:YES];
-
+       if([self isVertical]){
+           [self setPosition: point.x ofDividerAtIndex: divider];
+       } else {
+           [self setPosition: point.y ofDividerAtIndex: divider];
+       }
+       
     [pool release];
    }while(eventType!=NSLeftMouseUp);
 
@@ -412,6 +357,101 @@ static float constrainTo(float value,float min,float max){
 
     [self addCursorRect:rect cursor:cursor];
    }
+}
+
+- (float)minPossiblePositionOfDividerAtIndex:(int)index
+{
+    NSUnimplementedMethod();
+    return 0;
+}
+
+- (float)maxPossiblePositionOfDividerAtIndex:(int)index
+{
+    NSUnimplementedMethod();
+    return 0;
+}
+
+- (void)setPosition:(float)position ofDividerAtIndex:(int)index
+{
+    NSAssert(index >= 0 && index < [[self subviews] count] - 1, @"divider index out of range");
+    
+    NSRect   frame0,frame1;
+    frame0=[[[self subviews] objectAtIndex:index] frame];
+    frame1=[[[self subviews] objectAtIndex:index+1] frame];
+
+    float    maxSize,minSize;
+    
+    if([self isVertical]){
+        minSize=frame0.origin.x;
+        maxSize=frame0.size.width+frame1.size.width;
+    }
+    else {
+        minSize=frame0.origin.y;
+        maxSize=frame0.size.height+frame1.size.height;
+    }
+    
+    if([_delegate respondsToSelector:@selector(splitView:constrainMinCoordinate:maxCoordinate:ofSubviewAt:)]) {
+        float delegateMin=minSize, delegateMax=maxSize;
+        
+        [_delegate splitView:self constrainMinCoordinate:&delegateMin maxCoordinate:&delegateMax ofSubviewAt: index];
+        
+        if (delegateMin > minSize)
+            minSize = delegateMin;
+        
+        if (delegateMax < maxSize)
+            maxSize = delegateMax;
+    }
+    
+    BOOL delegateWantsTrackConstraining = [_delegate respondsToSelector:@selector(splitView:constrainSplitPosition:ofSubviewAt:)];
+
+    if(delegateWantsTrackConstraining) {
+        position = [_delegate splitView:self constrainSplitPosition: position ofSubviewAt: index];
+    }
+    
+    position = constrainTo(position,minSize,maxSize);
+
+    NSRect  resize0=frame0;
+    NSRect  resize1=frame1;
+    
+    if([self isVertical]){
+        
+        float currX = NSMaxX(resize0);
+        float delta=floor(position - currX);
+        
+        resize0.size.width+=delta;
+        
+        resize0.size.width=constrainTo(resize0.size.width,minSize,maxSize);
+        
+        resize1.size.width-=delta;
+        resize1.size.width=constrainTo(resize1.size.width,0,maxSize);
+        resize1.origin.x=(frame1.origin.x+frame1.size.width)-resize1.size.width;
+    }
+    else {
+        
+        float currX = NSMaxY(resize0);
+        float delta=floor(position - currX);
+        
+        resize0.size.height+=delta;
+        //  resize0.size.height=constrainTo(resize0.size.height,minSize,maxSize);
+        
+        resize1.size.height-=delta;
+        //  resize1.size.height=constrainTo(resize1.size.height,0,maxSize);
+        resize1.origin.y=(frame1.origin.y+frame1.size.height)-resize1.size.height;
+    }
+
+    NSView *subView1 = [[self subviews] objectAtIndex: index];
+    NSView *subView2 = [[self subviews] objectAtIndex: index + 1];
+    [subView1 setFrameOrigin:resize0.origin];
+    [subView1 setFrameSize:resize0.size];
+    // Tell the view to redisplay otherwise there are drawing artifacts
+    [subView1  setNeedsDisplay: YES];
+    
+    [subView2 setFrameOrigin:resize1.origin];
+    [subView2 setFrameSize:resize1.size];
+    // Tell the view to redisplay otherwise there are drawing artifacts
+    [subView2  setNeedsDisplay: YES];
+    
+    [self setNeedsDisplay:YES];
 }
 
 @end
