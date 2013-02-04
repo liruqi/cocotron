@@ -45,10 +45,16 @@ static int CALLBACK EnumFontFromFamilyCallBack(const EXTLOGFONTW* longFont,const
 {
 	HFONT font = CreateFontIndirectW(&longFont->elfLogFont);
 	if (font) {
-		SelectObject(dc, font);
-
 		// Get the full face name - on Win8, this is a localized name
 		NSString *winName = [NSString stringWithFormat:@"%S", longFont->elfFullName];
+        // Font name starting with "@" are rotated versions of the font, for vertical rendering
+        // We don't want them - the are polluting our font list + they have the same PS name
+        // as the normal ones, leading to confusion in our font picking algo
+        if ([winName characterAtIndex:0] == '@') {
+            return 1;
+        }
+        
+		SelectObject(dc, font);
 
 		// Get the PS name for the font...
 		DWORD bufferSize = GetFontData(dc, CFSwapInt32HostToBig('name'), 0, NULL, 0);
@@ -158,23 +164,21 @@ static int CALLBACK EnumFamiliesCallBackW(const EXTLOGFONTW* logFont,const TEXTM
 	NSString *winName = [NSString stringWithFormat:@"%S", logFont->elfLogFont.lfFaceName];
 
 	[families addObject:winName];
-	
 	return 1;
 }
-	
+
 + (void)_buildNativePSmapping
 {
 	HDC dc=GetDC(NULL);
 	sPSToWin32Table = [[NSMutableDictionary alloc] initWithCapacity:100];
 	sWin32ToPSTable = [[NSMutableDictionary alloc] initWithCapacity:100];
-
+    
 	// Get a list of all of the families
 	NSMutableArray *families = [NSMutableArray arrayWithCapacity:100];
 	LOGFONTW logFont = { 0 };
 	
 	logFont.lfCharSet=DEFAULT_CHARSET;
 	EnumFontFamiliesExW(dc,&logFont,(FONTENUMPROCW)EnumFamiliesCallBackW,(LPARAM)families,0);
-	
 	for (NSString *familyName in families) {
 		// Enum all of the faces for that family
 		LOGFONTW logFont = { 0 };
@@ -251,6 +255,20 @@ static int CALLBACK EnumFamiliesCallBackW(const EXTLOGFONTW* logFont,const TEXTM
 @end
 
 @implementation O2Font_gdi
+
++ (void)initialize
+{
+    if (self == [O2Font_gdi class]) {
+        // Set some decent defaut substitution fonts
+        [O2Font setPreferredFontNames:[NSArray arrayWithObjects:
+                                           @"Arial",              // Latin/Greek/Cyrillic, Arabic, Hebrew
+                                           @"Meiryo",             // Japanese
+                                           @"FangSong",           // Simplified Chinese
+                                           @"MingLiU",            // Traditional Chinese
+                                           @"Batang",             // Korean
+                                           nil]];
+    }
+}
 
 static HFONT Win32FontHandleWithName(NSString *name,int unitsPerEm){
    const unichar *wideName=(const unichar *)[name cStringUsingEncoding:NSUnicodeStringEncoding];
@@ -454,6 +472,44 @@ static HFONT Win32FontHandleWithName(NSString *name,int unitsPerEm){
    ReleaseDC(NULL,dc);
 }
 
+-(NSCharacterSet *)coveredCharacterSet {
+    if (_coveredCharSet == nil) {
+        HDC      dc=GetDC(NULL);
+
+        // Create our Windows font
+        HFONT font=Win32FontHandleWithName(_name,_unitsPerEm);
+        SelectObject(dc,font);
+        
+        GLYPHSET *glyphsets;
+        
+        // Get the unicode ranges from the font
+        DWORD size = GetFontUnicodeRanges(dc, NULL);
+        glyphsets = (GLYPHSET *)malloc(size);
+        GetFontUnicodeRanges(dc, glyphsets);
+        
+        // Create the NSCharacterSet from the GLYPHSET
+        NSMutableCharacterSet *set = [[NSMutableCharacterSet alloc] init];
+        WCRANGE *wcrange = glyphsets->ranges;
+        for (int i = 0; i < glyphsets->cRanges; ++i, ++wcrange) {
+            NSUInteger location = wcrange->wcLow;
+            // 1 = GS_8BIT_INDICES meaning the indices are 8 bits
+            if (glyphsets->flAccel & 1) {
+                location %= 0xff;
+            }
+            NSUInteger length = wcrange->cGlyphs;
+            NSRange range = NSMakeRange(location, length);
+            [set addCharactersInRange: range];
+        }
+        _coveredCharSet = set;
+        
+        free(glyphsets);
+        
+        DeleteObject(font);
+        ReleaseDC(NULL,dc);
+    }
+    return _coveredCharSet;
+}
+
 -(Win32Font *)createGDIFontSelectedInDC:(HDC)dc pointSize:(CGFloat)pointSize {
 	return [self createGDIFontSelectedInDC:dc pointSize:pointSize angle:0.];
 }
@@ -461,7 +517,7 @@ static HFONT Win32FontHandleWithName(NSString *name,int unitsPerEm){
 -(Win32Font *)createGDIFontSelectedInDC:(HDC)dc pointSize:(CGFloat)pointSize angle:(CGFloat)angle {
    if(_useMacMetrics){
     if (pointSize <= 10.0)
-		pointSize=pointSize;
+       pointSize=pointSize;
     else if (pointSize < 20.0)
        pointSize=pointSize/(1.0 + 0.2*sqrtf(0.0390625*(pointSize - 10.0)));
     else

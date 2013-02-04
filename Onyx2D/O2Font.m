@@ -10,6 +10,22 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #import "O2Encoding.h"
 
 @implementation O2Font
+static NSArray *_preferredFontNames = nil;
+
++ (void)initialize
+{
+    if (self == [O2Font class]) {
+        // Set some decent defaut substitution fonts
+        // Override that by a better list in the O2Font concrete subclass
+        [O2Font setPreferredFontNames:[NSArray arrayWithObjects:
+                                       @"Arial",              // Latin/Greek/Cyrillic, Arabic, Hebrew
+                                       @"Meiryo",             // Japanese
+                                       @"FangSong",           // Simplified Chinese
+                                       @"MingLiU",            // Traditional Chinese
+                                       @"Batang",             // Korean
+                                       nil]];
+    }
+ }
 
 -initWithFontName:(NSString *)name {
    _name=[name copy];
@@ -23,6 +39,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 -(void)dealloc {
    [_name release];
+    [_coveredCharSet release];
    if(_advances!=NULL)
     NSZoneFree(NULL,_advances);
    if(_MacRomanEncoding!=NULL)
@@ -47,7 +64,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 }
 
 -(void)fetchAdvances {
-   O2InvalidAbstractInvocation();
+    O2InvalidAbstractInvocation();
+}
+
+-(NSCharacterSet *)coveredCharacterSet {
+    return _coveredCharSet;
 }
 
 // Font name mapping : platform specific font class may override
@@ -77,6 +98,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 + (NSString *)postscriptNameForFontName:(NSString *)name
 {
 	return name;
+}
+
++(NSArray *)preferredFontNames
+{
+    return _preferredFontNames;
+}
+
++(void)setPreferredFontNames:(NSArray *)fontNames
+{
+    fontNames = [fontNames retain];
+    [_preferredFontNames release];
+    _preferredFontNames = fontNames;
 }
 
 NSString *O2MacRomanGlyphNames[256]={
@@ -345,7 +378,7 @@ NSString *O2MacRomanGlyphNames[256]={
     _MacRomanEncoding=NSZoneMalloc(NULL,sizeof(O2Glyph)*256);
     
     for(i=0;i<256;i++)
-     _MacRomanEncoding[i]=O2FontGetGlyphWithGlyphName(self,O2MacRomanGlyphNames[i]);
+     _MacRomanEncoding[i]=O2FontGetGlyphWithGlyphName(self,(CFStringRef)O2MacRomanGlyphNames[i]);
    }
    return _MacRomanEncoding;
 }
@@ -427,6 +460,10 @@ O2Rect    O2FontGetFontBBox(O2FontRef self) {
    return self->_bbox;
 }
 
+NSCharacterSet *O2FontGetCoveredCharacterSet(O2FontRef self) {
+    return [self coveredCharacterSet];
+}
+
 size_t    O2FontGetNumberOfGlyphs(O2FontRef self) {
    return self->_numberOfGlyphs;
 }
@@ -450,8 +487,8 @@ BOOL O2FontGetGlyphAdvances(O2FontRef self,const O2Glyph *glyphs,size_t count,in
    return YES;
 }
 
-O2Glyph   O2FontGetGlyphWithGlyphName(O2FontRef self,NSString *name) {
-   return [self glyphWithGlyphName:name];
+O2Glyph   O2FontGetGlyphWithGlyphName(O2FontRef self,CFStringRef name) {
+   return [self glyphWithGlyphName:(NSString *)name];
 }
 
 NSString *O2FontCopyGlyphNameForGlyph(O2FontRef self,O2Glyph glyph) {
@@ -462,7 +499,7 @@ NSData   *O2FontCopyTableForTag(O2FontRef self,uint32_t tag) {
    return [self copyTableForTag:(uint32_t)tag];
 }
 
-uint16_t O2FontUnicodeForGlyphName(NSString *name){
+uint16_t O2FontUnicodeForGlyphName(CFStringRef name){
    struct {
     NSString *name;
     unichar   code;
@@ -4775,10 +4812,10 @@ uint16_t O2FontUnicodeForGlyphName(NSString *name){
    int i;
    
    for(i=0;entries[i].name!=nil;i++)
-    if([entries[i].name isEqualToString:name])
+    if([entries[i].name isEqualToString:(NSString *)name])
      return entries[i].code;
    
-   NSLog(@"%s %d unable to map glyph name %@",name);
+   NSLog(@"%s %d unable to map glyph name %@",__FILE__,__LINE__,name);
    return 0;
 }
 

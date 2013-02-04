@@ -73,62 +73,62 @@ const char * const *NSProcessInfoArgv=NULL;
 }
 
 -(NSString *)operatingSystemVersionString {
-  OSVERSIONINFOEX osVersion;
-  int systemVersion;
-  NSString* versionString;
-  NSString* servicePack;
+	OSVERSIONINFOEX osVersion;
+	int systemVersion;
+	NSString* versionString;
+	NSString* servicePack;
 
-  osVersion.dwOSVersionInfoSize=sizeof(osVersion);
-  GetVersionEx((OSVERSIONINFO *)&osVersion);
+	osVersion.dwOSVersionInfoSize=sizeof(osVersion);
+	GetVersionEx((OSVERSIONINFO *)&osVersion);
 
-  // Switches aren't float-friendly, so let's get our major/minor version in
-  // some kind of combination that'll be easier for it to handle.  dwMajorVersion
-  // can live in the 10s digit, with dwMinorVersion living in the 1s digit.
-  // We'll also want to negate in the case we're not an NT_WORKSTATION productType - 
-  // this only matters for Vista and up
-  systemVersion =  osVersion.dwMajorVersion * 10 + osVersion.dwMinorVersion;
-  if(systemVersion >= 60 && osVersion.wProductType != VER_NT_WORKSTATION) {
-    systemVersion = -systemVersion;
-  }
-  
-  if (osVersion.szCSDVersion != '\0') {
-    servicePack = [NSString stringWithCString:osVersion.szCSDVersion];
-  } else {
-    servicePack = @"";
-  }
-    
-  switch (systemVersion) {
-    case 62:
-      return [NSString stringWithFormat: @"Windows 8 %@", servicePack];
-      break;
-    case -62:
-      return [NSString stringWithFormat: @"Windows Server 2012 %@", servicePack];
-      break;
-    case 61:
-      return [NSString stringWithFormat: @"Windows 7 %@", servicePack];
-      break;
-    case -61:
-      return [NSString stringWithFormat: @"Windows Server 2008 R2 %@", servicePack];
-      break;
-    case 60:
-      return [NSString stringWithFormat: @"Windows Vista %@", servicePack];
-      break;
-    case -60:
-      return [NSString stringWithFormat: @"Windows Server 2003 R2 %@", servicePack];
-      break;
-    case 52:
-      return [NSString stringWithFormat: @"Windows XP Professional x64 Edition %@", servicePack];
-      break;
-    case 51:
-      return [NSString stringWithFormat: @"Windows XP %@", servicePack];
-      break;
-    case 50:
-      return [NSString stringWithFormat: @"Windows 2000 %@", servicePack];
-      break;
-    default:
-      return [NSString stringWithFormat: @"%d.%d %d %d", osVersion.dwMajorVersion, osVersion.dwMinorVersion, osVersion.wServicePackMajor, osVersion.wServicePackMinor ];
-      break;
-  }
+	// Switches aren't float-friendly, so let's get our major/minor version in
+	// some kind of combination that'll be easier for it to handle.  dwMajorVersion
+	// can live in the 10s digit, with dwMinorVersion living in the 1s digit.
+	// We'll also want to negate in the case we're not an NT_WORKSTATION productType - 
+	// this only matters for Vista and up
+	systemVersion =  osVersion.dwMajorVersion * 10 + osVersion.dwMinorVersion;
+	if(systemVersion >= 60 && osVersion.wProductType != VER_NT_WORKSTATION) {
+		systemVersion = -systemVersion;
+	}
+	
+	if (osVersion.szCSDVersion != '\0') {
+		servicePack = [NSString stringWithCString:osVersion.szCSDVersion];
+	} else {
+		servicePack = @"";
+	}
+		
+	switch (systemVersion) {
+		case 62:
+			return [NSString stringWithFormat: @"Windows 8 %@", servicePack];
+			break;
+		case -62:
+			return [NSString stringWithFormat: @"Windows Server 2012 %@", servicePack];
+			break;
+		case 61:
+			return [NSString stringWithFormat: @"Windows 7 %@", servicePack];
+			break;
+		case -61:
+			return [NSString stringWithFormat: @"Windows Server 2008 R2 %@", servicePack];
+			break;
+		case 60:
+			return [NSString stringWithFormat: @"Windows Vista %@", servicePack];
+			break;
+		case -60:
+			return [NSString stringWithFormat: @"Windows Server 2003 R2 %@", servicePack];
+			break;
+		case 52:
+			return [NSString stringWithFormat: @"Windows XP Professional x64 Edition %@", servicePack];
+			break;
+		case 51:
+			return [NSString stringWithFormat: @"Windows XP %@", servicePack];
+			break;
+		case 50:
+			return [NSString stringWithFormat: @"Windows 2000 %@", servicePack];
+			break;
+		default:
+			return [NSString stringWithFormat: @"%d.%d %d %d", osVersion.dwMajorVersion, osVersion.dwMinorVersion, osVersion.wServicePackMajor, osVersion.wServicePackMinor ];
+			break;
+	}
 }
 
 -(NSString *)hostName {
@@ -171,7 +171,7 @@ const char * const *NSProcessInfoArgv=NULL;
    if(_arguments==nil){
     _arguments=[[[NSPlatform currentPlatform] arguments] retain];
    }
-  
+
    return _arguments;
 }
 
@@ -189,8 +189,31 @@ const char * const *NSProcessInfoArgv=NULL;
 
 @end
 
-FOUNDATION_EXPORT void NSInitializeProcess(int argc,const char *argv[]) {
-   NSProcessInfoArgc=argc;
-   NSProcessInfoArgv=argv;
-   OBJCInitializeProcess();
+FOUNDATION_EXPORT void NSInitializeProcess(int argc,const char *argv[])
+{
+    //no more used
 }
+
+void __NSInitializeProcess(int argc,const char *argv[])
+{
+    NSProcessInfoArgc=argc;
+    NSProcessInfoArgv=argv;
+#if !defined(GCC_RUNTIME_3)
+#if !defined(APPLE_RUNTIME_4)
+    OBJCInitializeProcess();
+#endif
+#ifdef __APPLE__
+    // init NSConstantString reference-tag (see http://lists.apple.com/archives/objc-language/2006/Jan/msg00013.html)
+    // only Darwin ppc!?
+    Class cls = objc_lookUpClass("NSConstantString");
+    memcpy(&_NSConstantStringClassReference, cls, sizeof(_NSConstantStringClassReference));
+    cls = objc_lookUpClass("NSDarwinString");
+    memcpy(&__CFConstantStringClassReference, cls, sizeof(_NSConstantStringClassReference));
+    
+    // Override the compiler version of the class
+    //objc_addClass(&_NSConstantStringClassReference);
+#endif
+#endif
+
+}
+

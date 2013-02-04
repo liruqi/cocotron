@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 45;
+	objectVersion = 46;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -12,17 +12,6 @@
 		FE081A17141070CF00A3DE85 /* NSSpellEngine_hunspellDictionary.mm in Sources */ = {isa = PBXBuildFile; fileRef = FE081A16141070CF00A3DE85 /* NSSpellEngine_hunspellDictionary.mm */; };
 		FEC24A24140DE31100DDAC92 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 089C1672FE841209C02AAC07 /* Foundation.framework */; };
 /* End PBXBuildFile section */
-
-/* Begin PBXBuildRule section */
-		FE05C383140C911400B85148 /* PBXBuildRule */ = {
-			isa = PBXBuildRule;
-			compilerSpec = org.cocotron.1.0.windows.i386.gcc.default;
-			fileType = sourcecode.c;
-			isEditable = 1;
-			outputFiles = (
-			);
-		};
-/* End PBXBuildRule section */
 
 /* Begin PBXFileReference section */
 		089C1672FE841209C02AAC07 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
@@ -169,7 +158,6 @@
 				8D5B49B3048680CD000E48DA /* Frameworks */,
 			);
 			buildRules = (
-				FE05C383140C911400B85148 /* PBXBuildRule */,
 			);
 			dependencies = (
 			);
@@ -185,7 +173,7 @@
 		089C1669FE841209C02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			buildConfigurationList = 1DEB913E08733D840010E9CD /* Build configuration list for PBXProject "NSSpellEngine_hunspell" */;
-			compatibilityVersion = "Xcode 3.1";
+			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 1;
 			knownRegions = (
