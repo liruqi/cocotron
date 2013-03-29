@@ -8,7 +8,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 #import <CoreGraphics/CoreGraphicsExport.h>
 #import <CoreFoundation/CFBase.h>
-#import <stdbool.h>
+#include <stdbool.h>
 
 COREGRAPHICS_EXPORT const CGRect CGRectZero;
 COREGRAPHICS_EXPORT const CGRect CGRectNull;
@@ -109,9 +109,17 @@ static inline bool CGRectEqualToRect(CGRect a, CGRect b) {
 	return CGPointEqualToPoint(a.origin, b.origin) && CGSizeEqualToSize(a.size, b.size);
 }
 
+static inline bool CGRectIsInfinite(CGRect rect) {
+	return (isinf(rect.origin.x) ||
+			isinf(rect.origin.y) || 
+			isinf(rect.size.width) ||
+			isinf(rect.size.height));
+}
+
 static inline bool CGRectIsNull(CGRect rect) {
 	return CGRectEqualToRect(rect, CGRectNull);
 }
+
 
 COREGRAPHICS_EXPORT CGRect CGRectUnion(CGRect a, CGRect b);
 COREGRAPHICS_EXPORT CGRect CGRectIntersection(CGRect a, CGRect b);

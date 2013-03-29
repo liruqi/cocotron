@@ -78,7 +78,6 @@ static void sTIFFUnmapFileProc(thandle_t userData, tdata_t data, toff_t size)
 	O2TIFFReader *reader = (O2TIFFReader *)userData;
 	[reader unmap:data size:size];
 }
-#endif
 
 @implementation O2TIFFReader
 - (id)initWithData:(NSData *)data
@@ -193,6 +192,7 @@ static void sTIFFUnmapFileProc(thandle_t userData, tdata_t data, toff_t size)
 	TIFFSetWarningHandler(prevHandler);
 }	
 @end
+#endif
 
 @implementation O2TIFFImageDirectory
 
@@ -540,12 +540,12 @@ void depredict_R8G8B8A8(uint8_t *pixelBytes,unsigned bytesPerRow,unsigned height
 
 // general checks
    if(_imageLength==0){
-    NSLog(@"TIFF general failure, imageLength=0",_imageLength);
+    NSLog(@"TIFF general failure, imageLength=0");
     return NO;
    }
 
    if(_imageWidth==0){
-    NSLog(@"TIFF rastering error, imageWidth=0",_imageWidth);
+    NSLog(@"TIFF rastering error, imageWidth=0");
     return NO;
    }
 
@@ -642,7 +642,7 @@ void depredict_R8G8B8A8(uint8_t *pixelBytes,unsigned bytesPerRow,unsigned height
      if(_samplesPerPixel==4)
       depredict_R8G8B8A8(pixelBytes,bytesPerRow,_imageLength);
      else
-      NSLog(@"TIFF predictor error, horizontal unsupported for samples per pixel=%d");
+      NSLog(@"TIFF predictor error, horizontal unsupported for samples per pixel=%d",_samplesPerPixel);
      break;
 
     case NSTIFFTagPredictor_floatingPoint:
